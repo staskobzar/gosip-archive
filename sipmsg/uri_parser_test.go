@@ -6,25 +6,34 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestURIParse(t *testing.T) {
-	uri := SIPURIParse([]byte("sip:alice@example.com"))
+func TestURIFoo(t *testing.T) {
+	uri := URIParse([]byte("sip:alice@example.com"))
 	assert.NotNil(t, uri)
 	assert.Equal(t, "sip", uri.Scheme())
+	assert.Equal(t, URIsip, uri.ID())
+}
+
+func TestURIParse(t *testing.T) {
+	uri := URIParse([]byte("sip:alice@example.com"))
+	assert.NotNil(t, uri)
+	assert.Equal(t, "sip", uri.Scheme())
+	assert.Equal(t, URIsip, uri.ID())
 	assert.Equal(t, "alice", uri.User())
 	assert.Equal(t, "example.com", uri.Host())
 	assert.Equal(t, "", uri.Params())
 	assert.Equal(t, "", uri.Headers())
 
-	uri = SIPURIParse([]byte("sips:bob:pa55w0rd@example.com:8080;user=phone;lr?X-t=foo&h=v"))
+	uri = URIParse([]byte("sips:bob:pa55w0rd@example.com:8080;user=phone;lr?X-t=foo&h=v"))
 	assert.NotNil(t, uri)
 	assert.Equal(t, "sips", uri.Scheme())
+	assert.Equal(t, URIsips, uri.ID())
 	assert.Equal(t, "bob", uri.User())
 	assert.Equal(t, "example.com", uri.Host())
 	assert.Equal(t, "8080", uri.Port())
 	assert.Equal(t, "user=phone;lr", uri.Params())
 	assert.Equal(t, "X-t=foo&h=v", uri.Headers())
 
-	uri = SIPURIParse([]byte("sip:atlanta.com"))
+	uri = URIParse([]byte("sip:atlanta.com"))
 	assert.NotNil(t, uri)
 	assert.Equal(t, "sip", uri.Scheme())
 	assert.Equal(t, "", uri.User())
@@ -34,9 +43,10 @@ func TestURIParse(t *testing.T) {
 	assert.Equal(t, "", uri.Params())
 	assert.Equal(t, "", uri.Headers())
 
-	uri = SIPURIParse([]byte("sip:alice:secretword@atlanta.com:8860;transport=tcp"))
+	uri = URIParse([]byte("sip:alice:secretword@atlanta.com:8860;transport=tcp"))
 	assert.NotNil(t, uri)
 	assert.Equal(t, "sip", uri.Scheme())
+	assert.Equal(t, URIsip, uri.ID())
 	assert.Equal(t, "alice", uri.User())
 	assert.Equal(t, "secretword", uri.Password())
 	assert.Equal(t, "atlanta.com", uri.Host())
@@ -47,9 +57,10 @@ func TestURIParse(t *testing.T) {
 	assert.False(t, ok)
 	assert.Equal(t, "", val)
 
-	uri = SIPURIParse([]byte("sips:alice@atlanta.com?subject=project%20x&priority=urgent"))
+	uri = URIParse([]byte("sips:alice@atlanta.com?subject=project%20x&priority=urgent"))
 	assert.NotNil(t, uri)
 	assert.Equal(t, "sips", uri.Scheme())
+	assert.Equal(t, URIsips, uri.ID())
 	assert.Equal(t, "alice", uri.User())
 	assert.Equal(t, "", uri.Password())
 	assert.Equal(t, "atlanta.com", uri.Host())
@@ -59,32 +70,34 @@ func TestURIParse(t *testing.T) {
 	assert.Equal(t, "", val)
 	assert.Equal(t, "subject=project%20x&priority=urgent", uri.Headers())
 
-	uri = SIPURIParse([]byte("sip:+1-212-555-1212:1234@gateway.com;user=phone"))
+	uri = URIParse([]byte("sip:+1-212-555-1212:1234@gateway.com;user=phone"))
 	assert.NotNil(t, uri)
 	assert.Equal(t, "sip", uri.Scheme())
+	assert.Equal(t, URIsip, uri.ID())
 	assert.Equal(t, "+1-212-555-1212", uri.User())
 	assert.Equal(t, "1234", uri.Password())
 	assert.Equal(t, "gateway.com", uri.Host())
 	assert.Equal(t, "user=phone", uri.Params())
 	assert.Equal(t, "", uri.Headers())
 
-	uri = SIPURIParse([]byte("sips:1212@gateway.com"))
+	uri = URIParse([]byte("sips:1212@gateway.com"))
 	assert.NotNil(t, uri)
 	assert.Equal(t, "sips", uri.Scheme())
+	assert.Equal(t, URIsips, uri.ID())
 	assert.Equal(t, "1212", uri.User())
 	assert.Equal(t, "", uri.Password())
 	assert.Equal(t, "gateway.com", uri.Host())
 	assert.Equal(t, "", uri.Params())
 	assert.Equal(t, "", uri.Headers())
 
-	uri = SIPURIParse([]byte("sip:alice@192.0.2.4:9090?User-Agent=SIPP"))
+	uri = URIParse([]byte("sip:alice@192.0.2.4:9090?User-Agent=SIPP"))
 	assert.NotNil(t, uri)
 	assert.Equal(t, "192.0.2.4", uri.Host())
 	assert.Equal(t, "9090", uri.Port())
 	assert.Equal(t, "", uri.Params())
 	assert.Equal(t, "User-Agent=SIPP", uri.Headers())
 
-	uri = SIPURIParse([]byte("sip:alice@192.0.2.4:9090"))
+	uri = URIParse([]byte("sip:alice@192.0.2.4:9090"))
 	assert.NotNil(t, uri)
 	assert.Equal(t, "sip", uri.Scheme())
 	assert.Equal(t, "alice", uri.User())
@@ -94,7 +107,7 @@ func TestURIParse(t *testing.T) {
 	assert.Equal(t, "", uri.Params())
 	assert.Equal(t, "", uri.Headers())
 
-	uri = SIPURIParse([]byte("sip:atlanta.com;method=REGISTER?to=alice%40atlanta.com"))
+	uri = URIParse([]byte("sip:atlanta.com;method=REGISTER?to=alice%40atlanta.com"))
 	assert.NotNil(t, uri)
 	assert.Equal(t, "sip", uri.Scheme())
 	assert.Equal(t, "", uri.User())
@@ -103,7 +116,7 @@ func TestURIParse(t *testing.T) {
 	assert.Equal(t, "method=REGISTER", uri.Params())
 	assert.Equal(t, "to=alice%40atlanta.com", uri.Headers())
 
-	uri = SIPURIParse([]byte("sip:alice;day=tuesday@atlanta.com"))
+	uri = URIParse([]byte("sip:alice;day=tuesday@atlanta.com"))
 	assert.NotNil(t, uri)
 	assert.Equal(t, "sip", uri.Scheme())
 	assert.Equal(t, "alice;day=tuesday", uri.User())
@@ -112,26 +125,27 @@ func TestURIParse(t *testing.T) {
 	assert.Equal(t, "", uri.Params())
 	assert.Equal(t, "", uri.Headers())
 
-	uri = SIPURIParse([]byte("sip:@atlanta.com"))
+	uri = URIParse([]byte("sip:@atlanta.com"))
 	assert.Nil(t, uri)
 
-	uri = SIPURIParse([]byte("sip::"))
+	uri = URIParse([]byte("sip::"))
 	assert.Nil(t, uri)
 
-	uri = SIPURIParse([]byte("localhost"))
+	uri = URIParse([]byte("localhost"))
 	assert.Nil(t, uri)
 
-	uri = SIPURIParse([]byte("alice@atlanta.com"))
+	uri = URIParse([]byte("alice@atlanta.com"))
 	assert.Nil(t, uri)
 
-	uri = SIPURIParse([]byte("sip:alice@atlanta.com:-4"))
+	uri = URIParse([]byte("sip:alice@atlanta.com:-4"))
 	assert.Nil(t, uri)
 }
 
 func TestURIParseHeaders(t *testing.T) {
-	uri := SIPURIParse([]byte("sip:bob@example.com?Foo=1&X-Bar=email"))
+	uri := URIParse([]byte("sip:bob@example.com?Foo=1&X-Bar=email"))
 	assert.NotNil(t, uri)
 	assert.Equal(t, "sip", uri.Scheme())
+	assert.Equal(t, URIsip, uri.ID())
 	assert.Equal(t, "bob", uri.User())
 	assert.Equal(t, "", uri.Password())
 	assert.Equal(t, "example.com", uri.Host())
@@ -145,13 +159,13 @@ func TestURIParseHeaders(t *testing.T) {
 	assert.True(t, exists)
 	assert.Equal(t, "email", val)
 
-	uri = SIPURIParse([]byte("sip:bob@example.com?r=0"))
+	uri = URIParse([]byte("sip:bob@example.com?r=0"))
 	assert.NotNil(t, uri)
 	val, exists = uri.Header("r")
 	assert.True(t, exists)
 	assert.Equal(t, "0", val)
 
-	uri = SIPURIParse([]byte("sip:example.com?User=bob&agent=4435&+cic=&r=none&w=&Country=ca"))
+	uri = URIParse([]byte("sip:example.com?User=bob&agent=4435&+cic=&r=none&w=&Country=ca"))
 	assert.NotNil(t, uri)
 	val, exists = uri.Header("user")
 	assert.True(t, exists)
@@ -174,16 +188,40 @@ func TestURIParseHeaders(t *testing.T) {
 	val, exists = uri.Header("user-agent")
 	assert.False(t, exists)
 
-	uri = SIPURIParse([]byte("sip:example.com?foo="))
+	uri = URIParse([]byte("sip:example.com?foo="))
 	assert.NotNil(t, uri)
 	val, exists = uri.Header("foo")
 	assert.True(t, exists)
 	val, exists = uri.Header("user")
 	assert.False(t, exists)
+
+	assert.Zero(t, uri.Path())
+	assert.Zero(t, uri.Query())
+}
+
+func TestURIParseAbsolute(t *testing.T) {
+	uri := URIParse([]byte("https://john.doe@www.example.com:123/forum/questions/?tag=networking&order=newest"))
+	assert.NotNil(t, uri)
+	assert.Equal(t, "https", uri.Scheme())
+	assert.Equal(t, URIabs, uri.ID())
+	assert.Equal(t, "john.doe", uri.User())
+	assert.Equal(t, "", uri.Password())
+	assert.Equal(t, "www.example.com", uri.Host())
+	assert.Equal(t, "123", uri.Port())
+	assert.Equal(t, "", uri.Params())
+	assert.Equal(t, "", uri.Headers())
+	assert.Equal(t, "/forum/questions/", uri.Path())
+	assert.Equal(t, "tag=networking&order=newest", uri.Query())
+
+	uri = URIParse([]byte("ftp://alice:sekre1@storage.com"))
+	assert.NotNil(t, uri)
+	assert.Equal(t, "ftp", uri.Scheme())
+	assert.Equal(t, URIabs, uri.ID())
+	assert.Equal(t, "sekre1", uri.Password())
 }
 
 func BenchmarkURIParsSimple(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		SIPURIParse([]byte("sips:bob:pa55w0rd@example.com:8080;user=phone?X-t=foo"))
+		URIParse([]byte("sips:bob:pa55w0rd@example.com:8080;user=phone?X-t=foo"))
 	}
 }
