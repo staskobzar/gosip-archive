@@ -47,8 +47,8 @@ package sipmsg
 
     hnv_unreserved  = (param_unreserved -- "&") | "?";
     hnameval        =  hnv_unreserved | unreserved | escaped;
-    header          =  hnameval+ "=" hnameval*;
-    headers         =  "?" header ( "&" header )*;
+    header          = hnameval+ "=" hnameval*;
+    headers         = "?" header ( "&" header )*;
 }%%
 
 func SIPURIParse(data []byte) *URI {
@@ -58,11 +58,10 @@ func SIPURIParse(data []byte) *URI {
     pe := len(data)
     eof := len(data)
     m := 0 // marker
-    hp, hl := 0, 0 
 %%{
     action sm   { m = p }
     action schm { uri.scheme    = pl{ 0, p }}
-    action user { uri.user      = pl{ m, p }}
+    action user { uri.user      = pl{ uri.scheme.l + 1, p }}
     action host { uri.host      = pl{ m, p }}
     action pass { uri.password  = pl{ m, p }}
     action port { uri.port      = pl{ m, p }}
@@ -70,10 +69,10 @@ func SIPURIParse(data []byte) *URI {
     action head { uri.headers   = pl{ m, p }}
 
     scheme      = ("sip" | "sips") %schm;
-    userinfo    = user >sm %user (':' password >sm %pass)? "@";
+    userinfo    = user %user ( ":" password >sm %pass)? "@";
     hostport    = host >sm %host ( ":" port >sm %port)?;
 
-    uri := scheme ':' userinfo? hostport
+    uri := scheme ":" userinfo? hostport
            (";" uri_parameter)* >sm %parm
            (headers >sm %head)?;
 }%%
