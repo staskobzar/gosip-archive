@@ -42,7 +42,7 @@ package sipmsg
     maddr_param     = "maddr="i host;
     lr_param        = "lr"i;
     other_param     = paramchar+ ("=" paramchar+)?;
-    uri_parameter   = transport_param | user_param | method_param | ttl_param
+    uri_parameter   = transport_param | user_param | method_param | ttl_param |
                       maddr_param | lr_param | other_param;
 
     hnv_unreserved  = (param_unreserved -- "&") | "?";
