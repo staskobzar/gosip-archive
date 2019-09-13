@@ -1153,11 +1153,11 @@ const uri_en_uri int = 1
 
 func URIParse(data []byte) *URI {
     uri := &URI{buf: data}
-    p := 0 // data pointer
     cs := 0 // current state. entery point = 0
-    pe := len(data)
-    eof := len(data)
-    m := 0 // marker
+    l := ptr(len(data))
+    var p, // data pointer
+        m, // marker
+        pe, eof ptr = 0, 0, l, l
 
 //line uri_parser.rl:46
 

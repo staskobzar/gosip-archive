@@ -4,7 +4,7 @@
 
 .PHONY: clean cov
 
-test: uri_parser.go
+test: uri_parser.go msg_parser.go
 	go test	-race -cover
 
 cov:
@@ -17,7 +17,7 @@ bench:
 lint:
 	golint uri.go
 
-uri_parser.go: uri_parser.rl
+%.go: %.rl
 	ragel -Z -o $@ $<
 
 # clean go tests cache

@@ -5,6 +5,16 @@
     ## Ref. RFC3261 section 25. Augmented BNF
     ##
 
+    CRLF            = "\r\n";
+    SP              = 0x20;
+    HTAB            = 0x09;
+
+    UTF8_CONT       = 0x80..0xBF;
+    UTF8_NONASCII   = ( 0xC0..0xDF UTF8_CONT{1} ) |
+                      ( 0xE0..0xEF UTF8_CONT{2} ) |
+                      ( 0xF0..0xF7 UTF8_CONT{3} ) |
+                      ( 0xF8..0xFB UTF8_CONT{4} ) |
+                      ( 0xFC..0xFD UTF8_CONT{5} );
     # TODO: pound (#) is not allowed but often used.(?)
     mark            = [\-_.!~*'()];
     unreserved      = alnum | mark;
@@ -70,4 +80,9 @@
     scheme_abs      = alpha ( alpha | digit | "+" | "-" | "." )*;
     scheme_sip      = "sip"i;
     scheme_sips     = "sips"i;
+
+    # status line
+    SIP_Version     = "SIP"i "/" digit+ "." digit+;
+    Reason_Phrase   = ( reserved | unreserved | escaped
+                      | UTF8_NONASCII | UTF8_CONT | SP | HTAB )*;
 }%%

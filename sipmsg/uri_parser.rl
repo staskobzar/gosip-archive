@@ -8,11 +8,11 @@ package sipmsg
 
 func URIParse(data []byte) *URI {
     uri := &URI{buf: data}
-    p := 0 // data pointer
     cs := 0 // current state. entery point = 0
-    pe := len(data)
-    eof := len(data)
-    m := 0 // marker
+    l := ptr(len(data))
+    var p, // data pointer
+        m, // marker
+        pe, eof ptr = 0, 0, l, l
 %%{
     action sm   { m = p }
     action sips { uri.scheme    = pl{0,p}; uri.id = URIsips; }

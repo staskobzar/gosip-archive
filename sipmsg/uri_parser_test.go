@@ -6,13 +6,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestURIFoo(t *testing.T) {
-	uri := URIParse([]byte("sip:alice@example.com"))
-	assert.NotNil(t, uri)
-	assert.Equal(t, "sip", uri.Scheme())
-	assert.Equal(t, URIsip, uri.ID())
-}
-
 func TestURIParse(t *testing.T) {
 	uri := URIParse([]byte("sip:alice@example.com"))
 	assert.NotNil(t, uri)
