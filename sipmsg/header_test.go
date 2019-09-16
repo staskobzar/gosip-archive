@@ -141,3 +141,10 @@ func TestHdrParseTo(t *testing.T) {
 	assert.True(t, ok)
 	assert.Equal(t, "5a", p)
 }
+
+func TestHdrParseContact(t *testing.T) {
+	msg := &Message{}
+	h, err := parseHeader(msg, []byte("Contact: sip:2234@10.0.114.12:12543\r\n"))
+	assert.Nil(t, err)
+	assert.Equal(t, SIPHdrContact, h)
+}

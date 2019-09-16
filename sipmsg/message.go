@@ -1,6 +1,7 @@
 package sipmsg
 
 import (
+	"fmt"
 	"strconv"
 )
 
@@ -103,4 +104,9 @@ func (m *Message) setFrom(buf []byte, params []pl, fname, dname, addr, tag pl) H
 func (m *Message) setTo(buf []byte, params []pl, fname, dname, addr, tag pl) HdrType {
 	m.to = newHeaderFromTo(buf, params, fname, dname, addr, tag)
 	return SIPHdrTo
+}
+
+func (m *Message) setContact(buf []byte, pos []pl) HdrType {
+	fmt.Println(pos)
+	return SIPHdrContact
 }

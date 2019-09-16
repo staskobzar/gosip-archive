@@ -5,6 +5,7 @@
 .PHONY: clean cov
 
 test: uri_parser.go msg_parser.go
+	go fmt
 	go test	-race -cover
 
 cov:
@@ -14,7 +15,7 @@ cov:
 bench:
 	go test -bench=. -benchmem
 
-lint: 
+lint:
 	golint $(filter-out $(wildcard *_parser.go),$(wildcard *.go))
 
 %.go: %.rl

@@ -77,6 +77,7 @@
     header          = hnameval+ "=" hnameval*;
     headers         = "?" header ( "&" header )*;
 
+    generic_param   = token ( EQUAL gen_value )?;
     # in RFC3261 it is: [ [ userinfo "@" ] hostport ] 
     # but userinfo already has "@"
     srvr            = (userinfo? hostport )?;
@@ -108,5 +109,12 @@
 
     # machines for From/To headers
     display_name    = (token LWS)* | quoted_string;
+
+    # contact
+    qvalue          = ( "0" ( "." digit{,3} )? ) | ( "1" ( "." "0"{,3} )? );
+    qparam          = "q" EQUAL qvalue;
+    expires_prm     = "expires" EQUAL digit+;
+    
+    contact_params  = qparam | expires_prm | generic_param;
 
 }%%
