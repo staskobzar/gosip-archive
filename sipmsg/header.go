@@ -1,6 +1,6 @@
 package sipmsg
 
-// type header ID
+// HdrType type header ID
 type HdrType int
 
 // SIP Header identifiers
@@ -60,11 +60,4 @@ type header struct {
 	id    HdrType
 	name  pl
 	value pl
-	resp  statusLine
-}
-
-type statusLine struct {
-	ver    pl
-	code   pl
-	reason pl
 }

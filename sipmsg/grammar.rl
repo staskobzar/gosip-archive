@@ -8,6 +8,15 @@
     CRLF            = "\r\n";
     SP              = 0x20;
     HTAB            = 0x09;
+    WSP             = SP | HTAB;            # whitespace
+    LWS             = ( WSP* CRLF )? WSP+;  # linear whitespace
+    SWS             = LWS?;                 # sep whitespace
+    HCOLON          = ( SP | HTAB )* ":" SWS;
+    DQUOTE          = 0x22;                 # " double quote
+    EQUAL           = SWS "=" SWS;          # equal
+    RAQUOT          = ">" SWS;              # right angle quote
+    LAQUOT          = SWS "<";              # left angle quote
+    SEMI            = SWS ";" SWS;          # semicolon
 
     UTF8_CONT       = 0x80..0xBF;
     UTF8_NONASCII   = ( 0xC0..0xDF UTF8_CONT{1} ) |
@@ -15,6 +24,10 @@
                       ( 0xF0..0xF7 UTF8_CONT{3} ) |
                       ( 0xF8..0xFB UTF8_CONT{4} ) |
                       ( 0xFC..0xFD UTF8_CONT{5} );
+
+    quoted_pair     = "\\" (0x00..0x09 | 0x0B..0x0C | 0x0E..0x7F);
+    qdtext          = LWS | 0x21 | 0x23..0x5B | 0x5D..0x7E | UTF8_NONASCII;
+    quoted_string   = SWS DQUOTE ( qdtext | quoted_pair )* DQUOTE;
     # TODO: pound (#) is not allowed but often used.(?)
     mark            = [\-_.!~*'()];
     unreserved      = alnum | mark;
@@ -25,6 +38,7 @@
     paramchar       = param_unreserved | unreserved | escaped;
     pchar           = unreserved | escaped | [:@&=+$,];
     token           = ( alnum | [\-.!%*_+`'~] )+;
+    word            = ( alnum | DQUOTE | [\-.!%*_+`'~()<>:\\/\[\]?{}] )+;
     Method          = "INVITE" | "ACK" | "OPTIONS" | "BYE" | "CANCEL" | "REGISTER"
                       | token;
     user            = ( unreserved | escaped | user_unreserved )+;
@@ -46,6 +60,8 @@
     port            = digit{1,5};
     hostport        = host ( ":" port )?;
 
+    gen_value       = token | host | quoted_string;
+
     transport_param = "transport="i ( "udp"i | "tcp"i | "sctp"i | "tls"i | token );
     user_param      = "user="i ("phone"i | "ip"i | token);
     method_param    = "method="i Method;
@@ -60,7 +76,6 @@
     hnameval        = hnv_unreserved | unreserved | escaped;
     header          = hnameval+ "=" hnameval*;
     headers         = "?" header ( "&" header )*;
-
 
     # in RFC3261 it is: [ [ userinfo "@" ] hostport ] 
     # but userinfo already has "@"
@@ -81,8 +96,17 @@
     scheme_sip      = "sip"i;
     scheme_sips     = "sips"i;
 
-    # status line
+    SIP_URI         = ( scheme_sips | scheme_sip ) userinfo? hostport
+                      ( ";" uri_parameter )* headers?;
+    ABS_URI         = scheme_abs ":" ( hier_part | opaque_part );
+
+    # status/request line
     SIP_Version     = "SIP"i "/" digit+ "." digit+;
     Reason_Phrase   = ( reserved | unreserved | escaped
                       | UTF8_NONASCII | UTF8_CONT | SP | HTAB )*;
+    RequestURI      = SIP_URI | ABS_URI;
+
+    # machines for From/To headers
+    display_name    = (token LWS)* | quoted_string;
+
 }%%
