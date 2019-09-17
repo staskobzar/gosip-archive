@@ -23,49 +23,55 @@ func parseHeader(msg *Message, data []byte) (HdrType, error) {
     var id HdrType
 %%{
 
-    action sm     { m = p }
-    action push   { pos = append(pos, pl{m, p}) }
-    action tag    { tag = pl{m, p} }
-    action dname  { dname.p =m; dname.l = p }
-    action addr   { if addr.p == 0 {addr.p = m; addr.l = p}}
-    action param  { params = append(params, pl{m, p})}
+    action sm        { m = p }
+    action push      { pos = append(pos, pl{m, p}) }
+    action tag       { tag = pl{m, p} }
+    action dname     { dname.p =m; dname.l = p }
+    action addr      { addr.p = m; addr.l = p }
+    action param     { params = append(params, pl{m, p}) }
+    action init_cnt  { msg.initContact(data, pos[0]) }
+    action reset_cnt { params = make([]pl, 0) }
+    action contact   { msg.setContact(dname, addr, params, p) }
 
     include grammar "grammar.rl";
 
-    addr_spec       = (SIP_URI | ABS_URI) >sm %addr;
+    addr_spec       = ((SIP_URI | ABS_URI) -- (COMMA)) >sm %addr;
     tag_param       = "tag"i EQUAL token >sm %tag;
     fromto_gparam   = (token -- "tag"i) >sm ( EQUAL gen_value )? %param;
     name_addr       = (display_name >sm %dname)? LAQUOT addr_spec RAQUOT;
     param_tofrom    = tag_param | fromto_gparam;
-    tofrom_value    = ( name_addr | addr_spec ) ( SEMI param_tofrom )*;
-    contact_value   = ( name_addr | addr_spec ) ( SEMI contact_params )*;
+    tofrom_value    = ( name_addr | (addr_spec -- SEMI) ) ( SEMI param_tofrom )*;
+    contact_value   = (( name_addr | (addr_spec -- SEMI)) ( SEMI contact_params >sm %param )* )
+                      >reset_cnt %contact;
     # @Date,
     # @Expires, @Route, @RecordRoute, and @Via
 
     # @Status-Line@
     StatusLine  = SIP_Version >sm %push SP digit{3} >sm %push SP
-                  Reason_Phrase >sm %push CRLF @{id = msg.setStatusLine(data, pos) };
+                  Reason_Phrase >sm %push CRLF @{ id = msg.setStatusLine(data, pos) };
     # @Request-Line@
     RequestLine = Method >sm %push SP RequestURI >sm %push SP
-                  SIP_Version >sm %push CRLF @{id = msg.setRequestLine(data, pos)};
+                  SIP_Version >sm %push CRLF @{ id = msg.setRequestLine(data, pos) };
     # @CSeq@
     CSeq        = "CSeq"i >sm %push HCOLON digit+ >sm %push
-                  LWS Method >sm %push CRLF @{id = msg.setCSeq(data, pos)};
+                  LWS Method >sm %push CRLF @{ id = msg.setCSeq(data, pos) };
     # @Call-ID@
     CallID      = ( "Call-ID"i | "i"i ) >sm %push HCOLON
-                  ( word ( "@" word )? ) >sm %push CRLF @{id = msg.setCallID(data, pos)};
+                  ( word ( "@" word )? ) >sm %push CRLF @{ id = msg.setCallID(data, pos) };
     # @Content-Length@
     ContentLen  = ( "Content-Length"i | "l"i ) >sm %push HCOLON
-                  digit+ >sm %push CRLF @{id = msg.setContentLen(data, pos)};
+                  digit+ >sm %push CRLF @{ id = msg.setContentLen(data, pos) };
     # @From@
     From        = ( "From"i | "f"i ) >sm %push HCOLON tofrom_value CRLF
-                  @{id = msg.setFrom(data, params, pos[0], dname, addr, tag)};
+                  @{ id = msg.setFrom(data, params, pos[0], dname, addr, tag) };
     # @To@
     To          = ( "To"i | "t"i ) >sm %push HCOLON tofrom_value CRLF
-                  @{id = msg.setTo(data, params, pos[0], dname, addr, tag)};
+                  @{ id = msg.setTo(data, params, pos[0], dname, addr, tag) };
     # @Contact@
-    Contact     = ( "Contact"i | "m"i ) >sm %push HCOLON contact_value CRLF
-                  @{id = msg.setContact(data, pos)};
+    Contact     = ( "Contact"i | "m"i ) >sm %push HCOLON >init_cnt 
+                  ( STAR %{msg.setContactStar()} | 
+                  ( contact_value ( COMMA contact_value )* )) CRLF
+                  @{ id = SIPHdrContact };
 
     siphdr :=   StatusLine
               | RequestLine

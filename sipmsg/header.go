@@ -1,5 +1,7 @@
 package sipmsg
 
+import "bytes"
+
 // HdrType type header ID
 type HdrType int
 
@@ -60,4 +62,17 @@ type header struct {
 	id    HdrType
 	name  pl
 	value pl
+}
+
+func searchParam(name string, buf []byte, params []pl) (string, bool) {
+	for _, p := range params {
+		prm := bytes.SplitN(buf[p.p:p.l], []byte("="), 2)
+		if bytes.EqualFold([]byte(name), prm[0]) {
+			if len(prm) < 2 {
+				return "", true
+			}
+			return string(prm[1]), true
+		}
+	}
+	return "", false
 }

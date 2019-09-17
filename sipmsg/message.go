@@ -1,7 +1,6 @@
 package sipmsg
 
 import (
-	"fmt"
 	"strconv"
 )
 
@@ -21,6 +20,7 @@ type Message struct {
 	statusLine *StatusLine
 	from       *HeaderFromTo
 	to         *HeaderFromTo
+	contacts   *ContactsList
 	cseq       uint
 	callID     []byte
 	cntLen     uint // Content-Length
@@ -47,6 +47,9 @@ func (m *Message) From() *HeaderFromTo { return m.from }
 
 // To returns SIP message from header
 func (m *Message) To() *HeaderFromTo { return m.to }
+
+// Contacts returns SIP message contacts list
+func (m *Message) Contacts() *ContactsList { return m.contacts }
 
 // private methods
 func (m *Message) setStatusLine(buf []byte, pos []pl) HdrType {
@@ -106,7 +109,28 @@ func (m *Message) setTo(buf []byte, params []pl, fname, dname, addr, tag pl) Hdr
 	return SIPHdrTo
 }
 
-func (m *Message) setContact(buf []byte, pos []pl) HdrType {
-	fmt.Println(pos)
-	return SIPHdrContact
+func (m *Message) initContact(buf []byte, name pl) {
+	m.contacts = &ContactsList{
+		buf:  buf,
+		name: name,
+	}
+}
+
+func (m *Message) setContact(dname, addr pl, params []pl, eol ptr) {
+	s := dname.p // shift len
+	for i := range params {
+		params[i].p -= s
+		params[i].l -= s
+	}
+	cnt := Contact{
+		buf:    m.contacts.buf[dname.p:eol],
+		dname:  pl{dname.p - s, dname.l - s},
+		addr:   pl{addr.p - s, addr.l - s},
+		params: params,
+	}
+	m.contacts.push(cnt)
+}
+
+func (m *Message) setContactStar() {
+	m.contacts.star = true
 }

@@ -32,16 +32,7 @@ func (h *HeaderFromTo) Tag() string {
 
 // Param header parameters
 func (h *HeaderFromTo) Param(name string) (string, bool) {
-	for _, p := range h.params {
-		prm := bytes.SplitN(h.buf[p.p:p.l], []byte("="), 2)
-		if bytes.EqualFold([]byte(name), prm[0]) {
-			if len(prm) < 2 {
-				return "", true
-			}
-			return string(prm[1]), true
-		}
-	}
-	return "", false
+	return searchParam(name, h.buf, h.params)
 }
 
 func newHeaderFromTo(buf []byte, params []pl, fname, dname, addr, tag pl) *HeaderFromTo {

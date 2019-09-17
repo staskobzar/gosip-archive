@@ -13,10 +13,12 @@
     SWS             = LWS?;                 # sep whitespace
     HCOLON          = ( SP | HTAB )* ":" SWS;
     DQUOTE          = 0x22;                 # " double quote
+    STAR            = SWS "*" SWS;          # asterisk
     EQUAL           = SWS "=" SWS;          # equal
     RAQUOT          = ">" SWS;              # right angle quote
     LAQUOT          = SWS "<";              # left angle quote
     SEMI            = SWS ";" SWS;          # semicolon
+    COMMA           = SWS "," SWS;          # comma
 
     UTF8_CONT       = 0x80..0xBF;
     UTF8_NONASCII   = ( 0xC0..0xDF UTF8_CONT{1} ) |
@@ -115,6 +117,6 @@
     qparam          = "q" EQUAL qvalue;
     expires_prm     = "expires" EQUAL digit+;
     
-    contact_params  = qparam | expires_prm | generic_param;
+    contact_params  = qparam | expires_prm | generic_param ;
 
 }%%
