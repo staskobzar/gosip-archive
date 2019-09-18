@@ -19,6 +19,8 @@
     LAQUOT          = SWS "<";              # left angle quote
     SEMI            = SWS ";" SWS;          # semicolon
     COMMA           = SWS "," SWS;          # comma
+    SLASH           = SWS "/" SWS;          # slash
+    COLON           = SWS ":" SWS;          # colon
 
     UTF8_CONT       = 0x80..0xBF;
     UTF8_NONASCII   = ( 0xC0..0xDF UTF8_CONT{1} ) |
@@ -64,7 +66,8 @@
 
     gen_value       = token | host | quoted_string;
 
-    transport_param = "transport="i ( "udp"i | "tcp"i | "sctp"i | "tls"i | token );
+    transport       =  "udp"i | "tcp"i | "sctp"i | "tls"i | token;
+    transport_param = "transport="i transport;
     user_param      = "user="i ("phone"i | "ip"i | token);
     method_param    = "method="i Method;
     ttl_param       = "ttl="i digit{1,3};
@@ -118,5 +121,9 @@
     expires_prm     = "expires" EQUAL digit+;
     
     contact_params  = qparam | expires_prm | generic_param ;
+    
+    # via header
+    branch_cookie   = "z9hG4bK";
+    via_generic     = token ( EQUAL gen_value )?;
 
 }%%

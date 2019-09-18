@@ -1,6 +1,7 @@
 package sipmsg
 
 import (
+	"fmt"
 	"strconv"
 )
 
@@ -21,6 +22,7 @@ type Message struct {
 	from       *HeaderFromTo
 	to         *HeaderFromTo
 	contacts   *ContactsList
+	via        *ViaList
 	cseq       uint
 	callID     []byte
 	cntLen     uint // Content-Length
@@ -133,4 +135,12 @@ func (m *Message) setContact(dname, addr pl, params []pl, eol ptr) {
 
 func (m *Message) setContactStar() {
 	m.contacts.star = true
+}
+
+func (m *Message) initVia(buf []byte, name pl) {
+	m.via = &ViaList{buf: buf, name: name}
+}
+
+func (m *Message) setVia(trans, addr, port, branch, ttl, maddr, recevd pl, eol ptr) {
+	fmt.Println(trans, addr, port, branch, ttl, maddr, recevd, eol)
 }

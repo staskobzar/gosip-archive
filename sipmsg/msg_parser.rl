@@ -16,7 +16,13 @@ func parseHeader(msg *Message, data []byte) (HdrType, error) {
         m, // marker
         pe ptr = 0, 0, l
     var dname,         // display name
+        trans,
         addr,
+        port,
+        ttl,
+        maddr,
+        recvd,
+        branch,
         tag pl;        // to/from tag
     var params []pl;
 
@@ -28,10 +34,20 @@ func parseHeader(msg *Message, data []byte) (HdrType, error) {
     action tag       { tag = pl{m, p} }
     action dname     { dname.p =m; dname.l = p }
     action addr      { addr.p = m; addr.l = p }
+    action port      { port.p = m; port.l = p }
+    action trans     { trans.p = m; trans.l = p }
     action param     { params = append(params, pl{m, p}) }
     action init_cnt  { msg.initContact(data, pos[0]) }
     action reset_cnt { params = make([]pl, 0) }
+    action reset_via {
+        branch.p = 0; branch.l = 0
+        ttl.p = 0;    ttl.l = 0
+        maddr.p = 0;  maddr.l = 0
+        recvd.p = 0;  recvd.l = 0
+    }
     action contact   { msg.setContact(dname, addr, params, p) }
+    action init_via  { msg.initVia(data, pos[0]) }
+    action via       { msg.setVia(trans, addr, port, branch, ttl, maddr, recvd, p) }
 
     include grammar "grammar.rl";
 
@@ -43,8 +59,19 @@ func parseHeader(msg *Message, data []byte) (HdrType, error) {
     tofrom_value    = ( name_addr | (addr_spec -- SEMI) ) ( SEMI param_tofrom )*;
     contact_value   = (( name_addr | (addr_spec -- SEMI)) ( SEMI contact_params >sm %param )* )
                       >reset_cnt %contact;
+
+    via_ttl         = "ttl"i EQUAL digit{1,3} >sm %{ ttl.p = m; ttl.l = p };
+    via_maddr       = "maddr"i EQUAL host >sm %{ maddr.p = m; maddr.l = p };
+    via_received    = "received"i EQUAL (IPv4address | IPv6address) >sm %{ recvd.p = m; recvd.l = p};
+    via_branch      = "branch"i EQUAL (branch_cookie token) >sm %{ branch.p = m; branch.l = p };
+    via_params      = via_ttl | via_maddr | via_received | via_branch | via_generic;
+    via_sent_proto  = "SIP" SLASH digit "." digit SLASH transport >sm %trans;
+    sent_by         = host >sm %addr (COLON port >sm %port)?;
+    via_parm        = ( via_sent_proto LWS sent_by (SEMI via_params)* )
+                      >reset_via %via;
+
     # @Date,
-    # @Expires, @Route, @RecordRoute, and @Via
+    # @Expires, @Route, @RecordRoute
 
     # @Status-Line@
     StatusLine  = SIP_Version >sm %push SP digit{3} >sm %push SP
@@ -71,7 +98,10 @@ func parseHeader(msg *Message, data []byte) (HdrType, error) {
     Contact     = ( "Contact"i | "m"i ) >sm %push HCOLON >init_cnt 
                   ( STAR %{msg.setContactStar()} | 
                   ( contact_value ( COMMA contact_value )* )) CRLF
-                  @{ id = SIPHdrContact };
+                  @{ id = SIPHdrContact; };
+    # @Via@
+    Via         = ( "Via"i | "v"i ) >sm %push HCOLON >init_via via_parm
+                  ( COMMA via_parm )* CRLF @{ id = SIPHdrVia }; 
 
     siphdr :=   StatusLine
               | RequestLine
@@ -80,6 +110,7 @@ func parseHeader(msg *Message, data []byte) (HdrType, error) {
               | Contact
               | ContentLen
               | To
+              | Via
               | From;
 }%%
     %% write init;

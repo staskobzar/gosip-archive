@@ -224,3 +224,12 @@ func TestHdrParseMultiContacts(t *testing.T) {
 	fmt.Printf("%s\n", cnt.cnt[3].buf)
 	*/
 }
+
+func TestHdrParseVia(t *testing.T) {
+	msg := &Message{}
+	h, err := parseHeader(msg, []byte("Via: SIP/ 2.0 / UDP erlang.bell-telephone.com:5060\r\n ;branch=z9hG4bK87asdks7\r\n"))
+	assert.Nil(t, err)
+	assert.Equal(t, SIPHdrVia, h)
+}
+
+// Via: SIP/2.0/UDP erlang.bell-telephone.com;branch=z9hG4bK87asdks7\r\n
