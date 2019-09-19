@@ -49,7 +49,7 @@ func parseHeader(msg *Message, data []byte) (HdrType, error) {
     }
     action contact   { msg.setContact(dname, addr, params, p) }
     action init_via  { msg.initVia(data, pos[0]) }
-    action via       { msg.setVia(hidx, trans, addr, port, branch, ttl, maddr, recvd, p) }
+    action via       { msg.setVia(hidx - 1, trans, addr, port, branch, ttl, maddr, recvd, p) }
 
     include grammar "grammar.rl";
 

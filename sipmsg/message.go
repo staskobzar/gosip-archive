@@ -138,11 +138,24 @@ func (m *Message) setContactStar() {
 }
 
 func (m *Message) initVia(buf []byte, name pl) {
-	fmt.Println("Init Via")
-	m.via = &ViaList{buf: buf, name: name}
+	if m.via == nil {
+		m.via = &ViaList{buf: buf, name: name}
+	}
 }
 
 func (m *Message) setVia(i int, trans, addr, port, branch, ttl, maddr, recevd pl, eol ptr) {
+	if len(m.via.vias) == 0 || len(m.via.vias) == i {
+		m.via.vias = append(m.via.vias, Via{})
+	}
+	m.via.vias[i].trans = trans
+	m.via.vias[i].host = addr
+	m.via.vias[i].port = port
+	m.via.vias[i].branch = branch
+	m.via.vias[i].ttl = ttl
+	m.via.vias[i].maddr = maddr
+	m.via.vias[i].recevd = recevd
+
 	fmt.Println(i)
+
 	fmt.Println(trans, addr, port, branch, ttl, maddr, recevd, eol)
 }

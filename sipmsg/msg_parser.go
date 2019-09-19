@@ -9539,7 +9539,7 @@ func parseHeader(msg *Message, data []byte) (HdrType, error) {
 				msg.initVia(data, pos[0])
 			case 13:
 //line msg_parser.rl:52
-				msg.setVia(hidx, trans, addr, port, branch, ttl, maddr, recvd, p)
+				msg.setVia(hidx-1, trans, addr, port, branch, ttl, maddr, recvd, p)
 			case 14:
 //line msg_parser.rl:65
 				ttl.p = m

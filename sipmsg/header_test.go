@@ -1,6 +1,7 @@
 package sipmsg
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -230,6 +231,7 @@ func TestHdrParseVia(t *testing.T) {
 	h, err := parseHeader(msg, []byte("Via: SIP/ 2.0 / UDP erlang.bell-telephone.com : 5060\r\n ;branch=z9hG4bK87asdks7, SIP/2.0/TCP foo.com :8080;branch=z9hG4bK87as111\r\n"))
 	assert.Nil(t, err)
 	assert.Equal(t, SIPHdrVia, h)
+	fmt.Println(msg.via.vias)
 }
 
 // Via: SIP/2.0/UDP erlang.bell-telephone.com:5060\r\n ;branch=z9hG4bK87asdks7\r\n
