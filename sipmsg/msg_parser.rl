@@ -26,6 +26,8 @@ func parseHeader(msg *Message, data []byte) (HdrType, error) {
         tag pl;        // to/from tag
     var params []pl;
 
+    hidx := 0 // header value index
+
     var id HdrType
 %%{
 
@@ -47,7 +49,7 @@ func parseHeader(msg *Message, data []byte) (HdrType, error) {
     }
     action contact   { msg.setContact(dname, addr, params, p) }
     action init_via  { msg.initVia(data, pos[0]) }
-    action via       { msg.setVia(trans, addr, port, branch, ttl, maddr, recvd, p) }
+    action via       { msg.setVia(hidx, trans, addr, port, branch, ttl, maddr, recvd, p) }
 
     include grammar "grammar.rl";
 
@@ -65,7 +67,7 @@ func parseHeader(msg *Message, data []byte) (HdrType, error) {
     via_received    = "received"i EQUAL (IPv4address | IPv6address) >sm %{ recvd.p = m; recvd.l = p};
     via_branch      = "branch"i EQUAL (branch_cookie token) >sm %{ branch.p = m; branch.l = p };
     via_params      = via_ttl | via_maddr | via_received | via_branch | via_generic;
-    via_sent_proto  = "SIP" SLASH digit "." digit SLASH transport >sm %trans;
+    via_sent_proto  = "SIP" SLASH digit "." digit SLASH >{ hidx++ } transport >sm %trans;
     sent_by         = host >sm %addr (COLON port >sm %port)?;
     via_parm        = ( via_sent_proto LWS sent_by (SEMI via_params)* )
                       >reset_via %via;

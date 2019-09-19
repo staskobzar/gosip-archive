@@ -138,9 +138,11 @@ func (m *Message) setContactStar() {
 }
 
 func (m *Message) initVia(buf []byte, name pl) {
+	fmt.Println("Init Via")
 	m.via = &ViaList{buf: buf, name: name}
 }
 
-func (m *Message) setVia(trans, addr, port, branch, ttl, maddr, recevd pl, eol ptr) {
+func (m *Message) setVia(i int, trans, addr, port, branch, ttl, maddr, recevd pl, eol ptr) {
+	fmt.Println(i)
 	fmt.Println(trans, addr, port, branch, ttl, maddr, recevd, eol)
 }
