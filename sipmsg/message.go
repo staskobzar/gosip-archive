@@ -1,7 +1,6 @@
 package sipmsg
 
 import (
-	"fmt"
 	"strconv"
 )
 
@@ -22,7 +21,7 @@ type Message struct {
 	from       *HeaderFromTo
 	to         *HeaderFromTo
 	contacts   *ContactsList
-	via        *ViaList
+	via        ViaList
 	cseq       uint
 	callID     []byte
 	cntLen     uint // Content-Length
@@ -52,6 +51,9 @@ func (m *Message) To() *HeaderFromTo { return m.to }
 
 // Contacts returns SIP message contacts list
 func (m *Message) Contacts() *ContactsList { return m.contacts }
+
+// Via returns SIP message Via headers list
+func (m *Message) Via() ViaList { return m.via }
 
 // private methods
 func (m *Message) setStatusLine(buf []byte, pos []pl) HdrType {
@@ -137,25 +139,15 @@ func (m *Message) setContactStar() {
 	m.contacts.star = true
 }
 
-func (m *Message) initVia(buf []byte, name pl) {
-	if m.via == nil {
-		m.via = &ViaList{buf: buf, name: name}
+func (m *Message) setVia(data []byte, name, trans, addr, port, branch, ttl, maddr, recevd pl, i int, eol ptr) {
+	if m.via.Count() == 0 || m.via.Count() == i {
+		m.via = append(m.via, &Via{buf: data, name: name})
 	}
-}
-
-func (m *Message) setVia(i int, trans, addr, port, branch, ttl, maddr, recevd pl, eol ptr) {
-	if len(m.via.vias) == 0 || len(m.via.vias) == i {
-		m.via.vias = append(m.via.vias, Via{})
-	}
-	m.via.vias[i].trans = trans
-	m.via.vias[i].host = addr
-	m.via.vias[i].port = port
-	m.via.vias[i].branch = branch
-	m.via.vias[i].ttl = ttl
-	m.via.vias[i].maddr = maddr
-	m.via.vias[i].recevd = recevd
-
-	fmt.Println(i)
-
-	fmt.Println(trans, addr, port, branch, ttl, maddr, recevd, eol)
+	m.via[i].trans = trans
+	m.via[i].host = addr
+	m.via[i].port = port
+	m.via[i].branch = branch
+	m.via[i].ttl = ttl
+	m.via[i].maddr = maddr
+	m.via[i].recevd = recevd
 }

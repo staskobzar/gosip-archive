@@ -41,15 +41,15 @@ func parseHeader(msg *Message, data []byte) (HdrType, error) {
     action param     { params = append(params, pl{m, p}) }
     action init_cnt  { msg.initContact(data, pos[0]) }
     action reset_cnt { params = make([]pl, 0) }
+    action init_via  { hidx = msg.Via().Count() }
     action reset_via {
         branch.p = 0; branch.l = 0
-        ttl.p = 0;    ttl.l = 0
-        maddr.p = 0;  maddr.l = 0
-        recvd.p = 0;  recvd.l = 0
+        ttl.p    = 0; ttl.l    = 0
+        maddr.p  = 0; maddr.l  = 0
+        recvd.p  = 0; recvd.l  = 0
     }
     action contact   { msg.setContact(dname, addr, params, p) }
-    action init_via  { msg.initVia(data, pos[0]) }
-    action via       { msg.setVia(hidx - 1, trans, addr, port, branch, ttl, maddr, recvd, p) }
+    action via       { msg.setVia(data[:], pos[0], trans, addr, port, branch, ttl, maddr, recvd, hidx, p) }
 
     include grammar "grammar.rl";
 
@@ -67,7 +67,7 @@ func parseHeader(msg *Message, data []byte) (HdrType, error) {
     via_received    = "received"i EQUAL (IPv4address | IPv6address) >sm %{ recvd.p = m; recvd.l = p};
     via_branch      = "branch"i EQUAL (branch_cookie token) >sm %{ branch.p = m; branch.l = p };
     via_params      = via_ttl | via_maddr | via_received | via_branch | via_generic;
-    via_sent_proto  = "SIP" SLASH digit "." digit SLASH >{ hidx++ } transport >sm %trans;
+    via_sent_proto  = "SIP" SLASH digit "." digit SLASH >init_via transport >sm %trans;
     sent_by         = host >sm %addr (COLON port >sm %port)?;
     via_parm        = ( via_sent_proto LWS sent_by (SEMI via_params)* )
                       >reset_via %via;
@@ -102,7 +102,7 @@ func parseHeader(msg *Message, data []byte) (HdrType, error) {
                   ( contact_value ( COMMA contact_value )* )) CRLF
                   @{ id = SIPHdrContact; };
     # @Via@
-    Via         = ( "Via"i | "v"i ) >sm %push HCOLON >init_via via_parm
+    Via         = ( "Via"i | "v"i ) >sm %push HCOLON via_parm
                   ( COMMA via_parm )* CRLF @{ id = SIPHdrVia }; 
 
     siphdr :=   StatusLine

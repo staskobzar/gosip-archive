@@ -1,7 +1,6 @@
 package sipmsg
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -228,10 +227,78 @@ func TestHdrParseMultiContacts(t *testing.T) {
 
 func TestHdrParseVia(t *testing.T) {
 	msg := &Message{}
-	h, err := parseHeader(msg, []byte("Via: SIP/ 2.0 / UDP erlang.bell-telephone.com : 5060\r\n ;branch=z9hG4bK87asdks7, SIP/2.0/TCP foo.com :8080;branch=z9hG4bK87as111\r\n"))
+	str := "Via: SIP/2.0/TLS ss1.example.com:5061;branch=z9hG4bK83749.1" +
+		";received=192.0.2.54;ttl=60;maddr=224.2.0.1;lr\r\n"
+	h, err := parseHeader(msg, []byte(str))
 	assert.Nil(t, err)
 	assert.Equal(t, SIPHdrVia, h)
-	fmt.Println(msg.via.vias)
+	via := msg.Via()
+	assert.Equal(t, 1, via.Count())
+	assert.Equal(t, "TLS", via[0].Transport())
+	assert.Equal(t, "ss1.example.com", via[0].Host())
+	assert.Equal(t, "5061", via[0].Port())
+	assert.Equal(t, "z9hG4bK83749.1", via[0].Branch())
+	assert.Equal(t, "192.0.2.54", via[0].Received())
+	assert.Equal(t, "60", via[0].TTL())
+	assert.Equal(t, "224.2.0.1", via[0].MAddr())
+
+	str = "V : SIP / 2.0 / UDP first.example.com: 4000;ttl=16\r\n" +
+		" ;maddr=224.2.0.1 ;branch=z9hG4bKa7c6a8dlze.1\r\n"
+	msg = &Message{}
+	h, err = parseHeader(msg, []byte(str))
+	assert.Nil(t, err)
+	assert.Equal(t, SIPHdrVia, h)
+	via = msg.Via()
+	assert.Equal(t, "UDP", via[0].Transport())
+	assert.Equal(t, "first.example.com", via[0].Host())
+	assert.Equal(t, "4000", via[0].Port())
+	assert.Equal(t, "z9hG4bKa7c6a8dlze.1", via[0].Branch())
+	assert.Equal(t, "16", via[0].TTL())
+	assert.Equal(t, "224.2.0.1", via[0].MAddr())
 }
 
-// Via: SIP/2.0/UDP erlang.bell-telephone.com:5060\r\n ;branch=z9hG4bK87asdks7\r\n
+func TestHdrParseViaComma(t *testing.T) {
+	msg := &Message{}
+	str := "Via: SIP/ 2.0 / UDP erlang.bell-telephone.com : 5060\r\n" +
+		" ;branch=z9hG4bK87asdks7, SIP/2.0/TCP foo.com " +
+		":8080;branch=z9hG4bK87as111;maddr=10.0.0.1\r\n"
+	h, err := parseHeader(msg, []byte(str))
+	assert.Nil(t, err)
+	assert.Equal(t, SIPHdrVia, h)
+
+	via := msg.Via()
+	assert.Equal(t, 2, via.Count())
+
+	assert.Equal(t, "UDP", via[0].Transport())
+	assert.Equal(t, "erlang.bell-telephone.com", via[0].Host())
+	assert.Equal(t, "5060", via[0].Port())
+	assert.Equal(t, "z9hG4bK87asdks7", via[0].Branch())
+	assert.Equal(t, "", via[0].MAddr())
+	assert.Equal(t, "", via[0].Received())
+
+	assert.Equal(t, "TCP", via[1].Transport())
+	assert.Equal(t, "foo.com", via[1].Host())
+	assert.Equal(t, "8080", via[1].Port())
+	assert.Equal(t, "z9hG4bK87as111", via[1].Branch())
+	assert.Equal(t, "10.0.0.1", via[1].MAddr())
+	assert.Equal(t, "", via[1].Received())
+}
+
+func TestHdrParseViaMultiHeaders(t *testing.T) {
+	msg := &Message{}
+	str := "Via: SIP/2.0/UDP bell.com : 5060;branch=z9hG4bK87asdks7.2\r\n"
+	h, err := parseHeader(msg, []byte(str))
+	assert.Nil(t, err)
+	assert.Equal(t, SIPHdrVia, h)
+	str = "v: SIP/2.0/TCP ssl.bell.com;branch=z9hG4bKa7c6a8dlze.1\r\n"
+	h, err = parseHeader(msg, []byte(str))
+	assert.Nil(t, err)
+	assert.Equal(t, SIPHdrVia, h)
+
+	via := msg.Via()
+	assert.Equal(t, 2, via.Count())
+	assert.Equal(t, "bell.com", via[0].Host())
+	assert.Equal(t, "z9hG4bK87asdks7.2", via[0].Branch())
+	assert.Equal(t, "ssl.bell.com", via[1].Host())
+	assert.Equal(t, "z9hG4bKa7c6a8dlze.1", via[1].Branch())
+}
