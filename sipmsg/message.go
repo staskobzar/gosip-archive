@@ -22,6 +22,8 @@ type Message struct {
 	to         *HeaderFromTo
 	contacts   *ContactsList
 	via        ViaList
+	route      RouteList
+	rroute     RouteList
 	cseq       uint
 	callID     []byte
 	cntLen     uint // Content-Length
@@ -54,6 +56,12 @@ func (m *Message) Contacts() *ContactsList { return m.contacts }
 
 // Via returns SIP message Via headers list
 func (m *Message) Via() ViaList { return m.via }
+
+// Routes returns SIP message Route headers list
+func (m *Message) Routes() RouteList { return m.route }
+
+// RecordRoutes returns SIP message Route headers list
+func (m *Message) RecordRoutes() RouteList { return m.rroute }
 
 // private methods
 func (m *Message) setStatusLine(buf []byte, pos []pl) HdrType {
@@ -150,4 +158,19 @@ func (m *Message) setVia(data []byte, name, trans, addr, port, branch, ttl, madd
 	m.via[i].ttl = ttl
 	m.via[i].maddr = maddr
 	m.via[i].recevd = recevd
+}
+
+func (m *Message) setRoute(hid HdrType, buf []byte, fname, dname, addr pl, params []pl) {
+	r := &Route{
+		buf:    buf,
+		fname:  fname,
+		dname:  dname,
+		addr:   addr,
+		params: params,
+	}
+	if hid == SIPHdrRecordRoute {
+		m.rroute = append(m.rroute, r)
+		return
+	}
+	m.route = append(m.route, r)
 }

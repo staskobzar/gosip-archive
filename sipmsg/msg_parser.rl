@@ -49,7 +49,11 @@ func parseHeader(msg *Message, data []byte) (HdrType, error) {
         recvd.p  = 0; recvd.l  = 0
     }
     action contact   { msg.setContact(dname, addr, params, p) }
-    action via       { msg.setVia(data[:], pos[0], trans, addr, port, branch, ttl, maddr, recvd, hidx, p) }
+    action via       {
+        msg.setVia(data[:], pos[0], trans, addr, port, branch, ttl, maddr, recvd, hidx, p)
+    }
+    action reset_route { params = make([]pl, 0) }
+    action route { msg.setRoute(id, data[:], pos[0], dname, addr, params)}
 
     include grammar "grammar.rl";
 
@@ -71,9 +75,10 @@ func parseHeader(msg *Message, data []byte) (HdrType, error) {
     sent_by         = host >sm %addr (COLON port >sm %port)?;
     via_parm        = ( via_sent_proto LWS sent_by (SEMI via_params)* )
                       >reset_via %via;
+    route_param     = ( name_addr ( SEMI generic_param >sm %param )* ) >reset_route %route;
 
     # @Date,
-    # @Expires, @Route, @RecordRoute
+    # @Expires, @RecordRoute
 
     # @Status-Line@
     StatusLine  = SIP_Version >sm %push SP digit{3} >sm %push SP
@@ -104,6 +109,12 @@ func parseHeader(msg *Message, data []byte) (HdrType, error) {
     # @Via@
     Via         = ( "Via"i | "v"i ) >sm %push HCOLON via_parm
                   ( COMMA via_parm )* CRLF @{ id = SIPHdrVia }; 
+    # @Route@
+    Route       = "Route"i >sm %push HCOLON %{id = SIPHdrRoute}
+                  route_param (COMMA route_param)* CRLF;
+    # @Record-Route@
+    RecordRoute = "Record-Route"i >sm %push HCOLON %{id = SIPHdrRecordRoute}
+                  route_param (COMMA route_param)* CRLF;
 
     siphdr :=   StatusLine
               | RequestLine
@@ -111,9 +122,11 @@ func parseHeader(msg *Message, data []byte) (HdrType, error) {
               | CallID
               | Contact
               | ContentLen
+              | From
               | To
-              | Via
-              | From;
+              | Route
+              | RecordRoute
+              | Via;
 }%%
     %% write init;
     %% write exec;

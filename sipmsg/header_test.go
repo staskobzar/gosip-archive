@@ -302,3 +302,102 @@ func TestHdrParseViaMultiHeaders(t *testing.T) {
 	assert.Equal(t, "ssl.bell.com", via[1].Host())
 	assert.Equal(t, "z9hG4bKa7c6a8dlze.1", via[1].Branch())
 }
+
+func TestHdrParseRoute(t *testing.T) {
+	msg := &Message{}
+	h, err := parseHeader(msg, []byte("Route: <sips:ss1.example.com>\r\n"))
+	assert.Equal(t, SIPHdrRoute, h)
+	assert.Nil(t, err)
+
+	r := msg.Routes()
+	assert.Equal(t, 1, r.Count())
+	rh := r[0]
+	assert.Equal(t, "sips:ss1.example.com", rh.Addr())
+
+	msg = &Message{}
+	h, err = parseHeader(msg, []byte("Route: Deli <sip:p1.voip.com;lr>;nat=yes;wr\r\n"))
+	assert.Equal(t, SIPHdrRoute, h)
+	assert.Nil(t, err)
+
+	r = msg.Routes()
+	assert.Equal(t, 1, r.Count())
+	rh = r[0]
+	assert.Equal(t, "sip:p1.voip.com;lr", rh.Addr())
+	p, ok := rh.Param("nat")
+	assert.True(t, ok)
+	assert.Equal(t, "yes", p)
+	p, ok = rh.Param("wr")
+	assert.True(t, ok)
+	assert.Equal(t, "", p)
+
+	uri := rh.AddrURI()
+	assert.NotNil(t, uri)
+	p, ok = uri.Param("lr")
+	assert.True(t, ok)
+	assert.Equal(t, "", p)
+}
+
+func TestHdrParseRouteComma(t *testing.T) {
+	msg := &Message{}
+	str := "Route: <sips:bigbox3.site3.atlanta.com;lr>;ssl=true," +
+		" <sip:server10.biloxi.com;lr>\r\n"
+	h, err := parseHeader(msg, []byte(str))
+	assert.Equal(t, SIPHdrRoute, h)
+	assert.Nil(t, err)
+
+	r := msg.Routes()
+	assert.Equal(t, 2, r.Count())
+	rh := r[0]
+	assert.Equal(t, "sips:bigbox3.site3.atlanta.com;lr", rh.Addr())
+	p, ok := rh.Param("ssl")
+	assert.True(t, ok)
+	assert.Equal(t, "true", p)
+	rh = r[1]
+	assert.Equal(t, "sip:server10.biloxi.com;lr", rh.Addr())
+
+	msg = &Message{}
+	str = "Route: <sip:site3.atlanta.com;lr>,\r\n" +
+		" <sip:biloxi.com;lr>,\r\n <sips:ssl.voip.fr>\r\n"
+	h, err = parseHeader(msg, []byte(str))
+	assert.Equal(t, SIPHdrRoute, h)
+	assert.Nil(t, err)
+
+	r = msg.Routes()
+	assert.Equal(t, 3, r.Count())
+	assert.Equal(t, "sip:site3.atlanta.com;lr", r[0].Addr())
+	assert.Equal(t, "sip:biloxi.com;lr", r[1].Addr())
+	assert.Equal(t, "sips:ssl.voip.fr", r[2].Addr())
+}
+
+func TestHdrParseRouteMulti(t *testing.T) {
+	msg := &Message{}
+	str := "Route: <sips:s3.atlanta.com;lr>," +
+		" <sip:server10.biloxi.com;lr>\r\n"
+	h, err := parseHeader(msg, []byte(str))
+	assert.Equal(t, SIPHdrRoute, h)
+	assert.Nil(t, err)
+
+	str = "Route: <sip:199.100.21.33:8809;lr>\r\n"
+	h, err = parseHeader(msg, []byte(str))
+	assert.Equal(t, SIPHdrRoute, h)
+	assert.Nil(t, err)
+
+	str = "Route: <sip:10.225.1.2>,\r\n <sip:10.225.1.1;lr>\r\n"
+	h, err = parseHeader(msg, []byte(str))
+	assert.Equal(t, SIPHdrRoute, h)
+	assert.Nil(t, err)
+
+	r := msg.Routes()
+	assert.Equal(t, 5, r.Count())
+}
+
+func TestHdrParseRecordRoute(t *testing.T) {
+	msg := &Message{}
+	str := "Record-Route: <sip:server10.biloxi.com;lr>,\r\n" +
+		"   <sip:bigbox3.site3.atlanta.com;lr>\r\n"
+	h, err := parseHeader(msg, []byte(str))
+	assert.Nil(t, err)
+	assert.Equal(t, SIPHdrRecordRoute, h)
+	r := msg.RecordRoutes()
+	assert.Equal(t, 2, r.Count())
+}
