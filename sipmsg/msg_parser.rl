@@ -3,7 +3,10 @@
 // SIP headers and first line parser
 package sipmsg
 
-import "errors"
+import (
+    "bytes"
+    "errors"
+)
 
 %% machine msg;
 %% write data;
@@ -29,6 +32,10 @@ func parseHeader(msg *Message, data []byte) (HdrType, error) {
     hidx := 0 // header value index
 
     var id HdrType
+
+    if bytes.Equal(data, []byte("\r\n")) {
+        return MsgEOF, nil
+    }
 %%{
 
     action sm        { m = p }

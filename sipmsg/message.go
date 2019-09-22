@@ -1,6 +1,8 @@
 package sipmsg
 
 import (
+	"bufio"
+	"bytes"
 	"strconv"
 )
 
@@ -28,6 +30,46 @@ type Message struct {
 	cseq       uint
 	callID     []byte
 	cntLen     uint // Content-Length
+}
+
+// MsgParse parser SIP message to Message structure
+func MsgParse(data []byte) *Message {
+	msg := &Message{}
+
+	idx := bytes.Index(data, []byte("\r\n"))
+	if idx == -1 {
+		panic("Invalid SIP Message.")
+	}
+	idx += 2
+	hid, err := parseHeader(msg, data[:idx])
+	if err != nil {
+		return nil // TODO: return errors ?
+	}
+	if !(hid == SIPHdrRequestLine || hid == SIPHdrStatusLine) {
+		return nil // TODO: return errors ?
+	}
+
+	splitFun := func(data []byte, atEOF bool) (int, []byte, error) {
+		if atEOF && len(data) == 0 {
+			return 0, nil, nil
+		}
+		if ix := bytes.Index(data, []byte("\r\n")); ix >= 0 {
+			return ix + 2, data[:ix+2], nil
+		}
+
+		return 0, nil, nil
+	}
+	scanner := bufio.NewScanner(bytes.NewReader(data[idx:]))
+	scanner.Split(splitFun)
+	for scanner.Scan() {
+		if _, err := parseHeader(msg, scanner.Bytes()); err != nil {
+			return nil // TODO: return errors ?
+		}
+	}
+	if err := scanner.Err(); err != nil {
+		return nil // TODO: return errors ?
+	}
+	return msg
 }
 
 // StatusLine returns SIP message status line

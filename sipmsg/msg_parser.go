@@ -4,11 +4,14 @@
 // SIP headers and first line parser
 package sipmsg
 
-import "errors"
+import (
+	"bytes"
+	"errors"
+)
 
-//line msg_parser.rl:9
+//line msg_parser.rl:12
 
-//line msg_parser.go:14
+//line msg_parser.go:17
 var _msg_actions []byte = []byte{
 	0, 1, 0, 1, 1, 1, 2, 1, 3,
 	1, 4, 1, 5, 1, 6, 1, 7,
@@ -10991,7 +10994,7 @@ const msg_error int = 0
 
 const msg_en_siphdr int = 1
 
-//line msg_parser.rl:10
+//line msg_parser.rl:13
 
 func parseHeader(msg *Message, data []byte) (HdrType, error) {
 	cs := 0 // current state. entery point = 0
@@ -11015,16 +11018,20 @@ func parseHeader(msg *Message, data []byte) (HdrType, error) {
 
 	var id HdrType
 
-//line msg_parser.rl:134
+	if bytes.Equal(data, []byte("\r\n")) {
+		return MsgEOF, nil
+	}
 
-//line msg_parser.go:11025
+//line msg_parser.rl:141
+
+//line msg_parser.go:11032
 	{
 		cs = msg_start
 	}
 
-//line msg_parser.rl:136
+//line msg_parser.rl:143
 
-//line msg_parser.go:11032
+//line msg_parser.go:11039
 	{
 		var _klen int
 		var _trans int
@@ -11105,44 +11112,44 @@ func parseHeader(msg *Message, data []byte) (HdrType, error) {
 			_acts++
 			switch _msg_actions[_acts-1] {
 			case 0:
-//line msg_parser.rl:34
+//line msg_parser.rl:41
 				m = p
 			case 1:
-//line msg_parser.rl:35
+//line msg_parser.rl:42
 				pos = append(pos, pl{m, p})
 			case 2:
-//line msg_parser.rl:36
+//line msg_parser.rl:43
 				tag = pl{m, p}
 			case 3:
-//line msg_parser.rl:37
+//line msg_parser.rl:44
 				dname.p = m
 				dname.l = p
 			case 4:
-//line msg_parser.rl:38
+//line msg_parser.rl:45
 				addr.p = m
 				addr.l = p
 			case 5:
-//line msg_parser.rl:39
+//line msg_parser.rl:46
 				port.p = m
 				port.l = p
 			case 6:
-//line msg_parser.rl:40
+//line msg_parser.rl:47
 				trans.p = m
 				trans.l = p
 			case 7:
-//line msg_parser.rl:41
+//line msg_parser.rl:48
 				params = append(params, pl{m, p})
 			case 8:
-//line msg_parser.rl:42
+//line msg_parser.rl:49
 				msg.initContact(data, pos[0])
 			case 9:
-//line msg_parser.rl:43
+//line msg_parser.rl:50
 				params = make([]pl, 0)
 			case 10:
-//line msg_parser.rl:44
+//line msg_parser.rl:51
 				hidx = msg.Via().Count()
 			case 11:
-//line msg_parser.rl:45
+//line msg_parser.rl:52
 
 				branch.p = 0
 				branch.l = 0
@@ -11154,78 +11161,78 @@ func parseHeader(msg *Message, data []byte) (HdrType, error) {
 				recvd.l = 0
 
 			case 12:
-//line msg_parser.rl:51
+//line msg_parser.rl:58
 				msg.setContact(dname, addr, params, p)
 			case 13:
-//line msg_parser.rl:52
+//line msg_parser.rl:59
 
 				msg.setVia(data[:], pos[0], trans, addr, port, branch, ttl, maddr, recvd, hidx, p)
 
 			case 14:
-//line msg_parser.rl:55
+//line msg_parser.rl:62
 				params = make([]pl, 0)
 			case 15:
-//line msg_parser.rl:56
+//line msg_parser.rl:63
 				msg.setRoute(id, data[:], pos[0], dname, addr, params)
 			case 16:
-//line msg_parser.rl:69
+//line msg_parser.rl:76
 				ttl.p = m
 				ttl.l = p
 			case 17:
-//line msg_parser.rl:70
+//line msg_parser.rl:77
 				maddr.p = m
 				maddr.l = p
 			case 18:
-//line msg_parser.rl:71
+//line msg_parser.rl:78
 				recvd.p = m
 				recvd.l = p
 			case 19:
-//line msg_parser.rl:72
+//line msg_parser.rl:79
 				branch.p = m
 				branch.l = p
 			case 20:
-//line msg_parser.rl:82
+//line msg_parser.rl:89
 				id = msg.setStatusLine(data, pos)
 			case 21:
-//line msg_parser.rl:85
+//line msg_parser.rl:92
 				id = msg.setRequestLine(data, pos)
 			case 22:
-//line msg_parser.rl:88
+//line msg_parser.rl:95
 				id = msg.setCSeq(data, pos)
 			case 23:
-//line msg_parser.rl:91
+//line msg_parser.rl:98
 				id = msg.setCallID(data, pos)
 			case 24:
-//line msg_parser.rl:94
+//line msg_parser.rl:101
 				id = msg.setContentLen(data, pos)
 			case 25:
-//line msg_parser.rl:97
+//line msg_parser.rl:104
 				id = msg.setFrom(data, params, pos[0], dname, addr, tag)
 			case 26:
-//line msg_parser.rl:100
+//line msg_parser.rl:107
 				id = msg.setTo(data, params, pos[0], dname, addr, tag)
 			case 27:
-//line msg_parser.rl:103
+//line msg_parser.rl:110
 				msg.setContactStar()
 			case 28:
-//line msg_parser.rl:105
+//line msg_parser.rl:112
 				id = SIPHdrContact
 			case 29:
-//line msg_parser.rl:108
+//line msg_parser.rl:115
 				id = SIPHdrVia
 			case 30:
-//line msg_parser.rl:110
+//line msg_parser.rl:117
 				id = SIPHdrRoute
 			case 31:
-//line msg_parser.rl:113
+//line msg_parser.rl:120
 				id = SIPHdrRecordRoute
 			case 32:
-//line msg_parser.rl:117
+//line msg_parser.rl:124
 				id = msg.setMaxFwd(data[m:p])
 			case 33:
-//line msg_parser.rl:119
+//line msg_parser.rl:126
 				id = SIPHdrOther
-//line msg_parser.go:11220
+//line msg_parser.go:11227
 			}
 		}
 
@@ -11245,7 +11252,7 @@ func parseHeader(msg *Message, data []byte) (HdrType, error) {
 		}
 	}
 
-//line msg_parser.rl:137
+//line msg_parser.rl:144
 	if cs >= msg_first_final {
 		return id, nil
 	}
