@@ -53,7 +53,7 @@ func parseHeader(msg *Message, data []byte) (HdrType, error) {
         msg.setVia(data[:], pos[0], trans, addr, port, branch, ttl, maddr, recvd, hidx, p)
     }
     action reset_route { params = make([]pl, 0) }
-    action route { msg.setRoute(id, data[:], pos[0], dname, addr, params)}
+    action route     { msg.setRoute(id, data[:], pos[0], dname, addr, params) }
 
     include grammar "grammar.rl";
 
@@ -77,9 +77,6 @@ func parseHeader(msg *Message, data []byte) (HdrType, error) {
                       >reset_via %via;
     route_param     = ( name_addr ( SEMI generic_param >sm %param )* ) >reset_route %route;
 
-    # @Date,
-    # @Expires, @RecordRoute
-
     # @Status-Line@
     StatusLine  = SIP_Version >sm %push SP digit{3} >sm %push SP
                   Reason_Phrase >sm %push CRLF @{ id = msg.setStatusLine(data, pos) };
@@ -87,46 +84,53 @@ func parseHeader(msg *Message, data []byte) (HdrType, error) {
     RequestLine = Method >sm %push SP RequestURI >sm %push SP
                   SIP_Version >sm %push CRLF @{ id = msg.setRequestLine(data, pos) };
     # @CSeq@
-    CSeq        = "CSeq"i >sm %push HCOLON digit+ >sm %push
+    CSeq        = name_cseq >sm %push HCOLON digit+ >sm %push
                   LWS Method >sm %push CRLF @{ id = msg.setCSeq(data, pos) };
     # @Call-ID@
-    CallID      = ( "Call-ID"i | "i"i ) >sm %push HCOLON
+    CallID      = name_callid >sm %push HCOLON
                   ( word ( "@" word )? ) >sm %push CRLF @{ id = msg.setCallID(data, pos) };
     # @Content-Length@
-    ContentLen  = ( "Content-Length"i | "l"i ) >sm %push HCOLON
+    ContentLen  = name_cnt_len >sm %push HCOLON
                   digit+ >sm %push CRLF @{ id = msg.setContentLen(data, pos) };
     # @From@
-    From        = ( "From"i | "f"i ) >sm %push HCOLON tofrom_value CRLF
+    From        = name_from >sm %push HCOLON tofrom_value CRLF
                   @{ id = msg.setFrom(data, params, pos[0], dname, addr, tag) };
     # @To@
-    To          = ( "To"i | "t"i ) >sm %push HCOLON tofrom_value CRLF
+    To          = name_to >sm %push HCOLON tofrom_value CRLF
                   @{ id = msg.setTo(data, params, pos[0], dname, addr, tag) };
     # @Contact@
-    Contact     = ( "Contact"i | "m"i ) >sm %push HCOLON >init_cnt 
+    Contact     = name_contact >sm %push HCOLON >init_cnt 
                   ( STAR %{msg.setContactStar()} | 
                   ( contact_value ( COMMA contact_value )* )) CRLF
                   @{ id = SIPHdrContact; };
     # @Via@
-    Via         = ( "Via"i | "v"i ) >sm %push HCOLON via_parm
+    Via         = name_via >sm %push HCOLON via_parm
                   ( COMMA via_parm )* CRLF @{ id = SIPHdrVia }; 
     # @Route@
-    Route       = "Route"i >sm %push HCOLON %{id = SIPHdrRoute}
+    Route       = name_route >sm %push HCOLON %{id = SIPHdrRoute}
                   route_param (COMMA route_param)* CRLF;
     # @Record-Route@
-    RecordRoute = "Record-Route"i >sm %push HCOLON %{id = SIPHdrRecordRoute}
+    RecordRoute = name_rroute >sm %push HCOLON %{id = SIPHdrRecordRoute}
                   route_param (COMMA route_param)* CRLF;
+    # @Max-Forwards@
+    MaxForwards = name_maxfwd HCOLON digit{1,4} >sm 
+                  %{ id = msg.setMaxFwd(data[m:p]) } CRLF;
+    # Other headers (generic)
+    OtherHeader = header_name HCOLON header_value CRLF @{ id = SIPHdrOther; };
 
     siphdr :=   StatusLine
-              | RequestLine
               | CSeq
               | CallID
               | Contact
               | ContentLen
               | From
-              | To
-              | Route
+              | MaxForwards
               | RecordRoute
-              | Via;
+              | RequestLine
+              | Route
+              | To
+              | Via
+              | OtherHeader;
 }%%
     %% write init;
     %% write exec;

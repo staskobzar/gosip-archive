@@ -28,6 +28,7 @@
                       ( 0xF0..0xF7 UTF8_CONT{3} ) |
                       ( 0xF8..0xFB UTF8_CONT{4} ) |
                       ( 0xFC..0xFD UTF8_CONT{5} );
+    TEXT_UTF8CHAR   = 0x21..0x7E | UTF8_NONASCII;
 
     quoted_pair     = "\\" (0x00..0x09 | 0x0B..0x0C | 0x0E..0x7F);
     qdtext          = LWS | 0x21 | 0x23..0x5B | 0x5D..0x7E | UTF8_NONASCII;
@@ -126,4 +127,29 @@
     branch_cookie   = "z9hG4bK";
     via_generic     = token ( EQUAL gen_value )?;
 
+    # generic header value
+    name_cseq       = "CSeq"i;
+    name_callid     = "Call-ID"i | "i"i;
+    name_cnt_len    = "Content-Length"i | "l"i;
+    name_from       = "From"i | "f"i;
+    name_to         = "To"i | "t"i;
+    name_contact    = "Contact"i | "m"i;
+    name_via        = "Via"i | "v"i;
+    name_route      = "Route"i;
+    name_rroute     = "Record-Route"i;
+    name_maxfwd     = "Max-Forwards"i;
+
+    header_name     = token - (
+                        name_cseq       |
+                        name_callid     |
+                        name_cnt_len    |
+                        name_from       |
+                        name_to         |
+                        name_contact    |
+                        name_via        |
+                        name_route      |
+                        name_rroute     |
+                        name_maxfwd     );
+
+    header_value    = (TEXT_UTF8CHAR | UTF8_CONT | LWS)*;
 }%%

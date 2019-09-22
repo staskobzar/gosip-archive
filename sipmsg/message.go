@@ -24,6 +24,7 @@ type Message struct {
 	via        ViaList
 	route      RouteList
 	rroute     RouteList
+	maxfwd     uint
 	cseq       uint
 	callID     []byte
 	cntLen     uint // Content-Length
@@ -62,6 +63,9 @@ func (m *Message) Routes() RouteList { return m.route }
 
 // RecordRoutes returns SIP message Route headers list
 func (m *Message) RecordRoutes() RouteList { return m.rroute }
+
+// MaxForwards returns SIP Max-Forwards number
+func (m *Message) MaxForwards() uint { return m.maxfwd }
 
 // private methods
 func (m *Message) setStatusLine(buf []byte, pos []pl) HdrType {
@@ -173,4 +177,13 @@ func (m *Message) setRoute(hid HdrType, buf []byte, fname, dname, addr pl, param
 		return
 	}
 	m.route = append(m.route, r)
+}
+
+func (m *Message) setMaxFwd(num []byte) HdrType {
+	max, err := strconv.ParseUint(string(num), 10, 32)
+	if err != nil {
+		panic("Failed to parse Max-Forwards header.")
+	}
+	m.maxfwd = uint(max)
+	return SIPHdrMaxForwards
 }

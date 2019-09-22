@@ -401,3 +401,18 @@ func TestHdrParseRecordRoute(t *testing.T) {
 	r := msg.RecordRoutes()
 	assert.Equal(t, 2, r.Count())
 }
+
+func TestHdrMaxForwards(t *testing.T) {
+	msg := &Message{}
+	h, err := parseHeader(msg, []byte("Max-Forwards: 70\r\n"))
+	assert.Nil(t, err)
+	assert.Equal(t, SIPHdrMaxForwards, h)
+	assert.EqualValues(t, 70, msg.MaxForwards())
+}
+
+func TestHdrOtherHeaders(t *testing.T) {
+	msg := &Message{}
+	h, err := parseHeader(msg, []byte("Foo: 70 BAR\r\n"))
+	assert.Nil(t, err)
+	assert.Equal(t, SIPHdrOther, h)
+}
