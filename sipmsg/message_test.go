@@ -18,5 +18,5 @@ func TestMessageParse(t *testing.T) {
 		"Expires: 7200\r\n" +
 		"Content-Length: 0\r\n\r\n"
 	msg := MsgParse([]byte(str))
-	fmt.Println(msg.From())
+	fmt.Printf("%s\n", msg.From.Addr())
 }

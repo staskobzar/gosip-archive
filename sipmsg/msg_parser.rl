@@ -48,7 +48,7 @@ func parseHeader(msg *Message, data []byte) (HdrType, error) {
     action param     { params = append(params, pl{m, p}) }
     action init_cnt  { msg.initContact(data, pos[0]) }
     action reset_cnt { params = make([]pl, 0) }
-    action init_via  { hidx = msg.Via().Count() }
+    action init_via  { hidx = msg.Vias.Count() }
     action reset_via {
         branch.p = 0; branch.l = 0
         ttl.p    = 0; ttl.l    = 0

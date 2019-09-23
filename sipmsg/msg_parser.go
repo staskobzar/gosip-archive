@@ -11147,7 +11147,7 @@ func parseHeader(msg *Message, data []byte) (HdrType, error) {
 				params = make([]pl, 0)
 			case 10:
 //line msg_parser.rl:51
-				hidx = msg.Via().Count()
+				hidx = msg.Vias.Count()
 			case 11:
 //line msg_parser.rl:52
 

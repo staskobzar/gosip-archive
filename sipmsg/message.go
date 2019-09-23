@@ -18,18 +18,18 @@ type pl struct {
 
 // Message SIP message structure
 type Message struct {
-	reqLine    *RequestLine
-	statusLine *StatusLine
-	from       *HeaderFromTo
-	to         *HeaderFromTo
-	contacts   *ContactsList
-	via        ViaList
-	route      RouteList
-	rroute     RouteList
-	maxfwd     uint
-	cseq       uint
-	callID     []byte
-	cntLen     uint // Content-Length
+	ReqLine    *RequestLine
+	StatusLine *StatusLine
+	From       *HeaderFromTo
+	To         *HeaderFromTo
+	Contacts   *ContactsList
+	Vias       ViaList
+	Routes     RouteList
+	RecRoutes  RouteList
+	MaxFwd     uint
+	CSeq       uint
+	CallID     string
+	ContentLen uint // Content-Length
 }
 
 // MsgParse parser SIP message to Message structure
@@ -72,43 +72,6 @@ func MsgParse(data []byte) *Message {
 	return msg
 }
 
-// StatusLine returns SIP message status line
-func (m *Message) StatusLine() *StatusLine { return m.statusLine }
-
-// RequestLine returns SIP message request line
-func (m *Message) RequestLine() *RequestLine { return m.reqLine }
-
-// CSeq returns SIP message sequence number
-func (m *Message) CSeq() uint { return m.cseq }
-
-// CallID returns SIP message call ID string
-func (m *Message) CallID() string { return string(m.callID) }
-
-// ContentLen returns SIP message content length.
-// If there are no content (body) then 0
-func (m *Message) ContentLen() uint { return m.cntLen }
-
-// From returns SIP message from header
-func (m *Message) From() *HeaderFromTo { return m.from }
-
-// To returns SIP message from header
-func (m *Message) To() *HeaderFromTo { return m.to }
-
-// Contacts returns SIP message contacts list
-func (m *Message) Contacts() *ContactsList { return m.contacts }
-
-// Via returns SIP message Via headers list
-func (m *Message) Via() ViaList { return m.via }
-
-// Routes returns SIP message Route headers list
-func (m *Message) Routes() RouteList { return m.route }
-
-// RecordRoutes returns SIP message Route headers list
-func (m *Message) RecordRoutes() RouteList { return m.rroute }
-
-// MaxForwards returns SIP Max-Forwards number
-func (m *Message) MaxForwards() uint { return m.maxfwd }
-
 // private methods
 func (m *Message) setStatusLine(buf []byte, pos []pl) HdrType {
 	sl := &StatusLine{
@@ -117,7 +80,7 @@ func (m *Message) setStatusLine(buf []byte, pos []pl) HdrType {
 		code:   pos[1],
 		reason: pos[2],
 	}
-	m.statusLine = sl
+	m.StatusLine = sl
 	return SIPHdrStatusLine
 }
 
@@ -128,7 +91,7 @@ func (m *Message) setRequestLine(buf []byte, pos []pl) HdrType {
 		uri:    pos[1],
 		ver:    pos[2],
 	}
-	m.reqLine = rl
+	m.ReqLine = rl
 	return SIPHdrRequestLine
 }
 
@@ -138,12 +101,12 @@ func (m *Message) setCSeq(buf []byte, pos []pl) HdrType {
 	if err != nil {
 		panic("Failed to parse CSeq header.")
 	}
-	m.cseq = uint(cseq)
+	m.CSeq = uint(cseq)
 	return SIPHdrCSeq
 }
 
 func (m *Message) setCallID(buf []byte, pos []pl) HdrType {
-	m.callID = buf[pos[1].p:pos[1].l]
+	m.CallID = string(buf[pos[1].p:pos[1].l])
 	return SIPHdrCallID
 }
 
@@ -153,22 +116,22 @@ func (m *Message) setContentLen(buf []byte, pos []pl) HdrType {
 	if err != nil {
 		panic("Failed to parse Content-Length header.")
 	}
-	m.cntLen = uint(ln)
+	m.ContentLen = uint(ln)
 	return SIPHdrContentLength
 }
 
 func (m *Message) setFrom(buf []byte, params []pl, fname, dname, addr, tag pl) HdrType {
-	m.from = newHeaderFromTo(buf, params, fname, dname, addr, tag)
+	m.From = newHeaderFromTo(buf, params, fname, dname, addr, tag)
 	return SIPHdrFrom
 }
 
 func (m *Message) setTo(buf []byte, params []pl, fname, dname, addr, tag pl) HdrType {
-	m.to = newHeaderFromTo(buf, params, fname, dname, addr, tag)
+	m.To = newHeaderFromTo(buf, params, fname, dname, addr, tag)
 	return SIPHdrTo
 }
 
 func (m *Message) initContact(buf []byte, name pl) {
-	m.contacts = &ContactsList{
+	m.Contacts = &ContactsList{
 		buf:  buf,
 		name: name,
 	}
@@ -181,29 +144,29 @@ func (m *Message) setContact(dname, addr pl, params []pl, eol ptr) {
 		params[i].l -= s
 	}
 	cnt := Contact{
-		buf:    m.contacts.buf[dname.p:eol],
+		buf:    m.Contacts.buf[dname.p:eol],
 		dname:  pl{dname.p - s, dname.l - s},
 		addr:   pl{addr.p - s, addr.l - s},
 		params: params,
 	}
-	m.contacts.push(cnt)
+	m.Contacts.push(cnt)
 }
 
 func (m *Message) setContactStar() {
-	m.contacts.star = true
+	m.Contacts.star = true
 }
 
 func (m *Message) setVia(data []byte, name, trans, addr, port, branch, ttl, maddr, recevd pl, i int, eol ptr) {
-	if m.via.Count() == 0 || m.via.Count() == i {
-		m.via = append(m.via, &Via{buf: data, name: name})
+	if m.Vias.Count() == 0 || m.Vias.Count() == i {
+		m.Vias = append(m.Vias, &Via{buf: data, name: name})
 	}
-	m.via[i].trans = trans
-	m.via[i].host = addr
-	m.via[i].port = port
-	m.via[i].branch = branch
-	m.via[i].ttl = ttl
-	m.via[i].maddr = maddr
-	m.via[i].recevd = recevd
+	m.Vias[i].trans = trans
+	m.Vias[i].host = addr
+	m.Vias[i].port = port
+	m.Vias[i].branch = branch
+	m.Vias[i].ttl = ttl
+	m.Vias[i].maddr = maddr
+	m.Vias[i].recevd = recevd
 }
 
 func (m *Message) setRoute(hid HdrType, buf []byte, fname, dname, addr pl, params []pl) {
@@ -215,10 +178,10 @@ func (m *Message) setRoute(hid HdrType, buf []byte, fname, dname, addr pl, param
 		params: params,
 	}
 	if hid == SIPHdrRecordRoute {
-		m.rroute = append(m.rroute, r)
+		m.RecRoutes = append(m.RecRoutes, r)
 		return
 	}
-	m.route = append(m.route, r)
+	m.Routes = append(m.Routes, r)
 }
 
 func (m *Message) setMaxFwd(num []byte) HdrType {
@@ -226,6 +189,6 @@ func (m *Message) setMaxFwd(num []byte) HdrType {
 	if err != nil {
 		panic("Failed to parse Max-Forwards header.")
 	}
-	m.maxfwd = uint(max)
+	m.MaxFwd = uint(max)
 	return SIPHdrMaxForwards
 }

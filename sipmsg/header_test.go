@@ -11,10 +11,9 @@ func TestHdrStatusLineParse(t *testing.T) {
 	h, err := parseHeader(msg, []byte("SIP/2.0 180 Ringing\r\n"))
 	assert.Nil(t, err)
 	assert.Equal(t, SIPHdrStatusLine, h)
-	sl := msg.StatusLine()
-	assert.Equal(t, "SIP/2.0", sl.Version())
-	assert.Equal(t, "180", sl.Code())
-	assert.Equal(t, "Ringing", sl.Reason())
+	assert.Equal(t, "SIP/2.0", msg.StatusLine.Version())
+	assert.Equal(t, "180", msg.StatusLine.Code())
+	assert.Equal(t, "Ringing", msg.StatusLine.Reason())
 }
 
 func TestHdrRequestLineParse(t *testing.T) {
@@ -22,10 +21,9 @@ func TestHdrRequestLineParse(t *testing.T) {
 	h, err := parseHeader(msg, []byte("INVITE sip:bob@biloxi.com SIP/2.0\r\n"))
 	assert.Nil(t, err)
 	assert.Equal(t, SIPHdrRequestLine, h)
-	rl := msg.RequestLine()
-	assert.Equal(t, "INVITE", rl.Method())
-	assert.Equal(t, "sip:bob@biloxi.com", rl.RequestURI())
-	assert.Equal(t, "SIP/2.0", rl.Version())
+	assert.Equal(t, "INVITE", msg.ReqLine.Method())
+	assert.Equal(t, "sip:bob@biloxi.com", msg.ReqLine.RequestURI())
+	assert.Equal(t, "SIP/2.0", msg.ReqLine.Version())
 }
 
 func TestHdrParseCSeq(t *testing.T) {
@@ -33,7 +31,7 @@ func TestHdrParseCSeq(t *testing.T) {
 	h, err := parseHeader(msg, []byte("CSeq: 4711 INVITE\r\n"))
 	assert.Nil(t, err)
 	assert.Equal(t, SIPHdrCSeq, h)
-	assert.EqualValues(t, 4711, msg.CSeq())
+	assert.EqualValues(t, 4711, msg.CSeq)
 }
 
 func TestHdrParseCallID(t *testing.T) {
@@ -41,12 +39,12 @@ func TestHdrParseCallID(t *testing.T) {
 	h, err := parseHeader(msg, []byte("Call-ID: 12345601@atlanta.example.com\r\n"))
 	assert.Nil(t, err)
 	assert.Equal(t, SIPHdrCallID, h)
-	assert.Equal(t, "12345601@atlanta.example.com", msg.CallID())
+	assert.Equal(t, "12345601@atlanta.example.com", msg.CallID)
 
 	h, err = parseHeader(msg, []byte("i :167b9a61dabe815567f422a4944b61c0\r\n"))
 	assert.Nil(t, err)
 	assert.Equal(t, SIPHdrCallID, h)
-	assert.Equal(t, "167b9a61dabe815567f422a4944b61c0", msg.CallID())
+	assert.Equal(t, "167b9a61dabe815567f422a4944b61c0", msg.CallID)
 }
 
 func TestHdrParseContentLength(t *testing.T) {
@@ -54,12 +52,12 @@ func TestHdrParseContentLength(t *testing.T) {
 	h, err := parseHeader(msg, []byte("Content-Length:   543\r\n"))
 	assert.Nil(t, err)
 	assert.Equal(t, SIPHdrContentLength, h)
-	assert.EqualValues(t, 543, msg.ContentLen())
+	assert.EqualValues(t, 543, msg.ContentLen)
 
 	h, err = parseHeader(msg, []byte("L   :   1024\r\n"))
 	assert.Nil(t, err)
 	assert.Equal(t, SIPHdrContentLength, h)
-	assert.EqualValues(t, 1024, msg.ContentLen())
+	assert.EqualValues(t, 1024, msg.ContentLen)
 }
 
 func TestHdrParseFrom(t *testing.T) {
@@ -67,49 +65,45 @@ func TestHdrParseFrom(t *testing.T) {
 	h, err := parseHeader(msg, []byte("From: sip:+12125551212@phone2net.com;tag=887s\r\n"))
 	assert.Nil(t, err)
 	assert.Equal(t, SIPHdrFrom, h)
-	f := msg.From()
-	assert.Equal(t, "", f.DisplayName())
-	assert.Equal(t, "sip:+12125551212@phone2net.com", f.Addr())
-	assert.Equal(t, "887s", f.Tag())
+	assert.Equal(t, "", msg.From.DisplayName())
+	assert.Equal(t, "sip:+12125551212@phone2net.com", msg.From.Addr())
+	assert.Equal(t, "887s", msg.From.Tag())
 
 	h, err = parseHeader(msg, []byte("f : Alice <sips:alice@atlanta.example.com;lr>;tag=837348234\r\n"))
 	assert.Nil(t, err)
 	assert.Equal(t, SIPHdrFrom, h)
-	f = msg.From()
-	assert.Equal(t, "Alice", f.DisplayName())
-	assert.Equal(t, "sips:alice@atlanta.example.com;lr", f.Addr())
-	assert.Equal(t, "837348234", f.Tag())
+	assert.Equal(t, "Alice", msg.From.DisplayName())
+	assert.Equal(t, "sips:alice@atlanta.example.com;lr", msg.From.Addr())
+	assert.Equal(t, "837348234", msg.From.Tag())
 
 	h, err = parseHeader(msg, []byte("From: \"Alice Jones\" <sips:51472@atlanta.com>;tag=8234afd;rl;user=phone\r\n"))
 	assert.Nil(t, err)
 	assert.Equal(t, SIPHdrFrom, h)
-	f = msg.From()
-	assert.Equal(t, "\"Alice Jones\"", f.DisplayName())
-	assert.Equal(t, "sips:51472@atlanta.com", f.Addr())
-	assert.Equal(t, "8234afd", f.Tag())
-	p, ok := f.Param("rl")
+	assert.Equal(t, "\"Alice Jones\"", msg.From.DisplayName())
+	assert.Equal(t, "sips:51472@atlanta.com", msg.From.Addr())
+	assert.Equal(t, "8234afd", msg.From.Tag())
+	p, ok := msg.From.Param("rl")
 	assert.True(t, ok)
 	assert.Equal(t, "", p)
-	p, ok = f.Param("user")
+	p, ok = msg.From.Param("user")
 	assert.True(t, ok)
 	assert.Equal(t, "phone", p)
-	_, ok = f.Param("foo")
+	_, ok = msg.From.Param("foo")
 	assert.False(t, ok)
 
 	h, err = parseHeader(msg, []byte("F: <sips:alice@example.com>;foo=bar;tag=9871ab;rl;user=phone\r\n"))
 	assert.Nil(t, err)
 	assert.Equal(t, SIPHdrFrom, h)
-	f = msg.From()
-	assert.Equal(t, "", f.DisplayName())
-	assert.Equal(t, "sips:alice@example.com", f.Addr())
-	assert.Equal(t, "9871ab", f.Tag())
-	p, ok = f.Param("rl")
+	assert.Equal(t, "", msg.From.DisplayName())
+	assert.Equal(t, "sips:alice@example.com", msg.From.Addr())
+	assert.Equal(t, "9871ab", msg.From.Tag())
+	p, ok = msg.From.Param("rl")
 	assert.True(t, ok)
 	assert.Equal(t, "", p)
-	p, ok = f.Param("user")
+	p, ok = msg.From.Param("user")
 	assert.True(t, ok)
 	assert.Equal(t, "phone", p)
-	p, ok = f.Param("foo")
+	p, ok = msg.From.Param("foo")
 	assert.True(t, ok)
 	assert.Equal(t, "bar", p)
 }
@@ -119,25 +113,23 @@ func TestHdrParseTo(t *testing.T) {
 	h, err := parseHeader(msg, []byte("To: Carol <sip:212@chicago.com>\r\n"))
 	assert.Nil(t, err)
 	assert.Equal(t, SIPHdrTo, h)
-	to := msg.To()
-	assert.Equal(t, "Carol", to.DisplayName())
-	assert.Equal(t, "sip:212@chicago.com", to.Addr())
-	assert.Equal(t, "", to.Tag())
+	assert.Equal(t, "Carol", msg.To.DisplayName())
+	assert.Equal(t, "sip:212@chicago.com", msg.To.Addr())
+	assert.Equal(t, "", msg.To.Tag())
 
 	h, err = parseHeader(msg, []byte("t :   <sip:55543@voip.com>;tag=85471af;cic=+1-800;part;l=5a\r\n"))
 	assert.Nil(t, err)
 	assert.Equal(t, SIPHdrTo, h)
-	to = msg.To()
-	assert.Equal(t, "", to.DisplayName())
-	assert.Equal(t, "sip:55543@voip.com", to.Addr())
-	assert.Equal(t, "85471af", to.Tag())
-	p, ok := to.Param("cic")
+	assert.Equal(t, "", msg.To.DisplayName())
+	assert.Equal(t, "sip:55543@voip.com", msg.To.Addr())
+	assert.Equal(t, "85471af", msg.To.Tag())
+	p, ok := msg.To.Param("cic")
 	assert.True(t, ok)
 	assert.Equal(t, "+1-800", p)
-	p, ok = to.Param("part")
+	p, ok = msg.To.Param("part")
 	assert.True(t, ok)
 	assert.Equal(t, "", p)
-	p, ok = to.Param("l")
+	p, ok = msg.To.Param("l")
 	assert.True(t, ok)
 	assert.Equal(t, "5a", p)
 }
@@ -147,7 +139,7 @@ func TestHdrParseContact(t *testing.T) {
 	h, err := parseHeader(msg, []byte("Contact: sip:2234@10.0.114.12:12543\r\n"))
 	assert.Nil(t, err)
 	assert.Equal(t, SIPHdrContact, h)
-	cnt := msg.Contacts()
+	cnt := msg.Contacts
 	assert.False(t, cnt.IsStar())
 	assert.Equal(t, 1, cnt.Count())
 	c := cnt.First()
@@ -157,7 +149,7 @@ func TestHdrParseContact(t *testing.T) {
 	h, err = parseHeader(msg, []byte("m  :\"Mr. Watson\" <sip:watson@bell-telephone.com>;q=0.7; expires=3600\r\n"))
 	assert.Nil(t, err)
 	assert.Equal(t, SIPHdrContact, h)
-	c = msg.Contacts().First()
+	c = msg.Contacts.First()
 	assert.Equal(t, "\"Mr. Watson\"", c.DisplayName())
 	assert.Equal(t, "sip:watson@bell-telephone.com", c.Location())
 	p, ok := c.Param("q")
@@ -172,7 +164,7 @@ func TestHdrParseContact(t *testing.T) {
 	h, err = parseHeader(msg, []byte("Contact: * \r\n"))
 	assert.Nil(t, err)
 	assert.Equal(t, SIPHdrContact, h)
-	assert.True(t, msg.Contacts().IsStar())
+	assert.True(t, msg.Contacts.IsStar())
 }
 
 func TestHdrParseMultiContacts(t *testing.T) {
@@ -180,7 +172,7 @@ func TestHdrParseMultiContacts(t *testing.T) {
 	h, err := parseHeader(msg, []byte("Contact: Alice <sip:2234@10.0.114.12:12543>;user=phone, sips:bob@voip.com;lr;cic=514284, \"123, rue Jones\" <sip:jones@sip.ca>\r\n"))
 	assert.Nil(t, err)
 	assert.Equal(t, SIPHdrContact, h)
-	cnt := msg.Contacts()
+	cnt := msg.Contacts
 	assert.Equal(t, 3, cnt.Count())
 
 	// iterate contacts
@@ -232,7 +224,7 @@ func TestHdrParseVia(t *testing.T) {
 	h, err := parseHeader(msg, []byte(str))
 	assert.Nil(t, err)
 	assert.Equal(t, SIPHdrVia, h)
-	via := msg.Via()
+	via := msg.Vias
 	assert.Equal(t, 1, via.Count())
 	assert.Equal(t, "TLS", via[0].Transport())
 	assert.Equal(t, "ss1.example.com", via[0].Host())
@@ -248,7 +240,7 @@ func TestHdrParseVia(t *testing.T) {
 	h, err = parseHeader(msg, []byte(str))
 	assert.Nil(t, err)
 	assert.Equal(t, SIPHdrVia, h)
-	via = msg.Via()
+	via = msg.Vias
 	assert.Equal(t, "UDP", via[0].Transport())
 	assert.Equal(t, "first.example.com", via[0].Host())
 	assert.Equal(t, "4000", via[0].Port())
@@ -266,7 +258,7 @@ func TestHdrParseViaComma(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, SIPHdrVia, h)
 
-	via := msg.Via()
+	via := msg.Vias
 	assert.Equal(t, 2, via.Count())
 
 	assert.Equal(t, "UDP", via[0].Transport())
@@ -295,7 +287,7 @@ func TestHdrParseViaMultiHeaders(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, SIPHdrVia, h)
 
-	via := msg.Via()
+	via := msg.Vias
 	assert.Equal(t, 2, via.Count())
 	assert.Equal(t, "bell.com", via[0].Host())
 	assert.Equal(t, "z9hG4bK87asdks7.2", via[0].Branch())
@@ -309,7 +301,7 @@ func TestHdrParseRoute(t *testing.T) {
 	assert.Equal(t, SIPHdrRoute, h)
 	assert.Nil(t, err)
 
-	r := msg.Routes()
+	r := msg.Routes
 	assert.Equal(t, 1, r.Count())
 	rh := r[0]
 	assert.Equal(t, "sips:ss1.example.com", rh.Addr())
@@ -319,7 +311,7 @@ func TestHdrParseRoute(t *testing.T) {
 	assert.Equal(t, SIPHdrRoute, h)
 	assert.Nil(t, err)
 
-	r = msg.Routes()
+	r = msg.Routes
 	assert.Equal(t, 1, r.Count())
 	rh = r[0]
 	assert.Equal(t, "sip:p1.voip.com;lr", rh.Addr())
@@ -345,7 +337,7 @@ func TestHdrParseRouteComma(t *testing.T) {
 	assert.Equal(t, SIPHdrRoute, h)
 	assert.Nil(t, err)
 
-	r := msg.Routes()
+	r := msg.Routes
 	assert.Equal(t, 2, r.Count())
 	rh := r[0]
 	assert.Equal(t, "sips:bigbox3.site3.atlanta.com;lr", rh.Addr())
@@ -362,7 +354,7 @@ func TestHdrParseRouteComma(t *testing.T) {
 	assert.Equal(t, SIPHdrRoute, h)
 	assert.Nil(t, err)
 
-	r = msg.Routes()
+	r = msg.Routes
 	assert.Equal(t, 3, r.Count())
 	assert.Equal(t, "sip:site3.atlanta.com;lr", r[0].Addr())
 	assert.Equal(t, "sip:biloxi.com;lr", r[1].Addr())
@@ -387,7 +379,7 @@ func TestHdrParseRouteMulti(t *testing.T) {
 	assert.Equal(t, SIPHdrRoute, h)
 	assert.Nil(t, err)
 
-	r := msg.Routes()
+	r := msg.Routes
 	assert.Equal(t, 5, r.Count())
 }
 
@@ -398,7 +390,7 @@ func TestHdrParseRecordRoute(t *testing.T) {
 	h, err := parseHeader(msg, []byte(str))
 	assert.Nil(t, err)
 	assert.Equal(t, SIPHdrRecordRoute, h)
-	r := msg.RecordRoutes()
+	r := msg.RecRoutes
 	assert.Equal(t, 2, r.Count())
 }
 
@@ -407,7 +399,7 @@ func TestHdrMaxForwards(t *testing.T) {
 	h, err := parseHeader(msg, []byte("Max-Forwards: 70\r\n"))
 	assert.Nil(t, err)
 	assert.Equal(t, SIPHdrMaxForwards, h)
-	assert.EqualValues(t, 70, msg.MaxForwards())
+	assert.EqualValues(t, 70, msg.MaxFwd)
 }
 
 func TestHdrOtherHeaders(t *testing.T) {
