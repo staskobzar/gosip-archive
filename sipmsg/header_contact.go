@@ -42,10 +42,7 @@ func (cl *ContactsList) Count() int {
 // First return first contact header of the SIP message
 func (cl *ContactsList) First() *Contact {
 	cl.iter = 0 // reset iteration
-	if len(cl.cnt) > 0 {
-		return &cl.cnt[0]
-	}
-	return nil
+	return &cl.cnt[0]
 }
 
 // Next iterate next contact header

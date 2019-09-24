@@ -25,6 +25,11 @@ func TestURIParse(t *testing.T) {
 	assert.Equal(t, "8080", uri.Port())
 	assert.Equal(t, "user=phone;lr", uri.Params())
 	assert.Equal(t, "X-t=foo&h=v", uri.Headers())
+	_, ok := uri.Param("lr")
+	assert.True(t, ok)
+	p, ok := uri.Param("user")
+	assert.True(t, ok)
+	assert.Equal(t, "phone", p)
 
 	uri = URIParse([]byte("sip:atlanta.com"))
 	assert.NotNil(t, uri)

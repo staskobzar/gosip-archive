@@ -1,7 +1,6 @@
 package sipmsg
 
 import (
-	"bufio"
 	"bytes"
 	"strconv"
 )
@@ -43,6 +42,7 @@ func MsgParse(data []byte) (*Message, error) {
 	if idx == -1 {
 		return nil, ErrorSIPMsgParse
 	}
+	// parse first line
 	idx += 2
 	hid, err := parseHeader(msg, data[:idx])
 	if err != nil {
@@ -52,28 +52,28 @@ func MsgParse(data []byte) (*Message, error) {
 		return nil, ErrorSIPMsgParse.msg("Missing Request/Status line")
 	}
 
-	splitFun := func(data []byte, atEOF bool) (int, []byte, error) {
-		if atEOF && len(data) == 0 {
-			return 0, nil, nil
-		}
-		if ix := bytes.Index(data, []byte("\r\n")); ix >= 0 {
-			if bytes.HasPrefix(data[ix:], []byte("\r\n ")) {
-				return 0, nil, nil
+	start := idx
+	for i := idx; i < len(data); {
+		if bytes.HasPrefix(data[i:], []byte("\r\n")) {
+			i += 2
+			if i < len(data) && (data[i] == ' ' || data[i] == '\t') {
+				continue
 			}
-			return ix + 2, data[:ix+2], nil
+			hid, err = parseHeader(msg, data[start:i])
+			if err != nil {
+				return nil, err
+			}
+			if hid == MsgEOF {
+				break
+			}
+			start = i
+			continue
 		}
-
-		return 0, nil, nil
+		i++
 	}
-	scanner := bufio.NewScanner(bytes.NewReader(data[idx:]))
-	scanner.Split(splitFun)
-	for scanner.Scan() {
-		if _, err := parseHeader(msg, scanner.Bytes()); err != nil {
-			return nil, err
-		}
-	}
-	if err := scanner.Err(); err != nil {
-		return nil, ErrorSIPMsgParse.msg("%s", err.Error())
+	// must be CRLF in the end of the SIP Message
+	if hid != MsgEOF {
+		return nil, ErrorSIPMsgParse.msg("Message must be finished with CRLF (%d)", hid)
 	}
 	return msg, nil
 }

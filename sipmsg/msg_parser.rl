@@ -108,7 +108,7 @@ func parseHeader(msg *Message, data []byte) (HdrType, error) {
                   @{ id = msg.setTo(data, params, pos[0], dname, addr, tag) };
     # @Contact@
     Contact     = name_contact >sm %push HCOLON >init_cnt 
-                  ( STAR %{msg.setContactStar()} | 
+                  ( STAR %{ msg.setContactStar() } | 
                   ( contact_value ( COMMA contact_value )* )) CRLF
                   @{ id = SIPHdrContact; };
     # @Via@
