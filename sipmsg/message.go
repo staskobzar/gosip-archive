@@ -16,6 +16,8 @@ type pl struct {
 	l ptr
 }
 
+var ErrorSIPMsgParse = errorNew("Invalid SIP Message")
+
 // Message SIP message structure
 type Message struct {
 	ReqLine    *RequestLine
@@ -26,27 +28,28 @@ type Message struct {
 	Vias       ViaList
 	Routes     RouteList
 	RecRoutes  RouteList
-	MaxFwd     uint
-	CSeq       uint
 	CallID     string
+	CSeq       uint
 	ContentLen uint // Content-Length
+	Expires    uint
+	MaxFwd     uint
 }
 
 // MsgParse parser SIP message to Message structure
-func MsgParse(data []byte) *Message {
+func MsgParse(data []byte) (*Message, error) {
 	msg := &Message{}
 
 	idx := bytes.Index(data, []byte("\r\n"))
 	if idx == -1 {
-		panic("Invalid SIP Message.")
+		return nil, ErrorSIPMsgParse
 	}
 	idx += 2
 	hid, err := parseHeader(msg, data[:idx])
 	if err != nil {
-		return nil // TODO: return errors ?
+		return nil, err
 	}
 	if !(hid == SIPHdrRequestLine || hid == SIPHdrStatusLine) {
-		return nil // TODO: return errors ?
+		return nil, ErrorSIPMsgParse.msg("Missing Request/Status line")
 	}
 
 	splitFun := func(data []byte, atEOF bool) (int, []byte, error) {
@@ -54,6 +57,9 @@ func MsgParse(data []byte) *Message {
 			return 0, nil, nil
 		}
 		if ix := bytes.Index(data, []byte("\r\n")); ix >= 0 {
+			if bytes.HasPrefix(data[ix:], []byte("\r\n ")) {
+				return 0, nil, nil
+			}
 			return ix + 2, data[:ix+2], nil
 		}
 
@@ -63,14 +69,20 @@ func MsgParse(data []byte) *Message {
 	scanner.Split(splitFun)
 	for scanner.Scan() {
 		if _, err := parseHeader(msg, scanner.Bytes()); err != nil {
-			return nil // TODO: return errors ?
+			return nil, err
 		}
 	}
 	if err := scanner.Err(); err != nil {
-		return nil // TODO: return errors ?
+		return nil, ErrorSIPMsgParse.msg("%s", err.Error())
 	}
-	return msg
+	return msg, nil
 }
+
+// IsRequest returns true is SIP Message is request
+func (m *Message) IsRequest() bool { return m.ReqLine != nil }
+
+// IsResponse returns true is SIP Message is response
+func (m *Message) IsResponse() bool { return m.StatusLine != nil }
 
 // private methods
 func (m *Message) setStatusLine(buf []byte, pos []pl) HdrType {
@@ -97,10 +109,8 @@ func (m *Message) setRequestLine(buf []byte, pos []pl) HdrType {
 
 func (m *Message) setCSeq(buf []byte, pos []pl) HdrType {
 	num := buf[pos[1].p:pos[1].l]
-	cseq, err := strconv.ParseUint(string(num), 10, 32)
-	if err != nil {
-		panic("Failed to parse CSeq header.")
-	}
+	// do not check return. Parser must assure it is a number
+	cseq, _ := strconv.ParseUint(string(num), 10, 32)
 	m.CSeq = uint(cseq)
 	return SIPHdrCSeq
 }
@@ -112,10 +122,8 @@ func (m *Message) setCallID(buf []byte, pos []pl) HdrType {
 
 func (m *Message) setContentLen(buf []byte, pos []pl) HdrType {
 	num := buf[pos[1].p:pos[1].l]
-	ln, err := strconv.ParseUint(string(num), 10, 32)
-	if err != nil {
-		panic("Failed to parse Content-Length header.")
-	}
+	// do not check return. Parser must assure it is a number
+	ln, _ := strconv.ParseUint(string(num), 10, 32)
 	m.ContentLen = uint(ln)
 	return SIPHdrContentLength
 }
@@ -184,11 +192,16 @@ func (m *Message) setRoute(hid HdrType, buf []byte, fname, dname, addr pl, param
 	m.Routes = append(m.Routes, r)
 }
 
+func (m *Message) setExpires(num []byte) HdrType {
+	// do not check return. Parser must assure it is a number
+	expires, _ := strconv.ParseUint(string(num), 10, 32)
+	m.Expires = uint(expires)
+	return SIPHdrExpires
+}
+
 func (m *Message) setMaxFwd(num []byte) HdrType {
-	max, err := strconv.ParseUint(string(num), 10, 32)
-	if err != nil {
-		panic("Failed to parse Max-Forwards header.")
-	}
+	// do not check return. Parser must assure it is a number
+	max, _ := strconv.ParseUint(string(num), 10, 32)
 	m.MaxFwd = uint(max)
 	return SIPHdrMaxForwards
 }

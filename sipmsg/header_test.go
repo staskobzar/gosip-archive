@@ -402,6 +402,14 @@ func TestHdrMaxForwards(t *testing.T) {
 	assert.EqualValues(t, 70, msg.MaxFwd)
 }
 
+func TestHdrExpires(t *testing.T) {
+	msg := &Message{}
+	h, err := parseHeader(msg, []byte("Expires: 1800\r\n"))
+	assert.Nil(t, err)
+	assert.Equal(t, SIPHdrExpires, h)
+	assert.EqualValues(t, 1800, msg.Expires)
+}
+
 func TestHdrOtherHeaders(t *testing.T) {
 	msg := &Message{}
 	h, err := parseHeader(msg, []byte("Foo: 70 BAR\r\n"))

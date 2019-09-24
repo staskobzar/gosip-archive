@@ -136,6 +136,7 @@
     name_contact    = "Contact"i | "m"i;
     name_via        = "Via"i | "v"i;
     name_route      = "Route"i;
+    name_expires    = "Expires"i;
     name_rroute     = "Record-Route"i;
     name_maxfwd     = "Max-Forwards"i;
 
@@ -149,6 +150,7 @@
                         name_via        |
                         name_route      |
                         name_rroute     |
+                        name_expires    |
                         name_maxfwd     );
 
     header_value    = (TEXT_UTF8CHAR | UTF8_CONT | LWS)*;

@@ -5,8 +5,9 @@ package sipmsg
 
 import (
     "bytes"
-    "errors"
 )
+
+var ErrorSIPHeader = errorNew("Invalid SIP Header")
 
 %% machine msg;
 %% write data;
@@ -14,7 +15,8 @@ import (
 func parseHeader(msg *Message, data []byte) (HdrType, error) {
     cs := 0 // current state. entery point = 0
     l := ptr(len(data))
-    var pos []pl
+    pos := make([]pl, 0, 12)
+    params := make([]pl, 0, 12)
     var p, // data pointer
         m, // marker
         pe ptr = 0, 0, l
@@ -27,7 +29,6 @@ func parseHeader(msg *Message, data []byte) (HdrType, error) {
         recvd,
         branch,
         tag pl;        // to/from tag
-    var params []pl;
 
     hidx := 0 // header value index
 
@@ -47,7 +48,7 @@ func parseHeader(msg *Message, data []byte) (HdrType, error) {
     action trans     { trans.p = m; trans.l = p }
     action param     { params = append(params, pl{m, p}) }
     action init_cnt  { msg.initContact(data, pos[0]) }
-    action reset_cnt { params = make([]pl, 0) }
+    action reset_cnt { params = make([]pl, 0, 12) }
     action init_via  { hidx = msg.Vias.Count() }
     action reset_via {
         branch.p = 0; branch.l = 0
@@ -59,7 +60,7 @@ func parseHeader(msg *Message, data []byte) (HdrType, error) {
     action via       {
         msg.setVia(data[:], pos[0], trans, addr, port, branch, ttl, maddr, recvd, hidx, p)
     }
-    action reset_route { params = make([]pl, 0) }
+    action reset_route { params = make([]pl, 0, 12) }
     action route     { msg.setRoute(id, data[:], pos[0], dname, addr, params) }
 
     include grammar "grammar.rl";
@@ -91,14 +92,14 @@ func parseHeader(msg *Message, data []byte) (HdrType, error) {
     RequestLine = Method >sm %push SP RequestURI >sm %push SP
                   SIP_Version >sm %push CRLF @{ id = msg.setRequestLine(data, pos) };
     # @CSeq@
-    CSeq        = name_cseq >sm %push HCOLON digit+ >sm %push
+    CSeq        = name_cseq >sm %push HCOLON digit{1,10} >sm %push
                   LWS Method >sm %push CRLF @{ id = msg.setCSeq(data, pos) };
     # @Call-ID@
     CallID      = name_callid >sm %push HCOLON
                   ( word ( "@" word )? ) >sm %push CRLF @{ id = msg.setCallID(data, pos) };
     # @Content-Length@
     ContentLen  = name_cnt_len >sm %push HCOLON
-                  digit+ >sm %push CRLF @{ id = msg.setContentLen(data, pos) };
+                  digit{1,10} >sm %push CRLF @{ id = msg.setContentLen(data, pos) };
     # @From@
     From        = name_from >sm %push HCOLON tofrom_value CRLF
                   @{ id = msg.setFrom(data, params, pos[0], dname, addr, tag) };
@@ -119,9 +120,10 @@ func parseHeader(msg *Message, data []byte) (HdrType, error) {
     # @Record-Route@
     RecordRoute = name_rroute >sm %push HCOLON %{id = SIPHdrRecordRoute}
                   route_param (COMMA route_param)* CRLF;
+    # @Expires@
+    Expires     = name_expires HCOLON digit{1,10} >sm %{ id = msg.setExpires(data[m:p]) } CRLF;
     # @Max-Forwards@
-    MaxForwards = name_maxfwd HCOLON digit{1,4} >sm 
-                  %{ id = msg.setMaxFwd(data[m:p]) } CRLF;
+    MaxForwards = name_maxfwd HCOLON digit{1,3} >sm %{ id = msg.setMaxFwd(data[m:p]) } CRLF;
     # Other headers (generic)
     OtherHeader = header_name HCOLON header_value CRLF @{ id = SIPHdrOther; };
 
@@ -130,6 +132,7 @@ func parseHeader(msg *Message, data []byte) (HdrType, error) {
               | CallID
               | Contact
               | ContentLen
+              | Expires
               | From
               | MaxForwards
               | RecordRoute
@@ -144,5 +147,5 @@ func parseHeader(msg *Message, data []byte) (HdrType, error) {
     if cs >= msg_first_final {
         return id, nil
     }
-    return -1, errors.New("Invalid SIP message header: " + string(data))
+    return -1, ErrorSIPHeader.msg("%s", data)
 }
