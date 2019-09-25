@@ -49,7 +49,7 @@ func TestMessageParseMultiLineHeaders(t *testing.T) {
 	assert.EqualValues(t, 69, msg.MaxFwd)
 	assert.Equal(t, 2, msg.Vias.Count())
 	assert.Equal(t, "12345600@atlanta.example.com", msg.CallID)
-	assert.Nil(t, msg.Contacts)
+	assert.Equal(t, 0, msg.Contacts.Count())
 }
 
 func TestMessageParseInvalidMsg(t *testing.T) {

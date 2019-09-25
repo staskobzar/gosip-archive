@@ -47,8 +47,7 @@ func parseHeader(msg *Message, data []byte) (HdrType, error) {
     action port      { port.p = m; port.l = p }
     action trans     { trans.p = m; trans.l = p }
     action param     { params = append(params, pl{m, p}) }
-    action init_cnt  { msg.initContact(data, pos[0]) }
-    action reset_cnt { params = make([]pl, 0, 12) }
+    action reset_cnt { hidx = msg.Contacts.Count(); params = make([]pl, 0, 12) }
     action init_via  { hidx = msg.Vias.Count() }
     action reset_via {
         branch.p = 0; branch.l = 0
@@ -56,16 +55,17 @@ func parseHeader(msg *Message, data []byte) (HdrType, error) {
         maddr.p  = 0; maddr.l  = 0
         recvd.p  = 0; recvd.l  = 0
     }
-    action contact   { msg.setContact(dname, addr, params, p) }
+    action contact   { msg.setContact(data[:], pos[0], dname, addr, params, hidx) }
     action via       {
-        msg.setVia(data[:], pos[0], trans, addr, port, branch, ttl, maddr, recvd, hidx, p)
+        msg.setVia(data[:], pos[0], trans, addr, port, branch, ttl, maddr, recvd, hidx)
     }
     action reset_route { params = make([]pl, 0, 12) }
     action route     { msg.setRoute(id, data[:], pos[0], dname, addr, params) }
 
     include grammar "grammar.rl";
 
-    addr_spec       = ((SIP_URI | ABS_URI) -- (COMMA)) >sm %addr;
+    # -- COMMA decreases machines but fails to parse , in To header username
+    addr_spec       = (SIP_URI | ABS_URI) >sm %addr;
     tag_param       = "tag"i EQUAL token >sm %tag;
     fromto_gparam   = (token -- "tag"i) >sm ( EQUAL gen_value )? %param;
     name_addr       = (display_name >sm %dname)? LAQUOT addr_spec RAQUOT;
@@ -107,7 +107,7 @@ func parseHeader(msg *Message, data []byte) (HdrType, error) {
     To          = name_to >sm %push HCOLON tofrom_value CRLF
                   @{ id = msg.setTo(data, params, pos[0], dname, addr, tag) };
     # @Contact@
-    Contact     = name_contact >sm %push HCOLON >init_cnt 
+    Contact     = name_contact >sm %push HCOLON
                   ( STAR %{ msg.setContactStar() } | 
                   ( contact_value ( COMMA contact_value )* )) CRLF
                   @{ id = SIPHdrContact; };
@@ -123,7 +123,7 @@ func parseHeader(msg *Message, data []byte) (HdrType, error) {
     # @Expires@
     Expires     = name_expires HCOLON digit{1,10} >sm %{ id = msg.setExpires(data[m:p]) } CRLF;
     # @Max-Forwards@
-    MaxForwards = name_maxfwd HCOLON digit{1,3} >sm %{ id = msg.setMaxFwd(data[m:p]) } CRLF;
+    MaxForwards = name_maxfwd HCOLON digit{1,6} >sm %{ id = msg.setMaxFwd(data[m:p]) } CRLF;
     # Other headers (generic)
     OtherHeader = header_name HCOLON header_value CRLF @{ id = SIPHdrOther; };
 

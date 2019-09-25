@@ -114,7 +114,11 @@
     RequestURI      = SIP_URI | ABS_URI;
 
     # machines for From/To headers
-    display_name    = (token LWS)* | quoted_string;
+    # display name by RFC3261 should be: *(token LWS)/ quoted-string
+    # but it requires space between token and <. RFC 4475 requires to
+    # accept headers with no space between token and <. This is why
+    # this little patch here. (rfc 4475 # 3.1.1.6)
+    display_name    = (token | LWS)* | quoted_string;
 
     # contact
     qvalue          = ( "0" ( "." digit{,3} )? ) | ( "1" ( "." "0"{,3} )? );

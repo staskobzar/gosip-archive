@@ -110,10 +110,10 @@ func TestHdrParseFrom(t *testing.T) {
 
 func TestHdrParseTo(t *testing.T) {
 	msg := &Message{}
-	h, err := parseHeader(msg, []byte("To: Carol <sip:212@chicago.com>\r\n"))
+	h, err := parseHeader(msg, []byte("To: Carol 212 <sip:212@chicago.com>\r\n"))
 	assert.Nil(t, err)
 	assert.Equal(t, SIPHdrTo, h)
-	assert.Equal(t, "Carol", msg.To.DisplayName())
+	assert.Equal(t, "Carol 212", msg.To.DisplayName())
 	assert.Equal(t, "sip:212@chicago.com", msg.To.Addr())
 	assert.Equal(t, "", msg.To.Tag())
 
@@ -169,7 +169,10 @@ func TestHdrParseContact(t *testing.T) {
 
 func TestHdrParseMultiContacts(t *testing.T) {
 	msg := &Message{}
-	h, err := parseHeader(msg, []byte("Contact: Alice <sip:2234@10.0.114.12:12543>;user=phone, sips:bob@voip.com;lr;cic=514284, \"123, rue Jones\" <sip:jones@sip.ca>\r\n"))
+	str := "Contact: Alice <sip:2234@10.0.114.12:12543>;\r\n" +
+		" user=phone, sips:bob@voip.com;  lr ; cic=514284," +
+		" \"123, rue Jones\" <sip:jones@sip.ca> ; par =\r\n  foo\r\n"
+	h, err := parseHeader(msg, []byte(str))
 	assert.Nil(t, err)
 	assert.Equal(t, SIPHdrContact, h)
 	cnt := msg.Contacts
@@ -202,19 +205,17 @@ func TestHdrParseMultiContacts(t *testing.T) {
 
 	c = cnt.Next()
 	assert.Nil(t, c)
+}
 
-	/* TODO: header with CRLF
+func TestHdrParseMultiHeaderContacts(t *testing.T) {
 	m := &Message{}
 	hs := "Contact: \"Mr. Watson\" <sip:watson@worcester.bell-telephone.com>\r\n" +
 		" ;q=0.7; expires=3600,\r\n" +
 		" \"Mr. Watson\" <mailto:watson@bell-telephone.com> ;q=0.1\r\n"
-	h, err = parseHeader(m, []byte(hs))
+	h, err := parseHeader(m, []byte(hs))
 	assert.Nil(t, err)
 	assert.Equal(t, SIPHdrContact, h)
-	cnt = m.Contacts()
-	assert.Equal(t, 2, cnt.Count())
-	fmt.Printf("%s\n", cnt.cnt[3].buf)
-	*/
+	assert.Equal(t, 2, m.Contacts.Count())
 }
 
 func TestHdrParseVia(t *testing.T) {

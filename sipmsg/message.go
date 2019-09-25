@@ -23,7 +23,7 @@ type Message struct {
 	StatusLine *StatusLine
 	From       *HeaderFromTo
 	To         *HeaderFromTo
-	Contacts   *ContactsList
+	Contacts   ContactsList
 	Vias       ViaList
 	Routes     RouteList
 	RecRoutes  RouteList
@@ -138,33 +138,21 @@ func (m *Message) setTo(buf []byte, params []pl, fname, dname, addr, tag pl) Hdr
 	return SIPHdrTo
 }
 
-func (m *Message) initContact(buf []byte, name pl) {
-	m.Contacts = &ContactsList{
-		buf:  buf,
-		name: name,
+func (m *Message) setContact(buf []byte, name, dname, addr pl, params []pl, i int) {
+	if m.Contacts.Count() == 0 || m.Contacts.Count() == i {
+		m.Contacts.cnt = append(m.Contacts.cnt, &Contact{buf: buf, name: name})
 	}
-}
-
-func (m *Message) setContact(dname, addr pl, params []pl, eol ptr) {
-	s := dname.p // shift len
-	for i := range params {
-		params[i].p -= s
-		params[i].l -= s
-	}
-	cnt := Contact{
-		buf:    m.Contacts.buf[dname.p:eol],
-		dname:  pl{dname.p - s, dname.l - s},
-		addr:   pl{addr.p - s, addr.l - s},
-		params: params,
-	}
-	m.Contacts.push(cnt)
+	m.Contacts.cnt[i].name = name
+	m.Contacts.cnt[i].dname = dname
+	m.Contacts.cnt[i].addr = addr
+	m.Contacts.cnt[i].params = params
 }
 
 func (m *Message) setContactStar() {
 	m.Contacts.star = true
 }
 
-func (m *Message) setVia(data []byte, name, trans, addr, port, branch, ttl, maddr, recevd pl, i int, eol ptr) {
+func (m *Message) setVia(data []byte, name, trans, addr, port, branch, ttl, maddr, recevd pl, i int) {
 	if m.Vias.Count() == 0 || m.Vias.Count() == i {
 		m.Vias = append(m.Vias, &Via{buf: data, name: name})
 	}

@@ -5,6 +5,7 @@ import "bytes"
 // Contact SIP contact entity
 type Contact struct {
 	buf    []byte
+	name   pl
 	dname  pl
 	addr   pl
 	params []pl
@@ -27,9 +28,7 @@ func (c *Contact) Param(name string) (string, bool) {
 
 // ContactsList SIP message contacts list
 type ContactsList struct {
-	buf  []byte
-	name pl
-	cnt  []Contact
+	cnt  []*Contact
 	iter int
 	star bool // Contact list is *
 }
@@ -42,14 +41,14 @@ func (cl *ContactsList) Count() int {
 // First return first contact header of the SIP message
 func (cl *ContactsList) First() *Contact {
 	cl.iter = 0 // reset iteration
-	return &cl.cnt[0]
+	return cl.cnt[0]
 }
 
 // Next iterate next contact header
 func (cl *ContactsList) Next() *Contact {
 	cl.iter++
 	if cl.iter < len(cl.cnt) {
-		return &cl.cnt[cl.iter]
+		return cl.cnt[cl.iter]
 	}
 	return nil
 }
@@ -57,8 +56,4 @@ func (cl *ContactsList) Next() *Contact {
 // IsStar returns True if SIP contact has STAR "*"
 func (cl *ContactsList) IsStar() bool {
 	return cl.star
-}
-
-func (cl *ContactsList) push(cnt Contact) {
-	cl.cnt = append(cl.cnt, cnt)
 }
