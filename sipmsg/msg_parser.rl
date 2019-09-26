@@ -125,7 +125,8 @@ func parseHeader(msg *Message, data []byte) (HdrType, error) {
     # @Max-Forwards@
     MaxForwards = name_maxfwd HCOLON digit{1,6} >sm %{ id = msg.setMaxFwd(data[m:p]) } CRLF;
     # Other headers (generic)
-    OtherHeader = header_name HCOLON header_value CRLF @{ id = SIPHdrOther; };
+    OtherHeader = header_name >sm %push HCOLON %sm header_value %push CRLF
+                  @{ id = msg.setGenericHeader(data, pos) };
 
     siphdr :=   StatusLine
               | CSeq

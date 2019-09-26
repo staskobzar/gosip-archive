@@ -23,15 +23,16 @@ type Message struct {
 	StatusLine *StatusLine
 	From       *HeaderFromTo
 	To         *HeaderFromTo
+	CSeq       *CSeq
 	Contacts   ContactsList
 	Vias       ViaList
 	Routes     RouteList
 	RecRoutes  RouteList
 	CallID     string
-	CSeq       uint
 	ContentLen uint // Content-Length
 	Expires    uint
 	MaxFwd     uint
+	Headers    HeadersList
 }
 
 // MsgParse parser SIP message to Message structure
@@ -111,7 +112,7 @@ func (m *Message) setCSeq(buf []byte, pos []pl) HdrType {
 	num := buf[pos[1].p:pos[1].l]
 	// do not check return. Parser must assure it is a number
 	cseq, _ := strconv.ParseUint(string(num), 10, 32)
-	m.CSeq = uint(cseq)
+	m.CSeq = &CSeq{uint(cseq), string(buf[pos[2].p:pos[2].l])}
 	return SIPHdrCSeq
 }
 
@@ -192,4 +193,21 @@ func (m *Message) setMaxFwd(num []byte) HdrType {
 	max, _ := strconv.ParseUint(string(num), 10, 32)
 	m.MaxFwd = uint(max)
 	return SIPHdrMaxForwards
+}
+
+func (m *Message) setGenericHeader(buf []byte, pos []pl) HdrType {
+	l := len(pos) - 1
+	// non-determinism workarround
+	// TODO: improve multiline value parsing (?)
+	if int(pos[l].l) < len(buf)-2 {
+		return -1
+	}
+	h := &Header{
+		buf:   buf,
+		id:    SIPHdrOther,
+		name:  pos[0],
+		value: pos[l],
+	}
+	m.Headers = append(m.Headers, h)
+	return SIPHdrOther
 }

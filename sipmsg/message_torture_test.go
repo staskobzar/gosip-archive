@@ -3,8 +3,9 @@ package sipmsg
 import (
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"strings"
+
+	"github.com/stretchr/testify/assert"
 )
 
 /*
@@ -51,12 +52,30 @@ func TestMsgParseTortureWsinv(t *testing.T) {
 	assert.Equal(t, "sip:jdrosen@example.com", msg.From.Addr())
 	assert.Equal(t, "98asjd8", msg.From.Tag())
 	assert.EqualValues(t, 68, msg.MaxFwd)
-	assert.EqualValues(t, 9, msg.CSeq)
+	assert.EqualValues(t, 9, msg.CSeq.Num)
+	assert.EqualValues(t, "INVITE", msg.CSeq.Method)
 	assert.Equal(t, 3, msg.Vias.Count())
 	assert.Equal(t, 1, msg.Routes.Count())
 	assert.Equal(t, 1, msg.Contacts.Count())
 	assert.Equal(t, "sip:jdrosen@example.com", msg.Contacts.First().Location())
-	// TODO: generic header test
+
+	h := msg.Headers.FindByName("s")
+	assert.NotNil(t, h)
+	assert.Equal(t, "", h.Value())
+
+	h = msg.Headers.FindByName("NewFangledHeader")
+	assert.NotNil(t, h)
+	assert.Equal(t, "newfangled value\r\n continued newfangled value", h.Value())
+
+	h = msg.Headers.FindByName("UnknownHeaderWithUnusualValue")
+	assert.NotNil(t, h)
+	assert.Equal(t, ";;,,;;,;", h.Value())
+
+	h = msg.Headers.FindByName("Content-type")
+	assert.NotNil(t, h)
+	assert.Equal(t, "application/sdp", h.Value())
+
+	assert.Equal(t, 4, msg.Headers.Count())
 }
 
 // 3.1.1.2.  Wide Range of Valid Characters
@@ -68,13 +87,13 @@ func TestMsgParseTortureIntmeth(t *testing.T) {
 
 		"Via: SIP/2.0/TCP host1.example.com;branch=z9hG4bK-.!%66*_+`'~\r\n" +
 
-		`To: "BEL:\x07 NUL:\x00 DEL:\x7F" ` +
+		"To: \"BEL:\\\x07 NUL:\\\x00 DEL:\\\x7F\" " +
 		"<sip:1_unusual.URI~(to-be!sure)&isn't+it$/crazy?,/;;*" +
 		"@example.com>\r\n" +
 
 		"From: token1~` token2'+_ token3*%!.- <sip:mundane@example.com>" +
 		";fromParam''~+*_!.-%=" +
-		"\"D180D0B0D0B1D0BED182D0B0D18ED189D0B8D0B9\"" +
+		"\"\xD1\x80\xD0\xB0\xD0\xB1\xD0\xBE\xD1\x82\xD0\xB0\xD1\x8E\xD1\x89\xD0\xB8\xD0\xB9\"" +
 		";tag=_token~1'+`*%!-.\r\n" +
 
 		"Call-ID: intmeth.word%ZK-!.*_+'@word`~)(><:\\/\"][?}{\r\n" +
@@ -82,7 +101,7 @@ func TestMsgParseTortureIntmeth(t *testing.T) {
 		"Max-Forwards: 255\r\n" +
 
 		"extensionHeader-!.%*+_`'~:" +
-		"EFBBBFE5A4A7E5819CE99BBB\r\n" +
+		"\xEF\xBB\xBF\xE5\xA4\xA7\xE5\x81\x9C\xE9\x9B\xBB\r\n" +
 
 		"Content-Length: 0\r\n\r\n"
 	msg, err := MsgParse([]byte(str))
@@ -91,9 +110,14 @@ func TestMsgParseTortureIntmeth(t *testing.T) {
 	assert.Equal(t, "sip:1_unusual.URI~(to-be!sure)&isn't+it$/crazy?,/;;*"+
 		":&it+has=1,weird!*pas$wo~d_too.(doesn't-it)@example.com",
 		msg.ReqLine.RequestURI())
-	assert.Equal(t, `"BEL:\x07 NUL:\x00 DEL:\x7F"`,
+	assert.Equal(t, "\"BEL:\\\x07 NUL:\\\x00 DEL:\\\x7F\"",
 		msg.To.DisplayName())
-	// TODO: generic header test
+
+	h := msg.Headers.FindByName("extensionHeader-!.%*+_`'~")
+	assert.NotNil(t, h)
+	assert.Equal(t, "\xEF\xBB\xBF\xE5\xA4\xA7\xE5\x81\x9C\xE9\x9B\xBB", h.Value())
+
+	assert.Equal(t, 1, msg.Headers.Count())
 }
 
 // TODO: esc01, escnull, esc02
@@ -214,7 +238,14 @@ func TestMsgParseTortureSemiUri(t *testing.T) {
 	ruri := msg.ReqLine.RequestURI()
 	uri := URIParse([]byte(ruri))
 	assert.Equal(t, "user;par=u%40example.net", uri.User())
-	// TODO: test generic header Accept
+
+	h := msg.Headers.FindByName("accept")
+	assert.NotNil(t, h)
+	assert.Equal(t, "application/sdp, application/pkcs7-mime,\r\n"+
+		"        multipart/mixed, multipart/signed,\r\n"+
+		"        message/sip, message/sipfrag", h.Value())
+
+	assert.Equal(t, 1, msg.Headers.Count())
 }
 
 // TODO: transports, mpart01

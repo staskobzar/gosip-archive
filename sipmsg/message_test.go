@@ -24,7 +24,8 @@ func TestMessageParse(t *testing.T) {
 	assert.Equal(t, "sip:registrar.biloxi.com", msg.ReqLine.RequestURI())
 	assert.EqualValues(t, 7200, msg.Expires)
 	assert.Equal(t, 1, msg.Vias.Count())
-	assert.EqualValues(t, 1826, msg.CSeq)
+	assert.EqualValues(t, 1826, msg.CSeq.Num)
+	assert.EqualValues(t, "REGISTER", msg.CSeq.Method)
 	assert.Equal(t, "843817637684230@998sdasdh09", msg.CallID)
 }
 
@@ -45,7 +46,8 @@ func TestMessageParseMultiLineHeaders(t *testing.T) {
 	assert.Nil(t, err)
 	assert.False(t, msg.IsRequest())
 	assert.True(t, msg.IsResponse())
-	assert.EqualValues(t, 1, msg.CSeq)
+	assert.EqualValues(t, 1, msg.CSeq.Num)
+	assert.Equal(t, "BYE", msg.CSeq.Method)
 	assert.EqualValues(t, 69, msg.MaxFwd)
 	assert.Equal(t, 2, msg.Vias.Count())
 	assert.Equal(t, "12345600@atlanta.example.com", msg.CallID)
@@ -89,6 +91,38 @@ func TestMessageParseInvalidHeader(t *testing.T) {
 	assert.NotNil(t, err)
 	assert.Equal(t, ErrorSIPHeader, err)
 	assert.Contains(t, err.Error(), "Call-ID:\r\n")
+}
+
+func TestMessageParseHeadersList(t *testing.T) {
+	str := "REGISTER sips:ss2.biloxi.example.com SIP/2.0\r\n" +
+		"Via: SIP/2.0/TLS client.biloxi.example.com:5061;branch=z9hG4bKnashds7\r\n" +
+		"Max-Forwards: 70\r\n" +
+		"From: Bob <sips:bob@biloxi.example.com>;tag=a73kszlfl\r\n" +
+		"To: Bob <sips:bob@biloxi.example.com>\r\n" +
+		"Call-ID: 1j9FpLxk3uxtm8tn@biloxi.example.com\r\n" +
+		"CSeq: 1 REGISTER\r\n" +
+		"Contact: <sips:bob@client.biloxi.example.com>\r\n" +
+		"City: Santa-Foo\r\n" +
+		"Address: 555-21 St-Maria\r\n" +
+		"Post-Code: 889-774\r\n" +
+		"Content-Length: 0\r\n\r\n"
+	msg, err := MsgParse([]byte(str))
+	assert.Nil(t, err)
+	assert.True(t, msg.IsRequest())
+
+	h := msg.Headers.FindByName("city")
+	assert.NotNil(t, h)
+	assert.Equal(t, "Santa-Foo", h.Value())
+
+	h = msg.Headers.FindByName("Address")
+	assert.NotNil(t, h)
+	assert.Equal(t, "555-21 St-Maria", h.Value())
+
+	h = msg.Headers.FindByName("Post-code")
+	assert.NotNil(t, h)
+	assert.Equal(t, "889-774", h.Value())
+
+	assert.Equal(t, 3, msg.Headers.Count())
 }
 
 func BenchmarkMessageParse(b *testing.B) {

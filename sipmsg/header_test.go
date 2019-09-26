@@ -31,7 +31,8 @@ func TestHdrParseCSeq(t *testing.T) {
 	h, err := parseHeader(msg, []byte("CSeq: 4711 INVITE\r\n"))
 	assert.Nil(t, err)
 	assert.Equal(t, SIPHdrCSeq, h)
-	assert.EqualValues(t, 4711, msg.CSeq)
+	assert.EqualValues(t, 4711, msg.CSeq.Num)
+	assert.EqualValues(t, "INVITE", msg.CSeq.Method)
 }
 
 func TestHdrParseCallID(t *testing.T) {
