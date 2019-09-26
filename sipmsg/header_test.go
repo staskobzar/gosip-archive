@@ -418,3 +418,90 @@ func TestHdrGenericHeaders(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, SIPHdrGeneric, h)
 }
+
+func TestHdrAccept(t *testing.T) {
+	msg := &Message{}
+	hid, err := parseHeader(msg, []byte("accept:  application/sdp;level=1, application/x-private\r\n"))
+	assert.Nil(t, err)
+	assert.Equal(t, SIPHdrAccept, hid)
+	assert.Equal(t, "application/sdp;level=1, application/x-private",
+		msg.Headers.Find(SIPHdrAccept).Value())
+}
+
+func TestHdrAcceptEncoding(t *testing.T) {
+	msg := &Message{}
+	hid, err := parseHeader(msg, []byte("Accept-Encoding: gzip\r\n"))
+	assert.Nil(t, err)
+	assert.Equal(t, SIPHdrAcceptEncoding, hid)
+	assert.Equal(t, "gzip", msg.Headers.Find(SIPHdrAcceptEncoding).Value())
+}
+
+func TestHdrAcceptLanguage(t *testing.T) {
+	msg := &Message{}
+	hid, err := parseHeader(msg, []byte("Accept-Language: da, en-gb;q=0.8, en;q=0.7\r\n"))
+	assert.Nil(t, err)
+	assert.Equal(t, SIPHdrAcceptLanguage, hid)
+	assert.Equal(t, "da, en-gb;q=0.8, en;q=0.7", msg.Headers.Find(SIPHdrAcceptLanguage).Value())
+}
+
+func TestHdrAlertInfo(t *testing.T) {
+	msg := &Message{}
+	hid, err := parseHeader(msg,
+		[]byte("Alert-Info: <http://www.example.com/sounds/moo.wav>\r\n"))
+	assert.Nil(t, err)
+	assert.Equal(t, SIPHdrAlertInfo, hid)
+	assert.Equal(t, "<http://www.example.com/sounds/moo.wav>",
+		msg.Headers.Find(SIPHdrAlertInfo).Value())
+}
+
+func TestHdrAllow(t *testing.T) {
+	msg := &Message{}
+	hid, err := parseHeader(msg, []byte("allow : INVITE, ACK, OPTIONS, CANCEL, BYE\r\n"))
+	assert.Nil(t, err)
+	assert.Equal(t, SIPHdrAllow, hid)
+	assert.Equal(t, "INVITE, ACK, OPTIONS, CANCEL, BYE", msg.Headers.Find(SIPHdrAllow).Value())
+}
+
+func TestHdrAuthInfo(t *testing.T) {
+	msg := &Message{}
+	hid, err := parseHeader(msg,
+		[]byte("Authentication-Info: nextnonce=\"47364c23432d2e131a5fb210812c\"\r\n"))
+	assert.Nil(t, err)
+	assert.Equal(t, SIPHdrAuthenticationInfo, hid)
+	assert.Equal(t, "nextnonce=\"47364c23432d2e131a5fb210812c\"",
+		msg.Headers.Find(SIPHdrAuthenticationInfo).Value())
+}
+
+func TestHdrAuthorization(t *testing.T) {
+	msg := &Message{}
+	str := "Authorization: Digest username=\"Alice\", realm=\"atlanta.com\",\r\n" +
+		" nonce=\"84a4cc6f3082121f32b42a2187831a9e\",\r\n" +
+		" response=\"7587245234b3434cc3412213e5f113a5432\"\r\n"
+	hid, err := parseHeader(msg, []byte(str))
+	assert.Nil(t, err)
+	assert.Equal(t, SIPHdrAuthorization, hid)
+	assert.Equal(t, "Digest username=\"Alice\", realm=\"atlanta.com\",\r\n"+
+		" nonce=\"84a4cc6f3082121f32b42a2187831a9e\",\r\n"+
+		" response=\"7587245234b3434cc3412213e5f113a5432\"",
+		msg.Headers.Find(SIPHdrAuthorization).Value())
+}
+
+func TestHdrCallInfo(t *testing.T) {
+	msg := &Message{}
+	str := "Call-Info: <http://wwww.example.com/alice/photo.jpg> ;purpose=icon,\r\n" +
+		" <http://www.example.com/alice/> ;purpose=info\r\n"
+	hid, err := parseHeader(msg, []byte(str))
+	assert.Nil(t, err)
+	assert.Equal(t, SIPHdrCallInfo, hid)
+	assert.Equal(t, "<http://wwww.example.com/alice/photo.jpg> ;purpose=icon,\r\n"+
+		" <http://www.example.com/alice/> ;purpose=info",
+		msg.Headers.Find(SIPHdrCallInfo).Value())
+}
+
+func TestHdrContentDispo(t *testing.T) {
+	msg := &Message{}
+	hid, err := parseHeader(msg, []byte("Content-Disposition: session\r\n"))
+	assert.Nil(t, err)
+	assert.Equal(t, SIPHdrContentDisposition, hid)
+	assert.Equal(t, "session", msg.Headers.Find(SIPHdrContentDisposition).Value())
+}

@@ -125,8 +125,27 @@ func parseHeader(msg *Message, data []byte) (HdrType, error) {
     # @Max-Forwards@
     MaxForwards = name_maxfwd HCOLON digit{1,6} >sm %{ id = msg.setMaxFwd(data[m:p]) } CRLF;
     # Generic headers
+    Accept      = name_accept >sm %push HCOLON %sm header_value %push CRLF
+                  @{ id = msg.setGenericHeader(data, pos, SIPHdrAccept) };
+    AcceptEnc   = name_acc_enc >sm %push HCOLON %sm header_value %push CRLF
+                  @{ id = msg.setGenericHeader(data, pos, SIPHdrAcceptEncoding) };
+    AcceptLang  = name_acc_lang >sm %push HCOLON %sm header_value %push CRLF
+                  @{ id = msg.setGenericHeader(data, pos, SIPHdrAcceptLanguage) };
+    AlertInfo   = name_alert >sm %push HCOLON %sm header_value %push CRLF
+                  @{ id = msg.setGenericHeader(data, pos, SIPHdrAlertInfo) };
+    Allow       = name_allow >sm %push HCOLON %sm header_value %push CRLF
+                  @{ id = msg.setGenericHeader(data, pos, SIPHdrAllow) };
+    AuthInfo    = name_auth_info >sm %push HCOLON %sm header_value %push CRLF
+                  @{ id = msg.setGenericHeader(data, pos, SIPHdrAuthenticationInfo) };
+    Auth        = name_auth >sm %push HCOLON %sm header_value %push CRLF
+                  @{ id = msg.setGenericHeader(data, pos, SIPHdrAuthorization) };
+    CallInfo    = name_call_info >sm %push HCOLON %sm header_value %push CRLF
+                  @{ id = msg.setGenericHeader(data, pos, SIPHdrCallInfo) };
+    ContDispo   = name_cont_disp >sm %push HCOLON %sm header_value %push CRLF
+                    @{ id = msg.setGenericHeader(data, pos, SIPHdrContentDisposition) };
+
     GenericHeader = header_name >sm %push HCOLON %sm header_value %push CRLF
-                  @{ id = msg.setGenericHeader(data, pos) };
+                  @{ id = msg.setGenericHeader(data, pos, SIPHdrGeneric) };
 
     siphdr :=   StatusLine
               | RequestLine
@@ -141,6 +160,15 @@ func parseHeader(msg *Message, data []byte) (HdrType, error) {
               | Route
               | To
               | Via
+              | Accept
+              | AcceptEnc
+              | AcceptLang
+              | AlertInfo
+              | Allow
+              | AuthInfo
+              | Auth
+              | CallInfo
+              | ContDispo
               | GenericHeader;
 }%%
     %% write init;

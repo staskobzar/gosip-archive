@@ -75,6 +75,15 @@ func (l HeadersList) FindByName(name string) *Header {
 	return nil
 }
 
+func (l HeadersList) Find(id HdrType) *Header {
+	for _, h := range l {
+		if h.ID() == id {
+			return h
+		}
+	}
+	return nil
+}
+
 type Header struct {
 	buf   []byte
 	id    HdrType

@@ -143,6 +143,16 @@
     name_expires    = "Expires"i;
     name_rroute     = "Record-Route"i;
     name_maxfwd     = "Max-Forwards"i;
+    # other headers
+    name_accept     = "Accept"i;
+    name_acc_enc    = "Accept-Encoding"i;
+    name_acc_lang   = "Accept-Language"i;
+    name_alert      = "Alert-Info"i;
+    name_allow      = "Allow"i;
+    name_auth_info  = "Authentication-Info"i;
+    name_auth       = "Authorization"i;
+    name_call_info  = "Call-Info"i;
+    name_cont_disp  = "Content-Disposition"i;
 
     header_name     = token - (
                         name_cseq       |
@@ -155,6 +165,15 @@
                         name_route      |
                         name_rroute     |
                         name_expires    |
+                        name_accept     |
+                        name_acc_enc    |
+                        name_acc_lang   |
+                        name_alert      |
+                        name_allow      |
+                        name_auth_info  |
+                        name_auth       |
+                        name_call_info  |
+                        name_cont_disp  |
                         name_maxfwd     );
 
     header_value    = (TEXT_UTF8CHAR | UTF8_CONT | LWS)*;

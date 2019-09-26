@@ -195,7 +195,7 @@ func (m *Message) setMaxFwd(num []byte) HdrType {
 	return SIPHdrMaxForwards
 }
 
-func (m *Message) setGenericHeader(buf []byte, pos []pl) HdrType {
+func (m *Message) setGenericHeader(buf []byte, pos []pl, id HdrType) HdrType {
 	l := len(pos) - 1
 	// non-determinism workarround
 	// TODO: improve multiline value parsing (?)
@@ -204,10 +204,10 @@ func (m *Message) setGenericHeader(buf []byte, pos []pl) HdrType {
 	}
 	h := &Header{
 		buf:   buf,
-		id:    SIPHdrGeneric,
+		id:    id,
 		name:  pos[0],
 		value: pos[l],
 	}
 	m.Headers = append(m.Headers, h)
-	return SIPHdrGeneric
+	return id
 }
