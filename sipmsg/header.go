@@ -11,7 +11,7 @@ type HdrType int
 // SIP Header identifiers
 const (
 	MsgEOF HdrType = iota
-	SIPHdrOther
+	SIPHdrGeneric
 	SIPHdrRequestLine
 	SIPHdrStatusLine
 	SIPHdrAccept

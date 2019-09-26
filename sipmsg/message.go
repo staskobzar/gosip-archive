@@ -204,10 +204,10 @@ func (m *Message) setGenericHeader(buf []byte, pos []pl) HdrType {
 	}
 	h := &Header{
 		buf:   buf,
-		id:    SIPHdrOther,
+		id:    SIPHdrGeneric,
 		name:  pos[0],
 		value: pos[l],
 	}
 	m.Headers = append(m.Headers, h)
-	return SIPHdrOther
+	return SIPHdrGeneric
 }

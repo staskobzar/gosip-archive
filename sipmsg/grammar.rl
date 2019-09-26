@@ -30,7 +30,7 @@
                       ( 0xFC..0xFD UTF8_CONT{5} );
     TEXT_UTF8CHAR   = 0x21..0x7E | UTF8_NONASCII;
 
-    quoted_pair     = '\' (0x00..0x09 | 0x0B..0x0C | 0x0E..0x7F);
+    quoted_pair     = '\\' (0x00..0x09 | 0x0B..0x0C | 0x0E..0x7F);
     qdtext          = LWS | 0x21 | 0x23..0x5B | 0x5D..0x7E | UTF8_NONASCII;
     quoted_string   = SWS DQUOTE ( qdtext | quoted_pair )* DQUOTE;
     # TODO: pound (#) is not allowed but often used.(?)

@@ -412,9 +412,9 @@ func TestHdrExpires(t *testing.T) {
 	assert.EqualValues(t, 1800, msg.Expires)
 }
 
-func TestHdrOtherHeaders(t *testing.T) {
+func TestHdrGenericHeaders(t *testing.T) {
 	msg := &Message{}
 	h, err := parseHeader(msg, []byte("Foo: 70 BAR\r\n"))
 	assert.Nil(t, err)
-	assert.Equal(t, SIPHdrOther, h)
+	assert.Equal(t, SIPHdrGeneric, h)
 }

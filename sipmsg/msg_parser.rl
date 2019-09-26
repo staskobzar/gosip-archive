@@ -124,11 +124,12 @@ func parseHeader(msg *Message, data []byte) (HdrType, error) {
     Expires     = name_expires HCOLON digit{1,10} >sm %{ id = msg.setExpires(data[m:p]) } CRLF;
     # @Max-Forwards@
     MaxForwards = name_maxfwd HCOLON digit{1,6} >sm %{ id = msg.setMaxFwd(data[m:p]) } CRLF;
-    # Other headers (generic)
-    OtherHeader = header_name >sm %push HCOLON %sm header_value %push CRLF
+    # Generic headers
+    GenericHeader = header_name >sm %push HCOLON %sm header_value %push CRLF
                   @{ id = msg.setGenericHeader(data, pos) };
 
     siphdr :=   StatusLine
+              | RequestLine
               | CSeq
               | CallID
               | Contact
@@ -137,11 +138,10 @@ func parseHeader(msg *Message, data []byte) (HdrType, error) {
               | From
               | MaxForwards
               | RecordRoute
-              | RequestLine
               | Route
               | To
               | Via
-              | OtherHeader;
+              | GenericHeader;
 }%%
     %% write init;
     %% write exec;
