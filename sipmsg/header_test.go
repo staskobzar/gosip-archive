@@ -505,3 +505,210 @@ func TestHdrContentDispo(t *testing.T) {
 	assert.Equal(t, SIPHdrContentDisposition, hid)
 	assert.Equal(t, "session", msg.Headers.Find(SIPHdrContentDisposition).Value())
 }
+
+func TestHdrContentEncoding(t *testing.T) {
+	msg := &Message{}
+	hid, err := parseHeader(msg, []byte("e  : tar\r\n"))
+	assert.Nil(t, err)
+	assert.Equal(t, SIPHdrContentEncoding, hid)
+	assert.Equal(t, "tar", msg.Headers.Find(SIPHdrContentEncoding).Value())
+}
+
+func TestHdrContentLanguage(t *testing.T) {
+	msg := &Message{}
+	hid, err := parseHeader(msg, []byte("Content-Language: fr\r\n"))
+	assert.Nil(t, err)
+	assert.Equal(t, SIPHdrContentLanguage, hid)
+	assert.Equal(t, "fr", msg.Headers.Find(SIPHdrContentLanguage).Value())
+}
+
+func TestHdrContentType(t *testing.T) {
+	msg := &Message{}
+	hid, err := parseHeader(msg, []byte("C : text/html; charset=ISO-8859-4\r\n"))
+	assert.Nil(t, err)
+	assert.Equal(t, SIPHdrContentType, hid)
+	assert.Equal(t, "text/html; charset=ISO-8859-4",
+		msg.Headers.Find(SIPHdrContentType).Value())
+}
+
+func TestHdrDate(t *testing.T) {
+	msg := &Message{}
+	hid, err := parseHeader(msg, []byte("Date: Sat, 13 Nov 2010 23:29:00 GMT\r\n"))
+	assert.Nil(t, err)
+	assert.Equal(t, SIPHdrDate, hid)
+	assert.Equal(t, "Sat, 13 Nov 2010 23:29:00 GMT", msg.Headers.Find(SIPHdrDate).Value())
+}
+
+func TestHdrErrorInfo(t *testing.T) {
+	msg := &Message{}
+	hid, err := parseHeader(msg, []byte("Error-Info: <sip:not-in-service-recording@atlanta.com>\r\n"))
+	assert.Nil(t, err)
+	assert.Equal(t, SIPHdrErrorInfo, hid)
+	assert.Equal(t, "<sip:not-in-service-recording@atlanta.com>",
+		msg.Headers.Find(SIPHdrErrorInfo).Value())
+}
+
+func TestHdrInReplyTo(t *testing.T) {
+	msg := &Message{}
+	hid, err := parseHeader(msg, []byte("In-Reply-To: 70710@saturn.bell-tel.com, 17320@saturn.bell-tel.com\r\n"))
+	assert.Nil(t, err)
+	assert.Equal(t, SIPHdrInReplyTo, hid)
+	assert.Equal(t, "70710@saturn.bell-tel.com, 17320@saturn.bell-tel.com", msg.Headers.Find(SIPHdrInReplyTo).Value())
+}
+
+func TestHdrMIMEVersion(t *testing.T) {
+	msg := &Message{}
+	hid, err := parseHeader(msg, []byte("MIME-Version: 1.0\r\n"))
+	assert.Nil(t, err)
+	assert.Equal(t, SIPHdrMIMEVersion, hid)
+	assert.Equal(t, "1.0", msg.Headers.Find(SIPHdrMIMEVersion).Value())
+}
+
+func TestHdrMinExpires(t *testing.T) {
+	msg := &Message{}
+	hid, err := parseHeader(msg, []byte("Min-Expires: 60\r\n"))
+	assert.Nil(t, err)
+	assert.Equal(t, SIPHdrMinExpires, hid)
+	assert.Equal(t, "60", msg.Headers.Find(SIPHdrMinExpires).Value())
+}
+
+func TestHdrOrganization(t *testing.T) {
+	msg := &Message{}
+	hid, err := parseHeader(msg, []byte("Organization: Boxes by Bob\r\n"))
+	assert.Nil(t, err)
+	assert.Equal(t, SIPHdrOrganization, hid)
+	assert.Equal(t, "Boxes by Bob", msg.Headers.Find(SIPHdrOrganization).Value())
+}
+
+func TestHdrPriority(t *testing.T) {
+	msg := &Message{}
+	hid, err := parseHeader(msg, []byte("Priority: non-urgent\r\n"))
+	assert.Nil(t, err)
+	assert.Equal(t, SIPHdrPriority, hid)
+	assert.Equal(t, "non-urgent", msg.Headers.Find(SIPHdrPriority).Value())
+}
+
+func TestHdrProxyAuthenticate(t *testing.T) {
+	msg := &Message{}
+	str := "Digest realm=\"atlanta.com\",\r\n" +
+		" domain=\"sip:ss1.carrier.com\", qop=\"auth\",\r\n" +
+		" nonce=\"f84f1cec41e6cbe5aea9c8e88d359\",\r\n" +
+		" opaque=\"\", stale=FALSE, algorithm=MD5"
+	hid, err := parseHeader(msg, []byte("Proxy-Authenticate: "+str+"\r\n"))
+	assert.Nil(t, err)
+	assert.Equal(t, SIPHdrProxyAuthenticate, hid)
+	assert.Equal(t, str, msg.Headers.Find(SIPHdrProxyAuthenticate).Value())
+}
+
+func TestHdrProxyAuthorization(t *testing.T) {
+	msg := &Message{}
+	str := "Digest username=\"Alice\", realm=\"atlanta.com\",\r\n" +
+		"   nonce=\"c60f3082ee1212b402a21831ae\",\r\n" +
+		"   response=\"245f23415f11432b3434341c022\""
+	hid, err := parseHeader(msg, []byte("Proxy-Authorization:"+str+"\r\n"))
+	assert.Nil(t, err)
+	assert.Equal(t, SIPHdrProxyAuthorization, hid)
+	assert.Equal(t, str, msg.Headers.Find(SIPHdrProxyAuthorization).Value())
+}
+
+func TestHdrProxyRequired(t *testing.T) {
+	msg := &Message{}
+	hid, err := parseHeader(msg, []byte("Proxy-Require: foo\r\n"))
+	assert.Nil(t, err)
+	assert.Equal(t, SIPHdrProxyRequire, hid)
+	assert.Equal(t, "foo", msg.Headers.Find(SIPHdrProxyRequire).Value())
+}
+
+func TestHdrReplyTo(t *testing.T) {
+	msg := &Message{}
+	hid, err := parseHeader(msg, []byte("Reply-To: Bob <sip:bob@biloxi.com>\r\n"))
+	assert.Nil(t, err)
+	assert.Equal(t, SIPHdrReplyTo, hid)
+	assert.Equal(t, "Bob <sip:bob@biloxi.com>", msg.Headers.Find(SIPHdrReplyTo).Value())
+}
+
+func TestHdrRequire(t *testing.T) {
+	msg := &Message{}
+	hid, err := parseHeader(msg, []byte("Require: 100rel\r\n"))
+	assert.Nil(t, err)
+	assert.Equal(t, SIPHdrRequire, hid)
+	assert.Equal(t, "100rel", msg.Headers.Find(SIPHdrRequire).Value())
+}
+
+func TestHdrRetryAfter(t *testing.T) {
+	msg := &Message{}
+	hid, err := parseHeader(msg, []byte("Retry-After: 18000;duration=3600\r\n"))
+	assert.Nil(t, err)
+	assert.Equal(t, SIPHdrRetryAfter, hid)
+	assert.Equal(t, "18000;duration=3600", msg.Headers.Find(SIPHdrRetryAfter).Value())
+}
+
+func TestHdrServer(t *testing.T) {
+	msg := &Message{}
+	hid, err := parseHeader(msg, []byte("Server: HomeServer v2\r\n"))
+	assert.Nil(t, err)
+	assert.Equal(t, SIPHdrServer, hid)
+	assert.Equal(t, "HomeServer v2", msg.Headers.Find(SIPHdrServer).Value())
+}
+
+func TestHdrSubject(t *testing.T) {
+	msg := &Message{}
+	hid, err := parseHeader(msg, []byte("S : Tech Support\r\n"))
+	assert.Nil(t, err)
+	assert.Equal(t, SIPHdrSubject, hid)
+	assert.Equal(t, "Tech Support", msg.Headers.Find(SIPHdrSubject).Value())
+}
+
+func TestHdrSupported(t *testing.T) {
+	msg := &Message{}
+	hid, err := parseHeader(msg, []byte("Supported: 100rel\r\n"))
+	assert.Nil(t, err)
+	assert.Equal(t, SIPHdrSupported, hid)
+	assert.Equal(t, "100rel", msg.Headers.Find(SIPHdrSupported).Value())
+}
+
+func TestHdrTimestamp(t *testing.T) {
+	msg := &Message{}
+	hid, err := parseHeader(msg, []byte("Timestamp: 54\r\n"))
+	assert.Nil(t, err)
+	assert.Equal(t, SIPHdrTimestamp, hid)
+	assert.Equal(t, "54", msg.Headers.Find(SIPHdrTimestamp).Value())
+}
+
+func TestHdrUnsupported(t *testing.T) {
+	msg := &Message{}
+	hid, err := parseHeader(msg, []byte("Unsupported: foo\r\n"))
+	assert.Nil(t, err)
+	assert.Equal(t, SIPHdrUnsupported, hid)
+	assert.Equal(t, "foo", msg.Headers.Find(SIPHdrUnsupported).Value())
+}
+
+func TestHdrUserAgent(t *testing.T) {
+	msg := &Message{}
+	hid, err := parseHeader(msg, []byte("User-Agent: Softphone Beta1.5\r\n"))
+	assert.Nil(t, err)
+	assert.Equal(t, SIPHdrUserAgent, hid)
+	assert.Equal(t, "Softphone Beta1.5", msg.Headers.Find(SIPHdrUserAgent).Value())
+}
+
+func TestHdrWarning(t *testing.T) {
+	msg := &Message{}
+	hid, err := parseHeader(msg,
+		[]byte("Warning: 301 isi.edu \"Incompatible network address type 'E.164'\"\r\n"))
+	assert.Nil(t, err)
+	assert.Equal(t, SIPHdrWarning, hid)
+	assert.Equal(t, "301 isi.edu \"Incompatible network address type 'E.164'\"",
+		msg.Headers.Find(SIPHdrWarning).Value())
+}
+
+func TestHdrWWWAuth(t *testing.T) {
+	str := "Digest realm=\"atlanta.com\",\r\n" +
+		" domain=\"sip:boxesbybob.com\", qop=\"auth\",\r\n" +
+		" nonce=\"f84f1cec41e6cbe5aea9c8e88d359\",\r\n" +
+		" opaque=\"\", stale=FALSE, algorithm=MD5"
+	msg := &Message{}
+	hid, err := parseHeader(msg, []byte("WWW-Authenticate: "+str+"\r\n"))
+	assert.Nil(t, err)
+	assert.Equal(t, SIPHdrWWWAuthenticate, hid)
+	assert.Equal(t, str, msg.Headers.Find(SIPHdrWWWAuthenticate).Value())
+}

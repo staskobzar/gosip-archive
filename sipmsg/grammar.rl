@@ -153,6 +153,30 @@
     name_auth       = "Authorization"i;
     name_call_info  = "Call-Info"i;
     name_cont_disp  = "Content-Disposition"i;
+    name_cont_enc   = "Content-Encoding"i | "e"i;
+    name_cont_lang  = "Content-Language"i;
+    name_cont_type  = "Content-Type"i | "c"i;
+    name_date       = "Date"i;
+    name_err_info   = "Error-Info"i;
+    name_in_reply   = "In-Reply-To"i;
+    name_mime_ver   = "MIME-Version"i;
+    name_min_expr   = "Min-Expires"i;
+    name_organizn   = "Organization"i;
+    name_priority   = "Priority"i;
+    name_pauthen    = "Proxy-Authenticate"i;
+    name_pauthor    = "Proxy-Authorization"i;
+    name_prequired  = "Proxy-Require"i;
+    name_reply_to   = "Reply-To"i;
+    name_require    = "Require"i;
+    name_retryafter = "Retry-After"i;
+    name_server     = "Server"i;
+    name_subject    = "Subject"i | "s"i;
+    name_supported  = "Supported"i | "k"i;
+    name_timestamp  = "Timestamp"i;
+    name_unsupport  = "Unsupported"i;
+    name_user_agent = "User-Agent"i;
+    name_warning    = "Warning"i;
+    name_www_auth   = "WWW-Authenticate"i;
 
     header_name     = token - (
                         name_cseq       |
@@ -174,6 +198,30 @@
                         name_auth       |
                         name_call_info  |
                         name_cont_disp  |
+                        name_cont_enc   |
+                        name_cont_lang  |
+                        name_cont_type  |
+                        name_date       |
+                        name_err_info   |
+                        name_in_reply   |
+                        name_mime_ver   |
+                        name_min_expr   |
+                        name_organizn   |
+                        name_priority   |
+                        name_pauthen    |
+                        name_pauthor    |
+                        name_prequired  |
+                        name_reply_to   |
+                        name_require    |
+                        name_retryafter |
+                        name_server     |
+                        name_subject    |
+                        name_supported  |
+                        name_timestamp  |
+                        name_unsupport  |
+                        name_user_agent |
+                        name_warning    |
+                        name_www_auth   |
                         name_maxfwd     );
 
     header_value    = (TEXT_UTF8CHAR | UTF8_CONT | LWS)*;

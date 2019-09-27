@@ -142,7 +142,55 @@ func parseHeader(msg *Message, data []byte) (HdrType, error) {
     CallInfo    = name_call_info >sm %push HCOLON %sm header_value %push CRLF
                   @{ id = msg.setGenericHeader(data, pos, SIPHdrCallInfo) };
     ContDispo   = name_cont_disp >sm %push HCOLON %sm header_value %push CRLF
-                    @{ id = msg.setGenericHeader(data, pos, SIPHdrContentDisposition) };
+                  @{ id = msg.setGenericHeader(data, pos, SIPHdrContentDisposition) };
+    ContEncode  = name_cont_enc >sm %push HCOLON %sm header_value %push CRLF
+                  @{ id = msg.setGenericHeader(data, pos, SIPHdrContentEncoding) };
+    ContLang    = name_cont_lang >sm %push HCOLON %sm header_value %push CRLF
+                  @{ id = msg.setGenericHeader(data, pos, SIPHdrContentLanguage) };
+    ContType    = name_cont_type >sm %push HCOLON %sm header_value %push CRLF
+                  @{ id = msg.setGenericHeader(data, pos, SIPHdrContentType) };
+    Date        = name_date >sm %push HCOLON %sm header_value %push CRLF
+                  @{ id = msg.setGenericHeader(data, pos, SIPHdrDate) };
+    ErrorInfo   = name_err_info >sm %push HCOLON %sm header_value %push CRLF
+                  @{ id = msg.setGenericHeader(data, pos, SIPHdrErrorInfo) };
+    InReplyTo   = name_in_reply >sm %push HCOLON %sm header_value %push CRLF
+                  @{ id = msg.setGenericHeader(data, pos, SIPHdrInReplyTo) };
+    MIMEVer     = name_mime_ver >sm %push HCOLON %sm header_value %push CRLF
+                  @{ id = msg.setGenericHeader(data, pos, SIPHdrMIMEVersion) };
+    MinExpires  = name_min_expr >sm %push HCOLON %sm header_value %push CRLF
+                  @{ id = msg.setGenericHeader(data, pos, SIPHdrMinExpires) };
+    Organization= name_organizn >sm %push HCOLON %sm header_value %push CRLF
+                  @{ id = msg.setGenericHeader(data, pos, SIPHdrOrganization) };
+    Priority    = name_priority >sm %push HCOLON %sm header_value %push CRLF
+                  @{ id = msg.setGenericHeader(data, pos, SIPHdrPriority) };
+    PxyAuthen   = name_pauthen >sm %push HCOLON %sm header_value %push CRLF
+                  @{ id = msg.setGenericHeader(data, pos, SIPHdrProxyAuthenticate) };
+    PxyAuthor   = name_pauthor >sm %push HCOLON %sm header_value %push CRLF
+                  @{ id = msg.setGenericHeader(data, pos, SIPHdrProxyAuthorization) };
+    PxyRequired = name_prequired >sm %push HCOLON %sm header_value %push CRLF
+                  @{ id = msg.setGenericHeader(data, pos, SIPHdrProxyRequire) };
+    ReplyTo     = name_reply_to >sm %push HCOLON %sm header_value %push CRLF
+                  @{ id = msg.setGenericHeader(data, pos, SIPHdrReplyTo) };
+    Require     = name_require >sm %push HCOLON %sm header_value %push CRLF
+                  @{ id = msg.setGenericHeader(data, pos, SIPHdrRequire) };
+    RetryAfter  = name_retryafter >sm %push HCOLON %sm header_value %push CRLF
+                  @{ id = msg.setGenericHeader(data, pos, SIPHdrRetryAfter) };
+    Server      = name_server >sm %push HCOLON %sm header_value %push CRLF
+                  @{ id = msg.setGenericHeader(data, pos, SIPHdrServer) };
+    Subject     = name_subject >sm %push HCOLON %sm header_value %push CRLF
+                  @{ id = msg.setGenericHeader(data, pos, SIPHdrSubject) };
+    Supported   = name_supported >sm %push HCOLON %sm header_value %push CRLF
+                  @{ id = msg.setGenericHeader(data, pos, SIPHdrSupported) };
+    Timestamp   = name_timestamp >sm %push HCOLON %sm header_value %push CRLF
+                  @{ id = msg.setGenericHeader(data, pos, SIPHdrTimestamp) };
+    Unsupported = name_unsupport >sm %push HCOLON %sm header_value %push CRLF
+                  @{ id = msg.setGenericHeader(data, pos, SIPHdrUnsupported) };
+    UserAgent   = name_user_agent >sm %push HCOLON %sm header_value %push CRLF
+                  @{ id = msg.setGenericHeader(data, pos, SIPHdrUserAgent) };
+    Warning     = name_warning >sm %push HCOLON %sm header_value %push CRLF
+                  @{ id = msg.setGenericHeader(data, pos, SIPHdrWarning) };
+    WWWAuth     = name_www_auth >sm %push HCOLON %sm header_value %push CRLF
+                  @{ id = msg.setGenericHeader(data, pos, SIPHdrWWWAuthenticate) };
 
     GenericHeader = header_name >sm %push HCOLON %sm header_value %push CRLF
                   @{ id = msg.setGenericHeader(data, pos, SIPHdrGeneric) };
@@ -169,6 +217,30 @@ func parseHeader(msg *Message, data []byte) (HdrType, error) {
               | Auth
               | CallInfo
               | ContDispo
+              | ContEncode
+              | ContLang
+              | ContType
+              | Date
+              | ErrorInfo
+              | InReplyTo
+              | MIMEVer
+              | MinExpires
+              | Organization
+              | Priority
+              | PxyAuthen
+              | PxyAuthor
+              | PxyRequired
+              | ReplyTo
+              | Require
+              | RetryAfter
+              | Server
+              | Subject
+              | Supported
+              | Timestamp
+              | Unsupported
+              | UserAgent
+              | Warning
+              | WWWAuth
               | GenericHeader;
 }%%
     %% write init;
