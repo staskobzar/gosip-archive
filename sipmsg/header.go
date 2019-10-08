@@ -60,12 +60,15 @@ const (
 	SIPHdrWWWAuthenticate
 )
 
+// HeadersList SIP headers list
 type HeadersList []*Header
 
+// Count number of headers
 func (l HeadersList) Count() int {
 	return len(l)
 }
 
+// FindByName find header by name
 func (l HeadersList) FindByName(name string) *Header {
 	for _, h := range l {
 		if strings.EqualFold(name, h.Name()) {
@@ -75,6 +78,7 @@ func (l HeadersList) FindByName(name string) *Header {
 	return nil
 }
 
+// Find find header by ID
 func (l HeadersList) Find(id HdrType) *Header {
 	for _, h := range l {
 		if h.ID() == id {
@@ -84,6 +88,7 @@ func (l HeadersList) Find(id HdrType) *Header {
 	return nil
 }
 
+// Header SIP header
 type Header struct {
 	buf   []byte
 	id    HdrType
@@ -91,18 +96,22 @@ type Header struct {
 	value pl
 }
 
+// ID SIP header ID
 func (h *Header) ID() HdrType {
 	return h.id
 }
 
+// Name SIP header name
 func (h *Header) Name() string {
 	return string(h.buf[h.name.p:h.name.l])
 }
 
+// Value SIP header value
 func (h *Header) Value() string {
 	return string(h.buf[h.value.p:h.value.l])
 }
 
+// CSeq SIP sequence number
 type CSeq struct {
 	Num    uint
 	Method string

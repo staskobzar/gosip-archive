@@ -15,6 +15,7 @@ type pl struct {
 	l ptr
 }
 
+// ErrorSIPMsgParse SIP message parsing error
 var ErrorSIPMsgParse = errorNew("Invalid SIP Message")
 
 // Message SIP message structure
@@ -113,11 +114,14 @@ func (m *Message) setCSeq(buf []byte, pos []pl) HdrType {
 	// do not check return. Parser must assure it is a number
 	cseq, _ := strconv.ParseUint(string(num), 10, 32)
 	m.CSeq = &CSeq{uint(cseq), string(buf[pos[2].p:pos[2].l])}
+
+	m.pushHeader(SIPHdrCSeq, buf, pos[0], pl{pos[1].p, pos[2].l})
 	return SIPHdrCSeq
 }
 
 func (m *Message) setCallID(buf []byte, pos []pl) HdrType {
 	m.CallID = string(buf[pos[1].p:pos[1].l])
+	m.pushHeader(SIPHdrCallID, buf, pos[0], pos[1])
 	return SIPHdrCallID
 }
 
@@ -202,12 +206,16 @@ func (m *Message) setGenericHeader(buf []byte, pos []pl, id HdrType) HdrType {
 	if int(pos[l].l) < len(buf)-2 {
 		return -1
 	}
+	m.pushHeader(id, buf, pos[0], pos[l])
+	return id
+}
+
+func (m *Message) pushHeader(id HdrType, buf []byte, name, value pl) {
 	h := &Header{
 		buf:   buf,
 		id:    id,
-		name:  pos[0],
-		value: pos[l],
+		name:  name,
+		value: value,
 	}
 	m.Headers = append(m.Headers, h)
-	return id
 }

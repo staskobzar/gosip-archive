@@ -122,7 +122,11 @@ func TestMessageParseHeadersList(t *testing.T) {
 	assert.NotNil(t, h)
 	assert.Equal(t, "889-774", h.Value())
 
-	assert.Equal(t, 3, msg.Headers.Count())
+	h = msg.Headers.FindByName("cseq")
+	assert.NotNil(t, h)
+	assert.Equal(t, "1 REGISTER", h.Value())
+
+	assert.Equal(t, 5, msg.Headers.Count())
 }
 
 func BenchmarkMessageParse(b *testing.B) {
