@@ -22,6 +22,10 @@ type Via struct {
 	params pl
 }
 
+func NewVia(trans, host string, port uint, params map[string]string) (*Via, error) {
+	return nil
+}
+
 // Transport Via header transport
 func (v *Via) Transport() string {
 	return string(v.buf[v.trans.p:v.trans.l])

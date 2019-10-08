@@ -188,3 +188,11 @@ func TestMessageResponseToBytes(t *testing.T) {
 
 	assert.Equal(t, []byte(str), msg.Bytes())
 }
+
+func TestMessageCreateRequest(t *testing.T) {
+	// TODO:
+	var vias ViaList = nil
+	var to, from *HeaderFromTo = nil, nil
+	var cseq, maxfwd uint = 0, 0
+	NewRequest("INVITE", vias, to, from, cseq, maxfwd)
+}

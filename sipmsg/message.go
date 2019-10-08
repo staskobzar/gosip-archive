@@ -80,6 +80,12 @@ func MsgParse(data []byte) (*Message, error) {
 	return msg, nil
 }
 
+// TODO: NewRequest init basic SIP Request
+func NewRequest(met string, vias ViaList, to, from *HeaderFromTo, cseq, maxfwd uint) (*Message, error) {
+	// TODO: generate Call-ID
+	return nil, nil
+}
+
 // IsRequest returns true is SIP Message is request
 func (m *Message) IsRequest() bool { return m.ReqLine != nil }
 
