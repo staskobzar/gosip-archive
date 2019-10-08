@@ -121,9 +121,13 @@ func parseHeader(msg *Message, data []byte) (HdrType, error) {
     RecordRoute = name_rroute >sm %push HCOLON %{id = SIPHdrRecordRoute}
                   route_param (COMMA route_param)* CRLF;
     # @Expires@
-    Expires     = name_expires HCOLON digit{1,10} >sm %{ id = msg.setExpires(data[m:p]) } CRLF;
+    Expires     = name_expires >sm %push HCOLON digit{1,10} >sm 
+                  %{ id = msg.setExpires(data[m:p]) } CRLF
+                  @{ msg.pushHeader(SIPHdrExpires, data, pos[0], pl{m, p}) };
     # @Max-Forwards@
-    MaxForwards = name_maxfwd HCOLON digit{1,6} >sm %{ id = msg.setMaxFwd(data[m:p]) } CRLF;
+    MaxForwards = name_maxfwd >sm %push HCOLON digit{1,6} >sm 
+                  %{ id = msg.setMaxFwd(data[m:p]) } CRLF
+                  @{ msg.pushHeader(SIPHdrMaxForwards, data, pos[0], pl{m, p}) };
     # Generic headers
     Accept      = name_accept >sm %push HCOLON %sm header_value %push CRLF
                   @{ id = msg.setGenericHeader(data, pos, SIPHdrAccept) };

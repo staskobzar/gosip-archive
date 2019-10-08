@@ -88,6 +88,15 @@ func (l HeadersList) Find(id HdrType) *Header {
 	return nil
 }
 
+func (l HeadersList) exists(buf []byte) bool {
+	for _, h := range l {
+		if bytes.Equal(buf, h.buf) {
+			return true
+		}
+	}
+	return false
+}
+
 // Header SIP header
 type Header struct {
 	buf   []byte

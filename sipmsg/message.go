@@ -86,6 +86,22 @@ func (m *Message) IsRequest() bool { return m.ReqLine != nil }
 // IsResponse returns true is SIP Message is response
 func (m *Message) IsResponse() bool { return m.StatusLine != nil }
 
+// Bytes SIP message as bytes
+func (m *Message) Bytes() []byte {
+	var buf bytes.Buffer
+	if m.IsRequest() {
+		buf.Write(m.ReqLine.buf)
+	} else {
+		buf.Write(m.StatusLine.buf)
+	}
+
+	for _, h := range m.Headers {
+		buf.Write(h.buf)
+	}
+	buf.Write([]byte("\r\n"))
+	return buf.Bytes()
+}
+
 // private methods
 func (m *Message) setStatusLine(buf []byte, pos []pl) HdrType {
 	sl := &StatusLine{
@@ -130,16 +146,23 @@ func (m *Message) setContentLen(buf []byte, pos []pl) HdrType {
 	// do not check return. Parser must assure it is a number
 	ln, _ := strconv.ParseUint(string(num), 10, 32)
 	m.ContentLen = uint(ln)
+	m.pushHeader(SIPHdrContentLength, buf, pos[0], pos[1])
 	return SIPHdrContentLength
 }
 
 func (m *Message) setFrom(buf []byte, params []pl, fname, dname, addr, tag pl) HdrType {
 	m.From = newHeaderFromTo(buf, params, fname, dname, addr, tag)
+	if h := m.Headers.Find(SIPHdrFrom); h == nil {
+		m.pushHeader(SIPHdrFrom, buf, fname, pl{fname.l + 1, ptr(len(buf))})
+	}
 	return SIPHdrFrom
 }
 
 func (m *Message) setTo(buf []byte, params []pl, fname, dname, addr, tag pl) HdrType {
 	m.To = newHeaderFromTo(buf, params, fname, dname, addr, tag)
+	if h := m.Headers.Find(SIPHdrTo); h == nil {
+		m.pushHeader(SIPHdrTo, buf, fname, pl{fname.l + 1, ptr(len(buf))})
+	}
 	return SIPHdrTo
 }
 
@@ -151,15 +174,24 @@ func (m *Message) setContact(buf []byte, name, dname, addr pl, params []pl, i in
 	m.Contacts.cnt[i].dname = dname
 	m.Contacts.cnt[i].addr = addr
 	m.Contacts.cnt[i].params = params
+
+	if !m.Headers.exists(buf) {
+		m.pushHeader(SIPHdrContact, buf, name, pl{name.l + 1, ptr(len(buf))})
+	}
 }
 
 func (m *Message) setContactStar() {
 	m.Contacts.star = true
+	m.pushHeader(SIPHdrContact, []byte("Contact: *\r\n"), pl{0, 7}, pl{9, 10})
 }
 
 func (m *Message) setVia(data []byte, name, trans, addr, port, branch, ttl, maddr, recevd pl, i int) {
 	if m.Vias.Count() == 0 || m.Vias.Count() == i {
 		m.Vias = append(m.Vias, &Via{buf: data, name: name})
+
+		if !m.Headers.exists(data) {
+			m.pushHeader(SIPHdrVia, data, name, pl{name.l + 1, ptr(len(data))})
+		}
 	}
 	m.Vias[i].trans = trans
 	m.Vias[i].host = addr
@@ -180,9 +212,11 @@ func (m *Message) setRoute(hid HdrType, buf []byte, fname, dname, addr pl, param
 	}
 	if hid == SIPHdrRecordRoute {
 		m.RecRoutes = append(m.RecRoutes, r)
+		m.pushHeader(SIPHdrRecordRoute, buf, fname, pl{fname.l + 1, ptr(len(buf))})
 		return
 	}
 	m.Routes = append(m.Routes, r)
+	m.pushHeader(SIPHdrRoute, buf, fname, pl{fname.l + 1, ptr(len(buf))})
 }
 
 func (m *Message) setExpires(num []byte) HdrType {

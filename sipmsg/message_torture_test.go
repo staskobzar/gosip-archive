@@ -79,7 +79,7 @@ func TestMsgParseTortureWsinv(t *testing.T) {
 	assert.NotNil(t, h)
 	assert.Equal(t, "0009\r\n  INVITE", h.Value())
 
-	assert.Equal(t, 6, msg.Headers.Count())
+	assert.Equal(t, 14, msg.Headers.Count())
 }
 
 // 3.1.1.2.  Wide Range of Valid Characters
@@ -125,7 +125,11 @@ func TestMsgParseTortureIntmeth(t *testing.T) {
 	assert.NotNil(t, h)
 	assert.Equal(t, "139122385 !interesting-Method0123456789_*+`.%indeed'~", h.Value())
 
-	assert.Equal(t, 3, msg.Headers.Count())
+	h = msg.Headers.FindByName("content-length")
+	assert.NotNil(t, h)
+	assert.Equal(t, "0", h.Value())
+
+	assert.Equal(t, 8, msg.Headers.Count())
 }
 
 // TODO: esc01, escnull, esc02
@@ -257,7 +261,11 @@ func TestMsgParseTortureSemiUri(t *testing.T) {
 	assert.NotNil(t, h)
 	assert.Equal(t, "8 OPTIONS", h.Value())
 
-	assert.Equal(t, 3, msg.Headers.Count())
+	h = msg.Headers.Find(SIPHdrContentLength)
+	assert.NotNil(t, h)
+	assert.Equal(t, "0", h.Value())
+
+	assert.Equal(t, 8, msg.Headers.Count())
 }
 
 // TODO: transports, mpart01
