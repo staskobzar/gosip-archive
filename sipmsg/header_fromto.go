@@ -14,6 +14,11 @@ type HeaderFromTo struct {
 	params []pl
 }
 
+// NewHdrTo creates new To header
+func NewHdrTo(dname, uri string, params map[string]string) *HeaderFromTo {
+	return nil
+}
+
 // DisplayName From/To header display name
 func (h *HeaderFromTo) DisplayName() string {
 	name := h.buf[h.dname.p:h.dname.l]

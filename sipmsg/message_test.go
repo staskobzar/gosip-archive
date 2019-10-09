@@ -191,7 +191,8 @@ func TestMessageResponseToBytes(t *testing.T) {
 
 func TestMessageCreateRequest(t *testing.T) {
 	// TODO:
-	var vias ViaList = nil
+	var vias ViaList
+
 	var to, from *HeaderFromTo = nil, nil
 	var cseq, maxfwd uint = 0, 0
 	NewRequest("INVITE", vias, to, from, cseq, maxfwd)
