@@ -1,12 +1,8 @@
 package sipmsg
 
 import (
-	"bytes"
-	"fmt"
-	"math/rand"
 	"strconv"
 	"strings"
-	"time"
 )
 
 const cookie = "z9hG4bK"
@@ -38,65 +34,39 @@ type Via struct {
 // Transport must be uppercase. If port is 0 then no port set (default 5060).
 // Parameters is a map. If parameters contain "branch" it will be ignored.
 func NewHdrVia(trans, host string, port uint, params map[string]string) (*Via, error) {
-	var buf bytes.Buffer
+	var buf buffer
 	v := &Via{}
-	buf.WriteString("Via: ")
-	v.name.l = 3
+	buf.name("Via", &v.name)
 
-	write := func(val string, p *pl) {
-		if p != nil {
-			p.p = ptr(buf.Len())
-		}
-		buf.WriteString(val)
-		if p != nil {
-			p.l = ptr(buf.Len())
-		}
-	}
+	buf.write("SIP/2.0/", nil)
+	buf.write(strings.ToUpper(trans), &v.trans)
 
-	branchVal := func() string {
-		rand.Seed(time.Now().UnixNano())
-		return fmt.Sprintf("%s%x", cookie, rand.Uint32())
-	}
-
-	paramWrite := func(name, value string, p *pl) {
-		buf.WriteByte(';')
-		buf.WriteString(name)
-		buf.WriteByte('=')
-		write(value, p)
-	}
-
-	buf.WriteString("SIP/2.0/")
-	write(strings.ToUpper(trans), &v.trans)
-
-	buf.WriteByte(' ')
-
-	write(host, &v.host)
+	buf.writeBytePrefix(0x20, host, &v.host) // space + host
 
 	if port > 65535 {
 		return nil, ErrorSIPHeader.msg("Via send-by port invalid: %d", port)
 	}
 	if port > 0 {
-		buf.WriteByte(':')
-		write(strconv.Itoa(int(port)), &v.port)
+		buf.writeBytePrefix(':', strconv.Itoa(int(port)), &v.port)
 	}
 
 	v.params.p = ptr(buf.Len())
 	for name, val := range params {
 		switch strings.ToLower(name) {
 		case "ttl":
-			paramWrite(name, val, &v.ttl)
+			buf.param(name, val, &v.ttl)
 		case "maddr":
-			paramWrite(name, val, &v.maddr)
+			buf.param(name, val, &v.maddr)
 		case "received":
-			paramWrite(name, val, &v.recevd)
+			buf.param(name, val, &v.recevd)
 		default:
-			paramWrite(name, val, nil)
+			buf.param(name, val, nil)
 		}
 	}
-	paramWrite("branch", branchVal(), &v.branch)
-	v.params.l = ptr(buf.Len())
+	buf.param("branch", randomStringPrefix(cookie), &v.branch)
+	v.params.l = buf.plen()
 
-	buf.WriteString("\r\n")
+	buf.crlf()
 	v.buf = buf.Bytes()
 	return v, nil
 }

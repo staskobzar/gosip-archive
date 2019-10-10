@@ -2,7 +2,10 @@ package sipmsg
 
 import (
 	"bytes"
+	"fmt"
+	"math/rand"
 	"strings"
+	"time"
 )
 
 // HdrType type header ID
@@ -137,4 +140,74 @@ func searchParam(name string, buf []byte, params []pl) (string, bool) {
 		}
 	}
 	return "", false
+}
+
+// local helper functions and structures
+func randomString() string {
+	rand.Seed(time.Now().UnixNano())
+	return fmt.Sprintf("%x", rand.Uint32())
+}
+
+func randomStringPrefix(prefix string) string {
+	return fmt.Sprintf("%s%s", prefix, randomString())
+}
+
+// local buffer extended structrue
+type buffer struct {
+	bytes.Buffer
+}
+
+func (b *buffer) plen() ptr {
+	return ptr(b.Len())
+}
+
+// field name with colon and space prepended and pl set.
+func (b *buffer) name(name string, p *pl) {
+	b.WriteString(name)
+	p.l = b.plen()
+	b.WriteString(": ")
+}
+
+func (b *buffer) write(val string, p *pl) {
+	if p != nil {
+		p.p = b.plen()
+	}
+	b.WriteString(val)
+	if p != nil {
+		p.l = b.plen()
+	}
+}
+
+func (b *buffer) writeBytePrefix(prefix byte, value string, p *pl) {
+	b.WriteByte(prefix)
+	b.write(value, p)
+}
+
+// write parameter (name=value) to buffer and prepend ";"
+// pl pointer for parameter is set only for value.
+// if name == value then single word parameter is written: ;param
+func (b *buffer) param(name, value string, p *pl) {
+	b.WriteByte(';')
+	b.WriteString(name)
+	b.WriteByte('=')
+	b.write(value, p)
+}
+
+// write and wrap
+// if plInside is true then set pl only around value, otherwise all with wrapper
+func (b *buffer) wwrap(wrapper, value string, p *pl, plInside bool) {
+	p.p = b.plen()
+	b.WriteByte(wrapper[0])
+	b.WriteString(value)
+	b.WriteByte(wrapper[1])
+	p.l = b.plen()
+
+	if plInside {
+		p.p++
+		p.l--
+	}
+}
+
+func (b *buffer) crlf() {
+	b.WriteString("\r\n")
 }

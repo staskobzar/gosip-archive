@@ -2,7 +2,7 @@
 # SIP message (rfc3261) parser and builder
 #
 
-.PHONY: clean cov
+.PHONY: clean cov test
 
 test: uri_parser.go msg_parser.go
 	go fmt

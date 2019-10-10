@@ -1,0 +1,8 @@
+# Guardfile
+guard :shell do
+  watch(%r{.*\.go$}) {
+    puts "*" * 80
+    `go test`
+  }
+  watch(%r{.*_parser\.rl$}) { `make test` }
+end

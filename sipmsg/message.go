@@ -157,7 +157,7 @@ func (m *Message) setContentLen(buf []byte, pos []pl) HdrType {
 }
 
 func (m *Message) setFrom(buf []byte, params []pl, fname, dname, addr, tag pl) HdrType {
-	m.From = newHeaderFromTo(buf, params, fname, dname, addr, tag)
+	m.From = initHeaderFromTo(buf, params, fname, dname, addr, tag)
 	if h := m.Headers.Find(SIPHdrFrom); h == nil {
 		m.pushHeader(SIPHdrFrom, buf, fname, pl{fname.l + 1, ptr(len(buf))})
 	}
@@ -165,7 +165,7 @@ func (m *Message) setFrom(buf []byte, params []pl, fname, dname, addr, tag pl) H
 }
 
 func (m *Message) setTo(buf []byte, params []pl, fname, dname, addr, tag pl) HdrType {
-	m.To = newHeaderFromTo(buf, params, fname, dname, addr, tag)
+	m.To = initHeaderFromTo(buf, params, fname, dname, addr, tag)
 	if h := m.Headers.Find(SIPHdrTo); h == nil {
 		m.pushHeader(SIPHdrTo, buf, fname, pl{fname.l + 1, ptr(len(buf))})
 	}
