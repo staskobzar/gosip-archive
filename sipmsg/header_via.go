@@ -54,20 +54,19 @@ func NewHdrVia(trans, host string, port uint, params map[string]string) (*Via, e
 	for name, val := range params {
 		switch strings.ToLower(name) {
 		case "ttl":
-			buf.param(name, val, &v.ttl)
+			buf.paramVal(name, val, &v.ttl)
 		case "maddr":
-			buf.param(name, val, &v.maddr)
+			buf.paramVal(name, val, &v.maddr)
 		case "received":
-			buf.param(name, val, &v.recevd)
+			buf.paramVal(name, val, &v.recevd)
 		default:
-			buf.param(name, val, nil)
+			buf.paramVal(name, val, nil)
 		}
 	}
-	buf.param("branch", randomStringPrefix(cookie), &v.branch)
+	buf.paramVal("branch", randomStringPrefix(cookie), &v.branch)
 	v.params.l = buf.plen()
 
-	buf.crlf()
-	v.buf = buf.Bytes()
+	v.buf = buf.crlf()
 	return v, nil
 }
 

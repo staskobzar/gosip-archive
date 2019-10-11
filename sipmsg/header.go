@@ -186,11 +186,26 @@ func (b *buffer) writeBytePrefix(prefix byte, value string, p *pl) {
 // write parameter (name=value) to buffer and prepend ";"
 // pl pointer for parameter is set only for value.
 // if name == value then single word parameter is written: ;param
-func (b *buffer) param(name, value string, p *pl) {
+func (b *buffer) paramVal(name, value string, p *pl) {
 	b.WriteByte(';')
 	b.WriteString(name)
-	b.WriteByte('=')
-	b.write(value, p)
+	if name != value {
+		b.WriteByte('=')
+		b.write(value, p)
+	}
+}
+
+func (b *buffer) param(name, value string) pl {
+	c := pl{}
+	b.WriteByte(';')
+	c.p = b.plen()
+	b.WriteString(name)
+	if name != value {
+		b.WriteByte('=')
+		b.write(value, nil)
+	}
+	c.l = b.plen()
+	return c
 }
 
 // write and wrap
@@ -208,6 +223,7 @@ func (b *buffer) wwrap(wrapper, value string, p *pl, plInside bool) {
 	}
 }
 
-func (b *buffer) crlf() {
+func (b *buffer) crlf() []byte {
 	b.WriteString("\r\n")
+	return b.Bytes()
 }

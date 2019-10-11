@@ -54,15 +54,12 @@ func (h *HeaderFromTo) AddTag() error {
 	if h.tag.l > h.tag.p {
 		return ErrorSIPHeader.msg("Header From/To already has Tag.")
 	}
+	var buf buffer
 	tag := randomString()
-	buf := bytes.NewBuffer(h.buf)
+	buf.Write(h.buf)
 	buf.Truncate(buf.Len() - 2) // remove CRLF
-	buf.WriteString(";tag=")
-	h.tag.p = ptr(buf.Len())
-	buf.WriteString(tag)
-	h.tag.l = ptr(buf.Len())
-	buf.WriteString("\r\n")
-	h.buf = buf.Bytes()
+	buf.paramVal("tag", tag, &h.tag)
+	h.buf = buf.crlf()
 	return nil
 }
 
@@ -84,19 +81,10 @@ func createHeaderFromTo(name, dname, uri string, params map[string]string) *Head
 	buf.wwrap("<>", uri, &h.addr, true)
 
 	for name, val := range params {
-		buf.WriteByte(';')
-		c := pl{buf.plen(), buf.plen()}
-		buf.WriteString(name)
-		if name != val {
-			buf.WriteByte('=')
-			buf.WriteString(val)
-		}
-		c.l = ptr(buf.Len())
-		h.params = append(h.params, c)
+		h.params = append(h.params, buf.param(name, val))
 	}
 
-	buf.WriteString("\r\n")
-	h.buf = buf.Bytes()
+	h.buf = buf.crlf()
 	return h
 }
 
