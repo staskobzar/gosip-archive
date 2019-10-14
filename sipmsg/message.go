@@ -81,7 +81,7 @@ func MsgParse(data []byte) (*Message, error) {
 }
 
 // TODO: NewRequest init basic SIP Request
-func NewRequest(met string, vias ViaList, to, from *HeaderFromTo, cseq, maxfwd uint) (*Message, error) {
+func NewRequest(met, ruri string, vias *Via, to, from *HeaderFromTo, cseq, maxfwd uint) (*Message, error) {
 	// TODO: generate Call-ID
 	return nil, nil
 }

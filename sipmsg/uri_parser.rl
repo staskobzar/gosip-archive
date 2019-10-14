@@ -7,9 +7,10 @@ package sipmsg
 %% write data;
 
 func URIParse(data []byte) *URI {
-    uri := &URI{buf: data}
+    uri := &URI{}
+    uri.buf.init(data)
     cs := 0 // current state. entery point = 0
-    l := ptr(len(data))
+    l := uri.buf.plen()
     var p, // data pointer
         m, // marker
         pe, eof ptr = 0, 0, l, l

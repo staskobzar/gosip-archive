@@ -191,9 +191,9 @@ func TestMessageResponseToBytes(t *testing.T) {
 
 func TestMessageCreateRequest(t *testing.T) {
 	// TODO:
-	var vias ViaList
+	var via *Via
 
 	var to, from *HeaderFromTo = nil, nil
 	var cseq, maxfwd uint = 0, 0
-	NewRequest("INVITE", vias, to, from, cseq, maxfwd)
+	NewRequest("INVITE", "sip:atlanta.com", via, to, from, cseq, maxfwd)
 }

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"math/rand"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -157,6 +158,10 @@ type buffer struct {
 	bytes.Buffer
 }
 
+func (b *buffer) init(data []byte) {
+	b.Write(data)
+}
+
 func (b *buffer) plen() ptr {
 	return ptr(b.Len())
 }
@@ -221,6 +226,29 @@ func (b *buffer) wwrap(wrapper, value string, p *pl, plInside bool) {
 		p.p++
 		p.l--
 	}
+}
+
+func (b *buffer) appendPort(port int, p *pl) error {
+	if port == 0 {
+		return nil
+	}
+
+	if port < 0 || port > 65535 {
+		return ErrorURI.msg("Invalid port %d", port)
+	}
+
+	b.writeBytePrefix(':', strconv.Itoa(port), p)
+
+	return nil
+}
+
+func (b *buffer) byt(p pl) []byte {
+	buf := b.Bytes()
+	return buf[p.p:p.l]
+}
+
+func (b *buffer) str(p pl) string {
+	return string(b.byt(p))
 }
 
 func (b *buffer) crlf() []byte {
