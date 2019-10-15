@@ -6,26 +6,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestHdrStatusLineParse(t *testing.T) {
-	msg := &Message{}
-	h, err := parseHeader(msg, []byte("SIP/2.0 180 Ringing\r\n"))
-	assert.Nil(t, err)
-	assert.Equal(t, SIPHdrStatusLine, h)
-	assert.Equal(t, "SIP/2.0", msg.StatusLine.Version())
-	assert.Equal(t, "180", msg.StatusLine.Code())
-	assert.Equal(t, "Ringing", msg.StatusLine.Reason())
-}
-
-func TestHdrRequestLineParse(t *testing.T) {
-	msg := &Message{}
-	h, err := parseHeader(msg, []byte("INVITE sip:bob@biloxi.com SIP/2.0\r\n"))
-	assert.Nil(t, err)
-	assert.Equal(t, SIPHdrRequestLine, h)
-	assert.Equal(t, "INVITE", msg.ReqLine.Method())
-	assert.Equal(t, "sip:bob@biloxi.com", msg.ReqLine.RequestURI())
-	assert.Equal(t, "SIP/2.0", msg.ReqLine.Version())
-}
-
 func TestHdrParseCSeq(t *testing.T) {
 	msg := &Message{}
 	h, err := parseHeader(msg, []byte("CSeq: 4711 INVITE\r\n"))

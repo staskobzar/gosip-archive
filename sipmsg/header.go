@@ -153,6 +153,12 @@ func randomStringPrefix(prefix string) string {
 	return fmt.Sprintf("%s%s", prefix, randomString())
 }
 
+func hashString() string {
+	b := make([]byte, 18)
+	rand.Read(b)
+	return fmt.Sprintf("%x", b)
+}
+
 // local buffer extended structrue
 type buffer struct {
 	bytes.Buffer

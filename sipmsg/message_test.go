@@ -1,6 +1,7 @@
 package sipmsg
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -191,9 +192,14 @@ func TestMessageResponseToBytes(t *testing.T) {
 
 func TestMessageCreateRequest(t *testing.T) {
 	// TODO:
-	var via *Via
+	via, err := NewHdrVia("UDP", "10.100.0.1", 5060, nil)
+	assert.Nil(t, err)
+	to := NewHdrTo("", "sip:alice@voip.com", nil)
+	to.AddTag()
+	from := NewHdrTo("Bob Smith", "sip:bob@voip.com", nil)
 
-	var to, from *HeaderFromTo = nil, nil
-	var cseq, maxfwd uint = 0, 0
-	NewRequest("INVITE", "sip:atlanta.com", via, to, from, cseq, maxfwd)
+	msg, err := NewRequest("INVITE", "sip:atlanta.com", via, to, from, 102, 70)
+	assert.Nil(t, err)
+
+	fmt.Printf("%s", msg.Bytes())
 }

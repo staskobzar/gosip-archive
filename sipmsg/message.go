@@ -80,10 +80,48 @@ func MsgParse(data []byte) (*Message, error) {
 	return msg, nil
 }
 
-// TODO: NewRequest init basic SIP Request
-func NewRequest(met, ruri string, vias *Via, to, from *HeaderFromTo, cseq, maxfwd uint) (*Message, error) {
-	// TODO: generate Call-ID
-	return nil, nil
+// NewRequest init basic SIP Request
+func NewRequest(met, ruri string, via *Via, to, from *HeaderFromTo, cseq, maxfwd int) (*Message, error) {
+	msg := &Message{}
+	buf := buffer{}
+	msg.ReqLine = NewReqLine(met, ruri)
+
+	msg.Vias = append(msg.Vias, via)
+	msg.pushHeader(SIPHdrVia, via.buf, via.name, pl{via.name.l + 2, ptr(len(via.buf))})
+
+	msg.From = from
+	msg.From.AddTag()
+	msg.pushHeader(SIPHdrFrom, from.buf, from.name, pl{from.name.l + 2, ptr(len(from.buf))})
+
+	msg.To = to
+	msg.pushHeader(SIPHdrTo, to.buf, to.name, pl{to.name.l + 2, ptr(len(to.buf))})
+
+	msg.CSeq = &CSeq{uint(cseq), met}
+	plName, plVal := pl{}, pl{}
+	buf.name("CSec", &plName)
+	plVal.p = buf.plen()
+	buf.write(strconv.Itoa(cseq), nil)
+	buf.WriteByte(' ')
+	buf.write(met, nil)
+	plVal.l = buf.plen()
+	buf.crlf()
+	msg.pushHeader(SIPHdrCSeq, buf.Bytes(), plName, plVal)
+
+	msg.MaxFwd = uint(maxfwd)
+	buf = buffer{}
+	buf.name("Max-Forwards", &plName)
+	buf.write(strconv.Itoa(maxfwd), &plVal)
+	buf.crlf()
+	msg.pushHeader(SIPHdrMaxForwards, buf.Bytes(), plName, plVal)
+
+	msg.CallID = hashString()
+	buf = buffer{}
+	buf.name("Call-ID", &plName)
+	buf.write(msg.CallID, &plVal)
+	buf.crlf()
+	msg.pushHeader(SIPHdrCallID, buf.Bytes(), plName, plVal)
+
+	return msg, nil
 }
 
 // IsRequest returns true is SIP Message is request
@@ -94,39 +132,38 @@ func (m *Message) IsResponse() bool { return m.StatusLine != nil }
 
 // Bytes SIP message as bytes
 func (m *Message) Bytes() []byte {
-	var buf bytes.Buffer
+	var buf buffer
 	if m.IsRequest() {
-		buf.Write(m.ReqLine.buf)
+		buf.Write(m.ReqLine.Bytes())
 	} else {
-		buf.Write(m.StatusLine.buf)
+		buf.Write(m.StatusLine.Bytes())
 	}
 
 	for _, h := range m.Headers {
 		buf.Write(h.buf)
 	}
-	buf.Write([]byte("\r\n"))
-	return buf.Bytes()
+	return buf.crlf()
 }
 
 // private methods
 func (m *Message) setStatusLine(buf []byte, pos []pl) HdrType {
 	sl := &StatusLine{
-		buf:    buf,
 		ver:    pos[0],
 		code:   pos[1],
 		reason: pos[2],
 	}
+	sl.buf.init(buf)
 	m.StatusLine = sl
 	return SIPHdrStatusLine
 }
 
 func (m *Message) setRequestLine(buf []byte, pos []pl) HdrType {
 	rl := &RequestLine{
-		buf:    buf,
 		method: pos[0],
 		uri:    pos[1],
 		ver:    pos[2],
 	}
+	rl.buf.init(buf)
 	m.ReqLine = rl
 	return SIPHdrRequestLine
 }
