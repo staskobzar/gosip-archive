@@ -18,6 +18,9 @@ type pl struct {
 // ErrorSIPMsgParse SIP message parsing error
 var ErrorSIPMsgParse = errorNew("Invalid SIP Message")
 
+// ErrorSIPMsgCreate SIP message creating error
+var ErrorSIPMsgCreate = errorNew("Invalid SIP Message")
+
 // Message SIP message structure
 type Message struct {
 	ReqLine    *RequestLine
@@ -84,6 +87,16 @@ func MsgParse(data []byte) (*Message, error) {
 func NewRequest(met, ruri string, via *Via, to, from *HeaderFromTo, cseq, maxfwd int) (*Message, error) {
 	msg := &Message{}
 	buf := buffer{}
+	plName, plVal := pl{}, pl{}
+
+	if cseq < 0 || cseq > (1<<31) {
+		return nil, ErrorSIPMsgCreate.msg("CSeq value %d", cseq)
+	}
+
+	if maxfwd < 0 || maxfwd > 255 {
+		return nil, ErrorSIPMsgCreate.msg("Max-Forwards value %d", cseq)
+	}
+
 	msg.ReqLine = NewReqLine(met, ruri)
 
 	msg.Vias = append(msg.Vias, via)
@@ -96,30 +109,19 @@ func NewRequest(met, ruri string, via *Via, to, from *HeaderFromTo, cseq, maxfwd
 	msg.To = to
 	msg.pushHeader(SIPHdrTo, to.buf, to.name, pl{to.name.l + 2, ptr(len(to.buf))})
 
+	msg.CallID = hashString()
+	plName, plVal = buf.headerValue("Call-ID", msg.CallID)
+	msg.pushHeader(SIPHdrCallID, buf.Bytes(), plName, plVal)
+
 	msg.CSeq = &CSeq{uint(cseq), met}
-	plName, plVal := pl{}, pl{}
-	buf.name("CSec", &plName)
-	plVal.p = buf.plen()
-	buf.write(strconv.Itoa(cseq), nil)
-	buf.WriteByte(' ')
-	buf.write(met, nil)
-	plVal.l = buf.plen()
-	buf.crlf()
+	buf = buffer{}
+	plName, plVal = buf.headerValue("CSeq", strconv.Itoa(cseq), met)
 	msg.pushHeader(SIPHdrCSeq, buf.Bytes(), plName, plVal)
 
 	msg.MaxFwd = uint(maxfwd)
 	buf = buffer{}
-	buf.name("Max-Forwards", &plName)
-	buf.write(strconv.Itoa(maxfwd), &plVal)
-	buf.crlf()
+	plName, plVal = buf.headerValue("Max-Forwards", strconv.Itoa(maxfwd))
 	msg.pushHeader(SIPHdrMaxForwards, buf.Bytes(), plName, plVal)
-
-	msg.CallID = hashString()
-	buf = buffer{}
-	buf.name("Call-ID", &plName)
-	buf.write(msg.CallID, &plVal)
-	buf.crlf()
-	msg.pushHeader(SIPHdrCallID, buf.Bytes(), plName, plVal)
 
 	return msg, nil
 }
@@ -132,6 +134,17 @@ func (m *Message) IsResponse() bool { return m.StatusLine != nil }
 
 // Bytes SIP message as bytes
 func (m *Message) Bytes() []byte {
+	b := m.buffer()
+	return b.Bytes()
+}
+
+// String SIP message as string
+func (m *Message) String() string {
+	b := m.buffer()
+	return b.String()
+}
+
+func (m *Message) buffer() buffer {
 	var buf buffer
 	if m.IsRequest() {
 		buf.Write(m.ReqLine.Bytes())
@@ -142,7 +155,8 @@ func (m *Message) Bytes() []byte {
 	for _, h := range m.Headers {
 		buf.Write(h.buf)
 	}
-	return buf.crlf()
+	buf.crlf()
+	return buf
 }
 
 // private methods

@@ -1,7 +1,6 @@
 package sipmsg
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -191,15 +190,31 @@ func TestMessageResponseToBytes(t *testing.T) {
 }
 
 func TestMessageCreateRequest(t *testing.T) {
-	// TODO:
 	via, err := NewHdrVia("UDP", "10.100.0.1", 5060, nil)
 	assert.Nil(t, err)
-	to := NewHdrTo("", "sip:alice@voip.com", nil)
-	to.AddTag()
-	from := NewHdrTo("Bob Smith", "sip:bob@voip.com", nil)
+	branch := via.Branch()
 
-	msg, err := NewRequest("INVITE", "sip:atlanta.com", via, to, from, 102, 70)
+	from := NewHdrFrom("Bob Smith", "sip:bob@voip.com", nil)
+
+	to := NewHdrTo("", "sip:alice@voip.com", nil)
+
+	msg, err := NewRequest("INVITE", "sip:alice@atlanta.com", via, to, from, 102, 70)
 	assert.Nil(t, err)
 
-	fmt.Printf("%s", msg.Bytes())
+	fromTag := from.Tag()
+	str := "INVITE sip:alice@atlanta.com SIP/2.0\r\n" +
+		"Via: SIP/2.0/UDP 10.100.0.1:5060;branch=" + branch + "\r\n" +
+		"From: \"Bob Smith\" <sip:bob@voip.com>;tag=" + fromTag + "\r\n" +
+		"To: <sip:alice@voip.com>\r\n" +
+		"Call-ID: " + msg.CallID + "\r\n" +
+		"CSeq: 102 INVITE\r\n" +
+		"Max-Forwards: 70\r\n\r\n"
+
+	assert.Equal(t, str, msg.String())
+
+	msg, err = NewRequest("INVITE", "sip:alice@atlanta.com", via, to, from, -1, 70)
+	assert.NotNil(t, err)
+
+	msg, err = NewRequest("INVITE", "sip:alice@atlanta.com", via, to, from, 102, 700)
+	assert.NotNil(t, err)
 }

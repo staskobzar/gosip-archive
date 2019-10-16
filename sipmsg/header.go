@@ -219,6 +219,22 @@ func (b *buffer) param(name, value string) pl {
 	return c
 }
 
+func (b *buffer) headerValue(vals ...string) (pl, pl) {
+	pn, pv := pl{}, pl{}
+	b.WriteString(vals[0])
+	pn.l = b.plen()
+	b.WriteByte(':')
+
+	pv.p = b.plen() + 1
+	for _, v := range vals[1:] {
+		b.WriteByte(' ')
+		b.WriteString(v)
+	}
+	pv.l = b.plen()
+	b.crlf()
+	return pn, pv
+}
+
 // write and wrap
 // if plInside is true then set pl only around value, otherwise all with wrapper
 func (b *buffer) wwrap(wrapper, value string, p *pl, plInside bool) {
