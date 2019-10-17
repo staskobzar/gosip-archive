@@ -1,29 +1,51 @@
 package sipmsg
 
-import "bytes"
+import (
+	"strings"
+)
 
 // Contact SIP contact entity
 type Contact struct {
-	buf    []byte
+	buf    buffer
 	name   pl
 	dname  pl
 	addr   pl
 	params []pl
 }
 
+// NewHdrContact creates new Contact SIP header
+func NewHdrContact(dname, addr string, params map[string]string) *Contact {
+	c := &Contact{buf: buffer{}}
+
+	c.buf.name("Contact", &c.name)
+	if len(dname) > 0 {
+		c.buf.wwrap(`""`, strings.ReplaceAll(dname, "\"", "%22"), &c.dname, false)
+		c.buf.WriteByte(' ')
+	}
+
+	c.buf.wwrap("<>", addr, &c.addr, true)
+
+	for name, val := range params {
+		c.params = append(c.params, c.buf.param(name, val))
+	}
+
+	c.buf.crlf()
+	return c
+}
+
 // Location returns SIP contact address/location
 func (c *Contact) Location() string {
-	return string(c.buf[c.addr.p:c.addr.l])
+	return c.buf.str(c.addr)
 }
 
 // DisplayName SIP message contact display name
 func (c *Contact) DisplayName() string {
-	return string(bytes.TrimSpace(c.buf[c.dname.p:c.dname.l]))
+	return strings.TrimSpace(c.buf.str(c.dname))
 }
 
 // Param SIP message contact param search by name
 func (c *Contact) Param(name string) (string, bool) {
-	return searchParam(name, c.buf, c.params)
+	return searchParam(name, c.buf.Bytes(), c.params)
 }
 
 // ContactsList SIP message contacts list

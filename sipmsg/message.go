@@ -86,7 +86,7 @@ func MsgParse(data []byte) (*Message, error) {
 // NewRequest init basic SIP Request
 func NewRequest(met, ruri string, via *Via, to, from *HeaderFromTo, cseq, maxfwd int) (*Message, error) {
 	msg := &Message{}
-	buf := buffer{}
+	var buf []byte
 	plName, plVal := pl{}, pl{}
 
 	if cseq < 0 || cseq > (1<<31) {
@@ -100,28 +100,26 @@ func NewRequest(met, ruri string, via *Via, to, from *HeaderFromTo, cseq, maxfwd
 	msg.ReqLine = NewReqLine(met, ruri)
 
 	msg.Vias = append(msg.Vias, via)
-	msg.pushHeader(SIPHdrVia, via.buf, via.name, pl{via.name.l + 2, ptr(len(via.buf))})
+	msg.pushHeader(SIPHdrVia, via.buf.Bytes(), via.name, pl{via.name.l + 2, via.buf.plen()})
 
 	msg.From = from
 	msg.From.AddTag()
-	msg.pushHeader(SIPHdrFrom, from.buf, from.name, pl{from.name.l + 2, ptr(len(from.buf))})
+	msg.pushHeader(SIPHdrFrom, from.buf.Bytes(), from.name, pl{from.name.l + 2, from.buf.plen()})
 
 	msg.To = to
-	msg.pushHeader(SIPHdrTo, to.buf, to.name, pl{to.name.l + 2, ptr(len(to.buf))})
+	msg.pushHeader(SIPHdrTo, to.buf.Bytes(), to.name, pl{to.name.l + 2, to.buf.plen()})
 
 	msg.CallID = hashString()
-	plName, plVal = buf.headerValue("Call-ID", msg.CallID)
-	msg.pushHeader(SIPHdrCallID, buf.Bytes(), plName, plVal)
+	buf, plName, plVal = headerValue("Call-ID", msg.CallID)
+	msg.pushHeader(SIPHdrCallID, buf, plName, plVal)
 
 	msg.CSeq = &CSeq{uint(cseq), met}
-	buf = buffer{}
-	plName, plVal = buf.headerValue("CSeq", strconv.Itoa(cseq), met)
-	msg.pushHeader(SIPHdrCSeq, buf.Bytes(), plName, plVal)
+	buf, plName, plVal = headerValue("CSeq", strconv.Itoa(cseq), met)
+	msg.pushHeader(SIPHdrCSeq, buf, plName, plVal)
 
 	msg.MaxFwd = uint(maxfwd)
-	buf = buffer{}
-	plName, plVal = buf.headerValue("Max-Forwards", strconv.Itoa(maxfwd))
-	msg.pushHeader(SIPHdrMaxForwards, buf.Bytes(), plName, plVal)
+	buf, plName, plVal = headerValue("Max-Forwards", strconv.Itoa(maxfwd))
+	msg.pushHeader(SIPHdrMaxForwards, buf, plName, plVal)
 
 	return msg, nil
 }
@@ -224,8 +222,10 @@ func (m *Message) setTo(buf []byte, params []pl, fname, dname, addr, tag pl) Hdr
 }
 
 func (m *Message) setContact(buf []byte, name, dname, addr pl, params []pl, i int) {
+	var b buffer
+	b.init(buf)
 	if m.Contacts.Count() == 0 || m.Contacts.Count() == i {
-		m.Contacts.cnt = append(m.Contacts.cnt, &Contact{buf: buf, name: name})
+		m.Contacts.cnt = append(m.Contacts.cnt, &Contact{buf: b, name: name})
 	}
 	m.Contacts.cnt[i].name = name
 	m.Contacts.cnt[i].dname = dname
@@ -233,7 +233,7 @@ func (m *Message) setContact(buf []byte, name, dname, addr pl, params []pl, i in
 	m.Contacts.cnt[i].params = params
 
 	if !m.Headers.exists(buf) {
-		m.pushHeader(SIPHdrContact, buf, name, pl{name.l + 1, ptr(len(buf))})
+		m.pushHeader(SIPHdrContact, buf, name, pl{name.l + 1, b.plen()})
 	}
 }
 
@@ -244,10 +244,12 @@ func (m *Message) setContactStar() {
 
 func (m *Message) setVia(data []byte, name, trans, addr, port, branch, ttl, maddr, recevd pl, i int) {
 	if m.Vias.Count() == 0 || m.Vias.Count() == i {
-		m.Vias = append(m.Vias, &Via{buf: data, name: name})
+		var buf buffer
+		buf.init(data)
+		m.Vias = append(m.Vias, &Via{buf: buf, name: name})
 
 		if !m.Headers.exists(data) {
-			m.pushHeader(SIPHdrVia, data, name, pl{name.l + 1, ptr(len(data))})
+			m.pushHeader(SIPHdrVia, buf.Bytes(), name, pl{name.l + 1, buf.plen()})
 		}
 	}
 	m.Vias[i].trans = trans
@@ -260,8 +262,10 @@ func (m *Message) setVia(data []byte, name, trans, addr, port, branch, ttl, madd
 }
 
 func (m *Message) setRoute(hid HdrType, buf []byte, fname, dname, addr pl, params []pl) {
+	b := buffer{}
+	b.init(buf)
 	r := &Route{
-		buf:    buf,
+		buf:    b,
 		fname:  fname,
 		dname:  dname,
 		addr:   addr,
@@ -269,11 +273,11 @@ func (m *Message) setRoute(hid HdrType, buf []byte, fname, dname, addr pl, param
 	}
 	if hid == SIPHdrRecordRoute {
 		m.RecRoutes = append(m.RecRoutes, r)
-		m.pushHeader(SIPHdrRecordRoute, buf, fname, pl{fname.l + 1, ptr(len(buf))})
+		m.pushHeader(SIPHdrRecordRoute, buf, fname, pl{fname.l + 1, r.buf.plen()})
 		return
 	}
 	m.Routes = append(m.Routes, r)
-	m.pushHeader(SIPHdrRoute, buf, fname, pl{fname.l + 1, ptr(len(buf))})
+	m.pushHeader(SIPHdrRoute, buf, fname, pl{fname.l + 1, r.buf.plen()})
 }
 
 func (m *Message) setExpires(num []byte) HdrType {

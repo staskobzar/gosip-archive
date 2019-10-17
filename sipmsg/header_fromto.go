@@ -1,13 +1,12 @@
 package sipmsg
 
 import (
-	"bytes"
 	"strings"
 )
 
 // HeaderFromTo SIP headers From/To structure
 type HeaderFromTo struct {
-	buf    []byte
+	buf    buffer
 	name   pl // header name
 	dname  pl // display name
 	addr   pl
@@ -35,18 +34,17 @@ func NewHdrFrom(dname, uri string, params map[string]string) *HeaderFromTo {
 
 // DisplayName From/To header display name
 func (h *HeaderFromTo) DisplayName() string {
-	name := h.buf[h.dname.p:h.dname.l]
-	return string(bytes.TrimSpace(name))
+	return strings.TrimSpace(h.buf.str(h.dname))
 }
 
 // Addr From/To header URI address as string
 func (h *HeaderFromTo) Addr() string {
-	return string(h.buf[h.addr.p:h.addr.l])
+	return h.buf.str(h.addr)
 }
 
 // Tag From/To header tag value
 func (h *HeaderFromTo) Tag() string {
-	return string(h.buf[h.tag.p:h.tag.l])
+	return h.buf.str(h.tag)
 }
 
 // AddTag Creates tag header's parameter. Fails is tag already exists.
@@ -54,43 +52,42 @@ func (h *HeaderFromTo) AddTag() error {
 	if h.tag.l > h.tag.p {
 		return ErrorSIPHeader.msg("Header From/To already has Tag.")
 	}
-	var buf buffer
 	tag := randomString()
-	buf.Write(h.buf)
-	buf.Truncate(buf.Len() - 2) // remove CRLF
-	buf.paramVal("tag", tag, &h.tag)
-	h.buf = buf.crlf()
+	h.buf.uncrlf() // remove CRLF
+	h.buf.paramVal("tag", tag, &h.tag)
+	h.buf.crlf()
 	return nil
 }
 
 // Param header parameters
 func (h *HeaderFromTo) Param(name string) (string, bool) {
-	return searchParam(name, h.buf, h.params)
+	return searchParam(name, h.buf.Bytes(), h.params)
 }
 
 func createHeaderFromTo(name, dname, uri string, params map[string]string) *HeaderFromTo {
-	var buf buffer
-	h := &HeaderFromTo{}
-	buf.name(name, &h.name)
+	h := &HeaderFromTo{buf: buffer{}}
+	h.buf.name(name, &h.name)
 
 	if len(dname) > 0 {
-		buf.wwrap(`""`, strings.ReplaceAll(dname, "\"", "%22"), &h.dname, false)
-		buf.WriteByte(' ')
+		h.buf.wwrap(`""`, strings.ReplaceAll(dname, "\"", "%22"), &h.dname, false)
+		h.buf.WriteByte(' ')
 	}
 
-	buf.wwrap("<>", uri, &h.addr, true)
+	h.buf.wwrap("<>", uri, &h.addr, true)
 
 	for name, val := range params {
-		h.params = append(h.params, buf.param(name, val))
+		h.params = append(h.params, h.buf.param(name, val))
 	}
 
-	h.buf = buf.crlf()
+	h.buf.crlf()
 	return h
 }
 
 func initHeaderFromTo(buf []byte, params []pl, fname, dname, addr, tag pl) *HeaderFromTo {
+	b := buffer{}
+	b.init(buf)
 	h := &HeaderFromTo{
-		buf:    buf,
+		buf:    b,
 		name:   fname,
 		dname:  dname,
 		addr:   addr,

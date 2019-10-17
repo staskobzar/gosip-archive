@@ -17,7 +17,7 @@ func (v ViaList) Count() int {
 
 // Via SIP header structure
 type Via struct {
-	buf    []byte
+	buf    buffer
 	name   pl
 	trans  pl // transport
 	host   pl
@@ -50,7 +50,7 @@ func NewHdrVia(trans, host string, port uint, params map[string]string) (*Via, e
 		buf.writeBytePrefix(':', strconv.Itoa(int(port)), &v.port)
 	}
 
-	v.params.p = ptr(buf.Len())
+	v.params.p = buf.plen()
 	for name, val := range params {
 		switch strings.ToLower(name) {
 		case "ttl":
@@ -66,41 +66,42 @@ func NewHdrVia(trans, host string, port uint, params map[string]string) (*Via, e
 	buf.paramVal("branch", randomStringPrefix(cookie), &v.branch)
 	v.params.l = buf.plen()
 
-	v.buf = buf.crlf()
+	buf.crlf()
+	v.buf = buf
 	return v, nil
 }
 
 // Transport Via header transport
 func (v *Via) Transport() string {
-	return string(v.buf[v.trans.p:v.trans.l])
+	return v.buf.str(v.trans)
 }
 
 // Host Via header host of send-by value
 func (v *Via) Host() string {
-	return string(v.buf[v.host.p:v.host.l])
+	return v.buf.str(v.host)
 }
 
 // Port Via header port of send-by value
 func (v *Via) Port() string {
-	return string(v.buf[v.port.p:v.port.l])
+	return v.buf.str(v.port)
 }
 
 // Branch Via header branch parameter
 func (v *Via) Branch() string {
-	return string(v.buf[v.branch.p:v.branch.l])
+	return v.buf.str(v.branch)
 }
 
 // TTL Via header time-to-live parameter
 func (v *Via) TTL() string {
-	return string(v.buf[v.ttl.p:v.ttl.l])
+	return v.buf.str(v.ttl)
 }
 
 // MAddr Via header maddr parameter
 func (v *Via) MAddr() string {
-	return string(v.buf[v.maddr.p:v.maddr.l])
+	return v.buf.str(v.maddr)
 }
 
 // Received Via header received parameter
 func (v *Via) Received() string {
-	return string(v.buf[v.recevd.p:v.recevd.l])
+	return v.buf.str(v.recevd)
 }
