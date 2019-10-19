@@ -52,6 +52,10 @@ func TestMessageParseMultiLineHeaders(t *testing.T) {
 	assert.Equal(t, 2, msg.Vias.Count())
 	assert.Equal(t, "12345600@atlanta.example.com", msg.CallID)
 	assert.Equal(t, 0, msg.Contacts.Count())
+
+	// find all via headers
+	vias := msg.Headers.FindAll(SIPHdrVia)
+	assert.Equal(t, 2, len(vias))
 }
 
 func TestMessageParseInvalidMsg(t *testing.T) {
@@ -216,5 +220,37 @@ func TestMessageCreateRequest(t *testing.T) {
 	assert.NotNil(t, err)
 
 	msg, err = NewRequest("INVITE", "sip:alice@atlanta.com", via, to, from, 102, 700)
+	assert.NotNil(t, err)
+}
+
+func TestMessageCreateResponse(t *testing.T) {
+	str := "REGISTER sip:registrar.biloxi.com SIP/2.0\r\n" +
+		"Via: SIP/2.0/UDP bobspc.biloxi.com:5060;branch=z9hG4bKnashds7\r\n" +
+		"Max-Forwards: 70\r\n" +
+		"To: Bob <sip:bob@biloxi.com>\r\n" +
+		"From: Bob <sip:bob@biloxi.com>;tag=456248\r\n" +
+		"Call-ID: 843817637684230@998sdasdh09\r\n" +
+		"CSeq: 1826 REGISTER\r\n" +
+		"Contact: <sip:bob@192.0.2.4>\r\n" +
+		"Expires: 7200\r\n" +
+		"Content-Length: 0\r\n\r\n"
+	msg, err := MsgParse([]byte(str))
+	assert.Nil(t, err)
+
+	resp, err := msg.NewResponse(100, "Trying")
+	assert.Equal(t, resp.)
+
+	// can not generate response on response
+	resp, err = resp.NewResponse(200, "Ok")
+	assert.NotNil(t, err)
+
+	resp, err = msg.NewResponse(10, "Too small")
+	assert.NotNil(t, err)
+
+	resp, err = msg.NewResponse(710, "Too big")
+	assert.NotNil(t, err)
+
+	// can not generate response on nil
+	resp, err = resp.NewResponse(200, "Ok")
 	assert.NotNil(t, err)
 }

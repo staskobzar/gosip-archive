@@ -228,6 +228,7 @@ func TestMsgParseTortureLongreq(t *testing.T) {
 	assert.Equal(t, 1, msg.Contacts.Count())
 	assert.Equal(t, "longreq.one"+strings.Repeat("really", 20)+"longcallid",
 		msg.CallID)
+
 }
 
 // TODO: dblreq

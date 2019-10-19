@@ -92,6 +92,17 @@ func (l HeadersList) Find(id HdrType) *Header {
 	return nil
 }
 
+// FindAll find all headers by ID and returns array of headers
+func (l HeadersList) FindAll(id HdrType) []*Header {
+	headers := make([]*Header, 0)
+	for _, h := range l {
+		if h.ID() == id {
+			headers = append(headers, h)
+		}
+	}
+	return headers
+}
+
 func (l HeadersList) exists(buf []byte) bool {
 	for _, h := range l {
 		if bytes.Equal(buf, h.buf) {

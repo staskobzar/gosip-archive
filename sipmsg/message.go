@@ -83,7 +83,7 @@ func MsgParse(data []byte) (*Message, error) {
 	return msg, nil
 }
 
-// NewRequest init basic SIP Request
+// NewRequest initiate SIP Request
 func NewRequest(met, ruri string, via *Via, to, from *HeaderFromTo, cseq, maxfwd int) (*Message, error) {
 	msg := &Message{}
 	var buf []byte
@@ -122,6 +122,25 @@ func NewRequest(met, ruri string, via *Via, to, from *HeaderFromTo, cseq, maxfwd
 	msg.pushHeader(SIPHdrMaxForwards, buf, plName, plVal)
 
 	return msg, nil
+}
+
+// NewResponse initiate SIP Response for the request with given code and reason.
+func (req *Message) NewResponse(code int, reason string) (*Message, error) {
+
+	if code < 100 || code > 699 {
+		return nil, ErrorSIPMsgCreate.msg("invalid reponse code: %d", code)
+	}
+
+	if req == nil || !req.IsRequest() {
+		return nil, ErrorSIPMsgCreate.msg("Response can be generated only to SIP request.")
+	}
+
+	resp := &Message{}
+
+	resp.StatusLine = NewStatusLine(strconv.Itoa(code), reason)
+	copy(resp.Vias, req.Vias)
+
+	return resp, nil
 }
 
 // IsRequest returns true is SIP Message is request
