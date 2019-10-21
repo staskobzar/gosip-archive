@@ -226,6 +226,8 @@ func TestMessageCreateRequest(t *testing.T) {
 func TestMessageCreateResponse(t *testing.T) {
 	str := "REGISTER sip:registrar.biloxi.com SIP/2.0\r\n" +
 		"Via: SIP/2.0/UDP bobspc.biloxi.com:5060;branch=z9hG4bKnashds7\r\n" +
+		"Via: SIP/2.0/TLS ss1.example.com:5061\r\n" +
+		"     ;branch=z9hG4bK83754\r\n" +
 		"Max-Forwards: 70\r\n" +
 		"To: Bob <sip:bob@biloxi.com>\r\n" +
 		"From: Bob <sip:bob@biloxi.com>;tag=456248\r\n" +
@@ -238,7 +240,42 @@ func TestMessageCreateResponse(t *testing.T) {
 	assert.Nil(t, err)
 
 	resp, err := msg.NewResponse(100, "Trying")
-	assert.Equal(t, resp.)
+	assert.Nil(t, err)
+	respStr := "SIP/2.0 100 Trying\r\n" +
+		"Via: SIP/2.0/UDP bobspc.biloxi.com:5060;branch=z9hG4bKnashds7\r\n" +
+		"Via: SIP/2.0/TLS ss1.example.com:5061\r\n" +
+		"     ;branch=z9hG4bK83754\r\n" +
+		"To: Bob <sip:bob@biloxi.com>\r\n" +
+		"From: Bob <sip:bob@biloxi.com>;tag=456248\r\n" +
+		"Call-ID: 843817637684230@998sdasdh09\r\n" +
+		"CSeq: 1826 REGISTER\r\n\r\n"
+	assert.Equal(t, respStr, resp.String())
+	assert.Empty(t, resp.To.Tag())
+
+	resp, err = msg.NewResponse(200, "OK")
+	assert.Nil(t, err)
+	err = resp.AddToTag()
+	assert.Nil(t, err)
+	tag := resp.To.Tag()
+	assert.Nil(t, err)
+	assert.Equal(t, 2, resp.Vias.Count())
+	assert.Equal(t, 6, resp.Headers.Count())
+	assert.Equal(t, "To: Bob <sip:bob@biloxi.com>;tag="+tag+"\r\n", resp.To.String())
+	assert.Equal(t, "From: Bob <sip:bob@biloxi.com>;tag=456248\r\n", resp.From.String())
+	assert.Equal(t, "843817637684230@998sdasdh09", resp.CallID)
+	assert.Equal(t, uint(1826), resp.CSeq.Num)
+	assert.Equal(t, "REGISTER", resp.CSeq.Method)
+	respStr = "SIP/2.0 200 OK\r\n" +
+		"Via: SIP/2.0/UDP bobspc.biloxi.com:5060;branch=z9hG4bKnashds7\r\n" +
+		"Via: SIP/2.0/TLS ss1.example.com:5061\r\n" +
+		"     ;branch=z9hG4bK83754\r\n" +
+		"To: Bob <sip:bob@biloxi.com>;tag=" + tag + "\r\n" +
+		"From: Bob <sip:bob@biloxi.com>;tag=456248\r\n" +
+		"Call-ID: 843817637684230@998sdasdh09\r\n" +
+		"CSeq: 1826 REGISTER\r\n\r\n"
+	assert.Equal(t, respStr, resp.String())
+	err = resp.AddToTag()
+	assert.NotNil(t, err)
 
 	// can not generate response on response
 	resp, err = resp.NewResponse(200, "Ok")
@@ -253,4 +290,20 @@ func TestMessageCreateResponse(t *testing.T) {
 	// can not generate response on nil
 	resp, err = resp.NewResponse(200, "Ok")
 	assert.NotNil(t, err)
+}
+
+func TestMessageCreateAddHeader(t *testing.T) {
+	str := "CANCEL sips:bob@client.biloxi.example.com SIP/2.0\r\n" +
+		"Via: SIP/2.0/TLS ss1.example.com:5061;branch=z9hG4bK83749.1\r\n" +
+		"Max-Forwards: 70\r\n" +
+		"From: Alice <sips:alice@atlanta.example.com>;tag=1234567\r\n" +
+		"To: Bob <sips:bob@biloxi.example.com>\r\n" +
+		"Call-ID: 12345600@atlanta.example.com\r\n" +
+		"CSeq: 1 CANCEL\r\n" +
+		"Content-Length: 0\r\n"
+	msg, err := MsgParse([]byte(str + "\r\n"))
+	assert.Nil(t, err)
+
+	msg.AddHeader("Subject", "Call canceled")
+	assert.Equal(t, str+"Subject: Call canceled\r\n\r\n", msg.String())
 }

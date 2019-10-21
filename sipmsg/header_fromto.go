@@ -32,6 +32,11 @@ func NewHdrFrom(dname, uri string, params map[string]string) *HeaderFromTo {
 	return createHeaderFromTo("From", dname, uri, params)
 }
 
+// String returns To/From header as string
+func (h *HeaderFromTo) String() string {
+	return h.buf.String()
+}
+
 // DisplayName From/To header display name
 func (h *HeaderFromTo) DisplayName() string {
 	return strings.TrimSpace(h.buf.str(h.dname))
@@ -48,6 +53,8 @@ func (h *HeaderFromTo) Tag() string {
 }
 
 // AddTag Creates tag header's parameter. Fails is tag already exists.
+// This will ONLY add tag to the header BUT not to the headers list.
+// To add to SIP Message user *Message method AddToTag().
 func (h *HeaderFromTo) AddTag() error {
 	if h.tag.l > h.tag.p {
 		return ErrorSIPHeader.msg("Header From/To already has Tag.")

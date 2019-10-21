@@ -138,7 +138,12 @@ func (req *Message) NewResponse(code int, reason string) (*Message, error) {
 	resp := &Message{}
 
 	resp.StatusLine = NewStatusLine(strconv.Itoa(code), reason)
-	copy(resp.Vias, req.Vias)
+	// rfc3261 8.2.6.2
+	resp.copyHeader(req, SIPHdrVia)
+	resp.copyHeader(req, SIPHdrTo)
+	resp.copyHeader(req, SIPHdrFrom)
+	resp.copyHeader(req, SIPHdrCallID)
+	resp.copyHeader(req, SIPHdrCSeq)
 
 	return resp, nil
 }
@@ -153,6 +158,36 @@ func (m *Message) IsResponse() bool { return m.StatusLine != nil }
 func (m *Message) Bytes() []byte {
 	b := m.buffer()
 	return b.Bytes()
+}
+
+// AddToTag appends tag parameter to To header if not exists.
+func (m *Message) AddToTag() error {
+	if len(m.To.Tag()) > 0 {
+		return ErrorSIPHeader.msg("To header already has tag.")
+	}
+	m.To.AddTag()
+	for i, h := range m.Headers {
+		if h.ID() == SIPHdrTo {
+			m.Headers[i].buf = m.To.buf.Bytes()
+			m.Headers[i].name = m.To.name
+			m.Headers[i].value.p = m.To.name.l + 2
+			m.Headers[i].value.l = m.To.buf.plen()
+
+			return nil
+		}
+	}
+	return nil
+}
+
+// AppendHeader appends new header to the end of SIP message.
+// If header is invalid returns error.
+func (m *Message) AddHeader(name, value string) error {
+	buf, _, _ := headerValue(name, value)
+	_, err := parseHeader(m, buf)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 // String SIP message as string
@@ -332,4 +367,28 @@ func (m *Message) pushHeader(id HdrType, buf []byte, name, value pl) {
 		value: value,
 	}
 	m.Headers = append(m.Headers, h)
+}
+
+func (m *Message) copyHeader(src *Message, id HdrType) {
+	switch id {
+	case SIPHdrVia:
+		m.Vias = make(ViaList, src.Vias.Count())
+		copy(m.Vias, src.Vias)
+	case SIPHdrTo:
+		to := src.To
+		m.To = initHeaderFromTo(to.buf.Bytes(), to.params, to.name, to.dname, to.addr, to.tag)
+	case SIPHdrFrom:
+		from := src.From
+		m.From = initHeaderFromTo(from.buf.Bytes(), from.params, from.name, from.dname, from.addr, from.tag)
+	case SIPHdrCallID:
+		m.CallID = src.CallID
+	case SIPHdrCSeq:
+		m.CSeq = &CSeq{src.CSeq.Num, src.CSeq.Method}
+	}
+
+	for _, h := range src.Headers {
+		if h.ID() == id {
+			m.pushHeader(h.id, h.buf, h.name, h.value)
+		}
+	}
 }
