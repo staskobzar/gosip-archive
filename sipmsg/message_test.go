@@ -332,4 +332,7 @@ func TestMessageCreateRemoveHeader(t *testing.T) {
 		"CSeq: 1 CANCEL\r\n" +
 		"Content-Length: 0\r\n\r\n"
 	assert.Equal(t, str, msg.String())
+
+	removed = msg.RemoveHeader("subject")
+	assert.False(t, removed)
 }
