@@ -39,9 +39,15 @@ type Message struct {
 	Headers    HeadersList
 }
 
+func initMessage() *Message {
+	msg := &Message{}
+	initHeadersList(msg)
+	return msg
+}
+
 // MsgParse parser SIP message to Message structure
 func MsgParse(data []byte) (*Message, error) {
-	msg := &Message{}
+	msg := initMessage()
 
 	idx := bytes.Index(data, []byte("\r\n"))
 	if idx == -1 {
@@ -85,7 +91,7 @@ func MsgParse(data []byte) (*Message, error) {
 
 // NewRequest initiate SIP Request
 func NewRequest(met, ruri string, via *Via, to, from *HeaderFromTo, cseq, maxfwd int) (*Message, error) {
-	msg := &Message{}
+	msg := initMessage()
 	var buf []byte
 	plName, plVal := pl{}, pl{}
 
@@ -135,7 +141,7 @@ func (req *Message) NewResponse(code int, reason string) (*Message, error) {
 		return nil, ErrorSIPMsgCreate.msg("Response can be generated only to SIP request.")
 	}
 
-	resp := &Message{}
+	resp := initMessage()
 
 	resp.StatusLine = NewStatusLine(strconv.Itoa(code), reason)
 	// rfc3261 8.2.6.2
@@ -166,20 +172,15 @@ func (m *Message) AddToTag() error {
 		return ErrorSIPHeader.msg("To header already has tag.")
 	}
 	m.To.AddTag()
-	for i, h := range m.Headers {
-		if h.ID() == SIPHdrTo {
-			m.Headers[i].buf = m.To.buf.Bytes()
-			m.Headers[i].name = m.To.name
-			m.Headers[i].value.p = m.To.name.l + 2
-			m.Headers[i].value.l = m.To.buf.plen()
-
-			return nil
-		}
-	}
+	h := m.Headers.Find(SIPHdrTo)
+	h.buf = m.To.buf.Bytes()
+	h.name = m.To.name
+	h.value.p = m.To.name.l + 2
+	h.value.l = m.To.buf.plen()
 	return nil
 }
 
-// AppendHeader appends new header to the end of SIP message.
+// AddHeader appends new header to the end of SIP message.
 // If header is invalid returns error.
 func (m *Message) AddHeader(name, value string) error {
 	buf, _, _ := headerValue(name, value)
@@ -188,6 +189,12 @@ func (m *Message) AddHeader(name, value string) error {
 		return err
 	}
 	return nil
+}
+
+// RemoveHeader removes header(s) from headers list.
+// Returns true id found and removed.
+func (m *Message) RemoveHeader(name string) bool {
+	return m.Headers.remove(name)
 }
 
 // String SIP message as string
@@ -204,9 +211,7 @@ func (m *Message) buffer() buffer {
 		buf.Write(m.StatusLine.Bytes())
 	}
 
-	for _, h := range m.Headers {
-		buf.Write(h.buf)
-	}
+	m.Headers.ForEach(func(h *Header) { buf.Write(h.buf) })
 	buf.crlf()
 	return buf
 }
@@ -366,7 +371,7 @@ func (m *Message) pushHeader(id HdrType, buf []byte, name, value pl) {
 		name:  name,
 		value: value,
 	}
-	m.Headers = append(m.Headers, h)
+	m.Headers.push(h)
 }
 
 func (m *Message) copyHeader(src *Message, id HdrType) {
@@ -386,9 +391,9 @@ func (m *Message) copyHeader(src *Message, id HdrType) {
 		m.CSeq = &CSeq{src.CSeq.Num, src.CSeq.Method}
 	}
 
-	for _, h := range src.Headers {
+	src.Headers.ForEach(func(h *Header) {
 		if h.ID() == id {
 			m.pushHeader(h.id, h.buf, h.name, h.value)
 		}
-	}
+	})
 }

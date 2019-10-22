@@ -2,6 +2,7 @@ package sipmsg
 
 import (
 	"bytes"
+	"container/list"
 	"fmt"
 	"math/rand"
 	"strconv"
@@ -65,16 +66,23 @@ const (
 )
 
 // HeadersList SIP headers list
-type HeadersList []*Header
+type HeadersList struct {
+	*list.List
+}
+
+func initHeadersList(msg *Message) {
+	msg.Headers = HeadersList{list.New()}
+}
 
 // Count number of headers
 func (l HeadersList) Count() int {
-	return len(l)
+	return l.Len()
 }
 
 // FindByName find header by name
 func (l HeadersList) FindByName(name string) *Header {
-	for _, h := range l {
+	for e := l.Front(); e != nil; e = e.Next() {
+		h := e.Value.(*Header)
 		if strings.EqualFold(name, h.Name()) {
 			return h
 		}
@@ -84,7 +92,8 @@ func (l HeadersList) FindByName(name string) *Header {
 
 // Find find header by ID
 func (l HeadersList) Find(id HdrType) *Header {
-	for _, h := range l {
+	for e := l.Front(); e != nil; e = e.Next() {
+		h := e.Value.(*Header)
 		if h.ID() == id {
 			return h
 		}
@@ -95,7 +104,8 @@ func (l HeadersList) Find(id HdrType) *Header {
 // FindAll find all headers by ID and returns array of headers
 func (l HeadersList) FindAll(id HdrType) []*Header {
 	headers := make([]*Header, 0)
-	for _, h := range l {
+	for e := l.Front(); e != nil; e = e.Next() {
+		h := e.Value.(*Header)
 		if h.ID() == id {
 			headers = append(headers, h)
 		}
@@ -103,13 +113,38 @@ func (l HeadersList) FindAll(id HdrType) []*Header {
 	return headers
 }
 
+// ForEach call first class function on each header
+func (l HeadersList) ForEach(callback func(h *Header)) {
+	for e := l.Front(); e != nil; e = e.Next() {
+		h := e.Value.(*Header)
+		callback(h)
+	}
+}
+
 func (l HeadersList) exists(buf []byte) bool {
-	for _, h := range l {
+	for e := l.Front(); e != nil; e = e.Next() {
+		h := e.Value.(*Header)
 		if bytes.Equal(buf, h.buf) {
 			return true
 		}
 	}
 	return false
+}
+
+func (l HeadersList) push(h *Header) {
+	l.PushBack(h)
+}
+
+func (l HeadersList) remove(name string) bool {
+	found := false
+	for e := l.Front(); e != nil; e = e.Next() {
+		h := e.Value.(*Header)
+		if strings.EqualFold(h.Name(), name) {
+			l.Remove(e)
+			found = true
+		}
+	}
+	return found
 }
 
 // Header SIP header

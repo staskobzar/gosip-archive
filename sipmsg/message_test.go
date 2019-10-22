@@ -307,3 +307,29 @@ func TestMessageCreateAddHeader(t *testing.T) {
 	msg.AddHeader("Subject", "Call canceled")
 	assert.Equal(t, str+"Subject: Call canceled\r\n\r\n", msg.String())
 }
+
+func TestMessageCreateRemoveHeader(t *testing.T) {
+	str := "CANCEL sips:bob@client.biloxi.example.com SIP/2.0\r\n" +
+		"Via: SIP/2.0/TLS ss1.example.com:5061;branch=z9hG4bK83749.1\r\n" +
+		"Max-Forwards: 70\r\n" +
+		"From: Alice <sips:alice@atlanta.example.com>;tag=1234567\r\n" +
+		"To: Bob <sips:bob@biloxi.example.com>\r\n" +
+		"Call-ID: 12345600@atlanta.example.com\r\n" +
+		"Subject: Cancel call to alice\r\n" +
+		"CSeq: 1 CANCEL\r\n" +
+		"Content-Length: 0\r\n\r\n"
+	msg, err := MsgParse([]byte(str))
+	assert.Nil(t, err)
+
+	removed := msg.RemoveHeader("subject")
+	assert.True(t, removed)
+	str = "CANCEL sips:bob@client.biloxi.example.com SIP/2.0\r\n" +
+		"Via: SIP/2.0/TLS ss1.example.com:5061;branch=z9hG4bK83749.1\r\n" +
+		"Max-Forwards: 70\r\n" +
+		"From: Alice <sips:alice@atlanta.example.com>;tag=1234567\r\n" +
+		"To: Bob <sips:bob@biloxi.example.com>\r\n" +
+		"Call-ID: 12345600@atlanta.example.com\r\n" +
+		"CSeq: 1 CANCEL\r\n" +
+		"Content-Length: 0\r\n\r\n"
+	assert.Equal(t, str, msg.String())
+}

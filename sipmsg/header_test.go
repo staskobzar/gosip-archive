@@ -7,7 +7,7 @@ import (
 )
 
 func TestHdrParseCSeq(t *testing.T) {
-	msg := &Message{}
+	msg := initMessage()
 	h, err := parseHeader(msg, []byte("CSeq: 4711 INVITE\r\n"))
 	assert.Nil(t, err)
 	assert.Equal(t, SIPHdrCSeq, h)
@@ -16,7 +16,7 @@ func TestHdrParseCSeq(t *testing.T) {
 }
 
 func TestHdrParseCallID(t *testing.T) {
-	msg := &Message{}
+	msg := initMessage()
 	h, err := parseHeader(msg, []byte("Call-ID: 12345601@atlanta.example.com\r\n"))
 	assert.Nil(t, err)
 	assert.Equal(t, SIPHdrCallID, h)
@@ -29,7 +29,7 @@ func TestHdrParseCallID(t *testing.T) {
 }
 
 func TestHdrParseContentLength(t *testing.T) {
-	msg := &Message{}
+	msg := initMessage()
 	h, err := parseHeader(msg, []byte("Content-Length:   543\r\n"))
 	assert.Nil(t, err)
 	assert.Equal(t, SIPHdrContentLength, h)
@@ -42,7 +42,7 @@ func TestHdrParseContentLength(t *testing.T) {
 }
 
 func TestHdrParseFrom(t *testing.T) {
-	msg := &Message{}
+	msg := initMessage()
 	h, err := parseHeader(msg, []byte("From: sip:+12125551212@phone2net.com;tag=887s\r\n"))
 	assert.Nil(t, err)
 	assert.Equal(t, SIPHdrFrom, h)
@@ -90,7 +90,7 @@ func TestHdrParseFrom(t *testing.T) {
 }
 
 func TestHdrParseTo(t *testing.T) {
-	msg := &Message{}
+	msg := initMessage()
 	h, err := parseHeader(msg, []byte("To: Carol 212 <sip:212@chicago.com>\r\n"))
 	assert.Nil(t, err)
 	assert.Equal(t, SIPHdrTo, h)
@@ -116,7 +116,7 @@ func TestHdrParseTo(t *testing.T) {
 }
 
 func TestHdrParseContact(t *testing.T) {
-	msg := &Message{}
+	msg := initMessage()
 	h, err := parseHeader(msg, []byte("Contact: sip:2234@10.0.114.12:12543\r\n"))
 	assert.Nil(t, err)
 	assert.Equal(t, SIPHdrContact, h)
@@ -126,7 +126,7 @@ func TestHdrParseContact(t *testing.T) {
 	c := cnt.First()
 	assert.Equal(t, "sip:2234@10.0.114.12:12543", c.Location())
 
-	msg = &Message{}
+	msg = initMessage()
 	h, err = parseHeader(msg, []byte("m  :\"Mr. Watson\" <sip:watson@bell-telephone.com>;q=0.7; expires=3600\r\n"))
 	assert.Nil(t, err)
 	assert.Equal(t, SIPHdrContact, h)
@@ -141,7 +141,7 @@ func TestHdrParseContact(t *testing.T) {
 	assert.Equal(t, "3600", p)
 
 	// Star contact
-	msg = &Message{}
+	msg = initMessage()
 	h, err = parseHeader(msg, []byte("Contact: * \r\n"))
 	assert.Nil(t, err)
 	assert.Equal(t, SIPHdrContact, h)
@@ -149,7 +149,7 @@ func TestHdrParseContact(t *testing.T) {
 }
 
 func TestHdrParseMultiContacts(t *testing.T) {
-	msg := &Message{}
+	msg := initMessage()
 	str := "Contact: Alice <sip:2234@10.0.114.12:12543>;\r\n" +
 		" user=phone, sips:bob@voip.com;  lr ; cic=514284," +
 		" \"123, rue Jones\" <sip:jones@sip.ca> ; par =\r\n  foo\r\n"
@@ -189,7 +189,7 @@ func TestHdrParseMultiContacts(t *testing.T) {
 }
 
 func TestHdrParseMultiHeaderContacts(t *testing.T) {
-	m := &Message{}
+	m := initMessage()
 	hs := "Contact: \"Mr. Watson\" <sip:watson@worcester.bell-telephone.com>\r\n" +
 		" ;q=0.7; expires=3600,\r\n" +
 		" \"Mr. Watson\" <mailto:watson@bell-telephone.com> ;q=0.1\r\n"
@@ -200,7 +200,7 @@ func TestHdrParseMultiHeaderContacts(t *testing.T) {
 }
 
 func TestHdrParseVia(t *testing.T) {
-	msg := &Message{}
+	msg := initMessage()
 	str := "Via: SIP/2.0/TLS ss1.example.com:5061;branch=z9hG4bK83749.1" +
 		";received=192.0.2.54;ttl=60;maddr=224.2.0.1;lr\r\n"
 	h, err := parseHeader(msg, []byte(str))
@@ -218,7 +218,7 @@ func TestHdrParseVia(t *testing.T) {
 
 	str = "V : SIP / 2.0 / UDP first.example.com: 4000;ttl=16\r\n" +
 		" ;maddr=224.2.0.1 ;branch=z9hG4bKa7c6a8dlze.1\r\n"
-	msg = &Message{}
+	msg = initMessage()
 	h, err = parseHeader(msg, []byte(str))
 	assert.Nil(t, err)
 	assert.Equal(t, SIPHdrVia, h)
@@ -232,7 +232,7 @@ func TestHdrParseVia(t *testing.T) {
 }
 
 func TestHdrParseViaComma(t *testing.T) {
-	msg := &Message{}
+	msg := initMessage()
 	str := "Via: SIP/ 2.0 / UDP erlang.bell-telephone.com : 5060\r\n" +
 		" ;branch=z9hG4bK87asdks7, SIP/2.0/TCP foo.com " +
 		":8080;branch=z9hG4bK87as111;maddr=10.0.0.1\r\n"
@@ -259,7 +259,7 @@ func TestHdrParseViaComma(t *testing.T) {
 }
 
 func TestHdrParseViaMultiHeaders(t *testing.T) {
-	msg := &Message{}
+	msg := initMessage()
 	str := "Via: SIP/2.0/UDP bell.com : 5060;branch=z9hG4bK87asdks7.2\r\n"
 	h, err := parseHeader(msg, []byte(str))
 	assert.Nil(t, err)
@@ -278,7 +278,7 @@ func TestHdrParseViaMultiHeaders(t *testing.T) {
 }
 
 func TestHdrParseRoute(t *testing.T) {
-	msg := &Message{}
+	msg := initMessage()
 	h, err := parseHeader(msg, []byte("Route: <sips:ss1.example.com>\r\n"))
 	assert.Equal(t, SIPHdrRoute, h)
 	assert.Nil(t, err)
@@ -288,7 +288,7 @@ func TestHdrParseRoute(t *testing.T) {
 	rh := r[0]
 	assert.Equal(t, "sips:ss1.example.com", rh.Addr())
 
-	msg = &Message{}
+	msg = initMessage()
 	h, err = parseHeader(msg, []byte("Route: Deli <sip:p1.voip.com;lr>;nat=yes;wr\r\n"))
 	assert.Equal(t, SIPHdrRoute, h)
 	assert.Nil(t, err)
@@ -312,7 +312,7 @@ func TestHdrParseRoute(t *testing.T) {
 }
 
 func TestHdrParseRouteComma(t *testing.T) {
-	msg := &Message{}
+	msg := initMessage()
 	str := "Route: <sips:bigbox3.site3.atlanta.com;lr>;ssl=true," +
 		" <sip:server10.biloxi.com;lr>\r\n"
 	h, err := parseHeader(msg, []byte(str))
@@ -329,7 +329,7 @@ func TestHdrParseRouteComma(t *testing.T) {
 	rh = r[1]
 	assert.Equal(t, "sip:server10.biloxi.com;lr", rh.Addr())
 
-	msg = &Message{}
+	msg = initMessage()
 	str = "Route: <sip:site3.atlanta.com;lr>,\r\n" +
 		" <sip:biloxi.com;lr>,\r\n <sips:ssl.voip.fr>\r\n"
 	h, err = parseHeader(msg, []byte(str))
@@ -344,7 +344,7 @@ func TestHdrParseRouteComma(t *testing.T) {
 }
 
 func TestHdrParseRouteMulti(t *testing.T) {
-	msg := &Message{}
+	msg := initMessage()
 	str := "Route: <sips:s3.atlanta.com;lr>," +
 		" <sip:server10.biloxi.com;lr>\r\n"
 	h, err := parseHeader(msg, []byte(str))
@@ -366,7 +366,7 @@ func TestHdrParseRouteMulti(t *testing.T) {
 }
 
 func TestHdrParseRecordRoute(t *testing.T) {
-	msg := &Message{}
+	msg := initMessage()
 	str := "Record-Route: <sip:server10.biloxi.com;lr>,\r\n" +
 		"   <sip:bigbox3.site3.atlanta.com;lr>\r\n"
 	h, err := parseHeader(msg, []byte(str))
@@ -377,7 +377,7 @@ func TestHdrParseRecordRoute(t *testing.T) {
 }
 
 func TestHdrMaxForwards(t *testing.T) {
-	msg := &Message{}
+	msg := initMessage()
 	h, err := parseHeader(msg, []byte("Max-Forwards: 70\r\n"))
 	assert.Nil(t, err)
 	assert.Equal(t, SIPHdrMaxForwards, h)
@@ -385,7 +385,7 @@ func TestHdrMaxForwards(t *testing.T) {
 }
 
 func TestHdrExpires(t *testing.T) {
-	msg := &Message{}
+	msg := initMessage()
 	h, err := parseHeader(msg, []byte("Expires: 1800\r\n"))
 	assert.Nil(t, err)
 	assert.Equal(t, SIPHdrExpires, h)
@@ -393,14 +393,14 @@ func TestHdrExpires(t *testing.T) {
 }
 
 func TestHdrGenericHeaders(t *testing.T) {
-	msg := &Message{}
+	msg := initMessage()
 	h, err := parseHeader(msg, []byte("Foo: 70 BAR\r\n"))
 	assert.Nil(t, err)
 	assert.Equal(t, SIPHdrGeneric, h)
 }
 
 func TestHdrAccept(t *testing.T) {
-	msg := &Message{}
+	msg := initMessage()
 	hid, err := parseHeader(msg, []byte("accept:  application/sdp;level=1, application/x-private\r\n"))
 	assert.Nil(t, err)
 	assert.Equal(t, SIPHdrAccept, hid)
@@ -409,7 +409,7 @@ func TestHdrAccept(t *testing.T) {
 }
 
 func TestHdrAcceptEncoding(t *testing.T) {
-	msg := &Message{}
+	msg := initMessage()
 	hid, err := parseHeader(msg, []byte("Accept-Encoding: gzip\r\n"))
 	assert.Nil(t, err)
 	assert.Equal(t, SIPHdrAcceptEncoding, hid)
@@ -417,7 +417,7 @@ func TestHdrAcceptEncoding(t *testing.T) {
 }
 
 func TestHdrAcceptLanguage(t *testing.T) {
-	msg := &Message{}
+	msg := initMessage()
 	hid, err := parseHeader(msg, []byte("Accept-Language: da, en-gb;q=0.8, en;q=0.7\r\n"))
 	assert.Nil(t, err)
 	assert.Equal(t, SIPHdrAcceptLanguage, hid)
@@ -425,7 +425,7 @@ func TestHdrAcceptLanguage(t *testing.T) {
 }
 
 func TestHdrAlertInfo(t *testing.T) {
-	msg := &Message{}
+	msg := initMessage()
 	hid, err := parseHeader(msg,
 		[]byte("Alert-Info: <http://www.example.com/sounds/moo.wav>\r\n"))
 	assert.Nil(t, err)
@@ -435,7 +435,7 @@ func TestHdrAlertInfo(t *testing.T) {
 }
 
 func TestHdrAllow(t *testing.T) {
-	msg := &Message{}
+	msg := initMessage()
 	hid, err := parseHeader(msg, []byte("allow : INVITE, ACK, OPTIONS, CANCEL, BYE\r\n"))
 	assert.Nil(t, err)
 	assert.Equal(t, SIPHdrAllow, hid)
@@ -443,7 +443,7 @@ func TestHdrAllow(t *testing.T) {
 }
 
 func TestHdrAuthInfo(t *testing.T) {
-	msg := &Message{}
+	msg := initMessage()
 	hid, err := parseHeader(msg,
 		[]byte("Authentication-Info: nextnonce=\"47364c23432d2e131a5fb210812c\"\r\n"))
 	assert.Nil(t, err)
@@ -453,7 +453,7 @@ func TestHdrAuthInfo(t *testing.T) {
 }
 
 func TestHdrAuthorization(t *testing.T) {
-	msg := &Message{}
+	msg := initMessage()
 	str := "Authorization: Digest username=\"Alice\", realm=\"atlanta.com\",\r\n" +
 		" nonce=\"84a4cc6f3082121f32b42a2187831a9e\",\r\n" +
 		" response=\"7587245234b3434cc3412213e5f113a5432\"\r\n"
@@ -467,7 +467,7 @@ func TestHdrAuthorization(t *testing.T) {
 }
 
 func TestHdrCallInfo(t *testing.T) {
-	msg := &Message{}
+	msg := initMessage()
 	str := "Call-Info: <http://wwww.example.com/alice/photo.jpg> ;purpose=icon,\r\n" +
 		" <http://www.example.com/alice/> ;purpose=info\r\n"
 	hid, err := parseHeader(msg, []byte(str))
@@ -479,7 +479,7 @@ func TestHdrCallInfo(t *testing.T) {
 }
 
 func TestHdrContentDispo(t *testing.T) {
-	msg := &Message{}
+	msg := initMessage()
 	hid, err := parseHeader(msg, []byte("Content-Disposition: session\r\n"))
 	assert.Nil(t, err)
 	assert.Equal(t, SIPHdrContentDisposition, hid)
@@ -487,7 +487,7 @@ func TestHdrContentDispo(t *testing.T) {
 }
 
 func TestHdrContentEncoding(t *testing.T) {
-	msg := &Message{}
+	msg := initMessage()
 	hid, err := parseHeader(msg, []byte("e  : tar\r\n"))
 	assert.Nil(t, err)
 	assert.Equal(t, SIPHdrContentEncoding, hid)
@@ -495,7 +495,7 @@ func TestHdrContentEncoding(t *testing.T) {
 }
 
 func TestHdrContentLanguage(t *testing.T) {
-	msg := &Message{}
+	msg := initMessage()
 	hid, err := parseHeader(msg, []byte("Content-Language: fr\r\n"))
 	assert.Nil(t, err)
 	assert.Equal(t, SIPHdrContentLanguage, hid)
@@ -503,7 +503,7 @@ func TestHdrContentLanguage(t *testing.T) {
 }
 
 func TestHdrContentType(t *testing.T) {
-	msg := &Message{}
+	msg := initMessage()
 	hid, err := parseHeader(msg, []byte("C : text/html; charset=ISO-8859-4\r\n"))
 	assert.Nil(t, err)
 	assert.Equal(t, SIPHdrContentType, hid)
@@ -512,7 +512,7 @@ func TestHdrContentType(t *testing.T) {
 }
 
 func TestHdrDate(t *testing.T) {
-	msg := &Message{}
+	msg := initMessage()
 	hid, err := parseHeader(msg, []byte("Date: Sat, 13 Nov 2010 23:29:00 GMT\r\n"))
 	assert.Nil(t, err)
 	assert.Equal(t, SIPHdrDate, hid)
@@ -520,7 +520,7 @@ func TestHdrDate(t *testing.T) {
 }
 
 func TestHdrErrorInfo(t *testing.T) {
-	msg := &Message{}
+	msg := initMessage()
 	hid, err := parseHeader(msg, []byte("Error-Info: <sip:not-in-service-recording@atlanta.com>\r\n"))
 	assert.Nil(t, err)
 	assert.Equal(t, SIPHdrErrorInfo, hid)
@@ -529,7 +529,7 @@ func TestHdrErrorInfo(t *testing.T) {
 }
 
 func TestHdrInReplyTo(t *testing.T) {
-	msg := &Message{}
+	msg := initMessage()
 	hid, err := parseHeader(msg, []byte("In-Reply-To: 70710@saturn.bell-tel.com, 17320@saturn.bell-tel.com\r\n"))
 	assert.Nil(t, err)
 	assert.Equal(t, SIPHdrInReplyTo, hid)
@@ -537,7 +537,7 @@ func TestHdrInReplyTo(t *testing.T) {
 }
 
 func TestHdrMIMEVersion(t *testing.T) {
-	msg := &Message{}
+	msg := initMessage()
 	hid, err := parseHeader(msg, []byte("MIME-Version: 1.0\r\n"))
 	assert.Nil(t, err)
 	assert.Equal(t, SIPHdrMIMEVersion, hid)
@@ -545,7 +545,7 @@ func TestHdrMIMEVersion(t *testing.T) {
 }
 
 func TestHdrMinExpires(t *testing.T) {
-	msg := &Message{}
+	msg := initMessage()
 	hid, err := parseHeader(msg, []byte("Min-Expires: 60\r\n"))
 	assert.Nil(t, err)
 	assert.Equal(t, SIPHdrMinExpires, hid)
@@ -553,7 +553,7 @@ func TestHdrMinExpires(t *testing.T) {
 }
 
 func TestHdrOrganization(t *testing.T) {
-	msg := &Message{}
+	msg := initMessage()
 	hid, err := parseHeader(msg, []byte("Organization: Boxes by Bob\r\n"))
 	assert.Nil(t, err)
 	assert.Equal(t, SIPHdrOrganization, hid)
@@ -561,7 +561,7 @@ func TestHdrOrganization(t *testing.T) {
 }
 
 func TestHdrPriority(t *testing.T) {
-	msg := &Message{}
+	msg := initMessage()
 	hid, err := parseHeader(msg, []byte("Priority: non-urgent\r\n"))
 	assert.Nil(t, err)
 	assert.Equal(t, SIPHdrPriority, hid)
@@ -569,7 +569,7 @@ func TestHdrPriority(t *testing.T) {
 }
 
 func TestHdrProxyAuthenticate(t *testing.T) {
-	msg := &Message{}
+	msg := initMessage()
 	str := "Digest realm=\"atlanta.com\",\r\n" +
 		" domain=\"sip:ss1.carrier.com\", qop=\"auth\",\r\n" +
 		" nonce=\"f84f1cec41e6cbe5aea9c8e88d359\",\r\n" +
@@ -581,7 +581,7 @@ func TestHdrProxyAuthenticate(t *testing.T) {
 }
 
 func TestHdrProxyAuthorization(t *testing.T) {
-	msg := &Message{}
+	msg := initMessage()
 	str := "Digest username=\"Alice\", realm=\"atlanta.com\",\r\n" +
 		"   nonce=\"c60f3082ee1212b402a21831ae\",\r\n" +
 		"   response=\"245f23415f11432b3434341c022\""
@@ -592,7 +592,7 @@ func TestHdrProxyAuthorization(t *testing.T) {
 }
 
 func TestHdrProxyRequired(t *testing.T) {
-	msg := &Message{}
+	msg := initMessage()
 	hid, err := parseHeader(msg, []byte("Proxy-Require: foo\r\n"))
 	assert.Nil(t, err)
 	assert.Equal(t, SIPHdrProxyRequire, hid)
@@ -600,7 +600,7 @@ func TestHdrProxyRequired(t *testing.T) {
 }
 
 func TestHdrReplyTo(t *testing.T) {
-	msg := &Message{}
+	msg := initMessage()
 	hid, err := parseHeader(msg, []byte("Reply-To: Bob <sip:bob@biloxi.com>\r\n"))
 	assert.Nil(t, err)
 	assert.Equal(t, SIPHdrReplyTo, hid)
@@ -608,7 +608,7 @@ func TestHdrReplyTo(t *testing.T) {
 }
 
 func TestHdrRequire(t *testing.T) {
-	msg := &Message{}
+	msg := initMessage()
 	hid, err := parseHeader(msg, []byte("Require: 100rel\r\n"))
 	assert.Nil(t, err)
 	assert.Equal(t, SIPHdrRequire, hid)
@@ -616,7 +616,7 @@ func TestHdrRequire(t *testing.T) {
 }
 
 func TestHdrRetryAfter(t *testing.T) {
-	msg := &Message{}
+	msg := initMessage()
 	hid, err := parseHeader(msg, []byte("Retry-After: 18000;duration=3600\r\n"))
 	assert.Nil(t, err)
 	assert.Equal(t, SIPHdrRetryAfter, hid)
@@ -624,7 +624,7 @@ func TestHdrRetryAfter(t *testing.T) {
 }
 
 func TestHdrServer(t *testing.T) {
-	msg := &Message{}
+	msg := initMessage()
 	hid, err := parseHeader(msg, []byte("Server: HomeServer v2\r\n"))
 	assert.Nil(t, err)
 	assert.Equal(t, SIPHdrServer, hid)
@@ -632,7 +632,7 @@ func TestHdrServer(t *testing.T) {
 }
 
 func TestHdrSubject(t *testing.T) {
-	msg := &Message{}
+	msg := initMessage()
 	hid, err := parseHeader(msg, []byte("S : Tech Support\r\n"))
 	assert.Nil(t, err)
 	assert.Equal(t, SIPHdrSubject, hid)
@@ -640,7 +640,7 @@ func TestHdrSubject(t *testing.T) {
 }
 
 func TestHdrSupported(t *testing.T) {
-	msg := &Message{}
+	msg := initMessage()
 	hid, err := parseHeader(msg, []byte("Supported: 100rel\r\n"))
 	assert.Nil(t, err)
 	assert.Equal(t, SIPHdrSupported, hid)
@@ -648,7 +648,7 @@ func TestHdrSupported(t *testing.T) {
 }
 
 func TestHdrTimestamp(t *testing.T) {
-	msg := &Message{}
+	msg := initMessage()
 	hid, err := parseHeader(msg, []byte("Timestamp: 54\r\n"))
 	assert.Nil(t, err)
 	assert.Equal(t, SIPHdrTimestamp, hid)
@@ -656,7 +656,7 @@ func TestHdrTimestamp(t *testing.T) {
 }
 
 func TestHdrUnsupported(t *testing.T) {
-	msg := &Message{}
+	msg := initMessage()
 	hid, err := parseHeader(msg, []byte("Unsupported: foo\r\n"))
 	assert.Nil(t, err)
 	assert.Equal(t, SIPHdrUnsupported, hid)
@@ -664,7 +664,7 @@ func TestHdrUnsupported(t *testing.T) {
 }
 
 func TestHdrUserAgent(t *testing.T) {
-	msg := &Message{}
+	msg := initMessage()
 	hid, err := parseHeader(msg, []byte("User-Agent: Softphone Beta1.5\r\n"))
 	assert.Nil(t, err)
 	assert.Equal(t, SIPHdrUserAgent, hid)
@@ -672,7 +672,7 @@ func TestHdrUserAgent(t *testing.T) {
 }
 
 func TestHdrWarning(t *testing.T) {
-	msg := &Message{}
+	msg := initMessage()
 	hid, err := parseHeader(msg,
 		[]byte("Warning: 301 isi.edu \"Incompatible network address type 'E.164'\"\r\n"))
 	assert.Nil(t, err)
@@ -686,7 +686,7 @@ func TestHdrWWWAuth(t *testing.T) {
 		" domain=\"sip:boxesbybob.com\", qop=\"auth\",\r\n" +
 		" nonce=\"f84f1cec41e6cbe5aea9c8e88d359\",\r\n" +
 		" opaque=\"\", stale=FALSE, algorithm=MD5"
-	msg := &Message{}
+	msg := initMessage()
 	hid, err := parseHeader(msg, []byte("WWW-Authenticate: "+str+"\r\n"))
 	assert.Nil(t, err)
 	assert.Equal(t, SIPHdrWWWAuthenticate, hid)
