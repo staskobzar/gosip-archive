@@ -1,12 +1,12 @@
-//line uri_parser.rl:1
+//line parser_uri.rl:1
 // -*-go-*-
 //
 // SIP(s) URI parser
 package sipmsg
 
-//line uri_parser.rl:7
+//line parser_uri.rl:7
 
-//line uri_parser.go:12
+//line parser_uri.go:12
 var _uri_actions []byte = []byte{
 	0, 1, 0, 1, 1, 1, 2, 1, 3,
 	1, 4, 1, 5, 1, 6, 1, 8,
@@ -1145,7 +1145,7 @@ const uri_error int = 0
 
 const uri_en_uri int = 1
 
-//line uri_parser.rl:8
+//line parser_uri.rl:8
 
 func URIParse(data []byte) *URI {
 	uri := &URI{}
@@ -1156,16 +1156,16 @@ func URIParse(data []byte) *URI {
 		m, // marker
 		pe, eof ptr = 0, 0, l, l
 
-//line uri_parser.rl:47
+//line parser_uri.rl:47
 
-//line uri_parser.go:1167
+//line parser_uri.go:1167
 	{
 		cs = uri_start
 	}
 
-//line uri_parser.rl:49
+//line parser_uri.rl:49
 
-//line uri_parser.go:1174
+//line parser_uri.go:1174
 	{
 		var _klen int
 		var _trans int
@@ -1245,18 +1245,18 @@ func URIParse(data []byte) *URI {
 			_acts++
 			switch _uri_actions[_acts-1] {
 			case 0:
-//line uri_parser.rl:18
+//line parser_uri.rl:18
 				m = p
 			case 1:
-//line uri_parser.rl:19
+//line parser_uri.rl:19
 				uri.scheme = pl{0, p}
 				uri.id = URIsips
 			case 2:
-//line uri_parser.rl:20
+//line parser_uri.rl:20
 				uri.scheme = pl{0, p}
 				uri.id = URIsip
 			case 4:
-//line uri_parser.rl:22
+//line parser_uri.rl:22
 
 				from := uri.scheme.l + 1
 				if uri.id == URIabs {
@@ -1265,18 +1265,18 @@ func URIParse(data []byte) *URI {
 				uri.user = pl{from, p}
 
 			case 5:
-//line uri_parser.rl:27
+//line parser_uri.rl:27
 				uri.host = pl{m, p}
 			case 6:
-//line uri_parser.rl:28
+//line parser_uri.rl:28
 				uri.password = pl{m, p}
 			case 7:
-//line uri_parser.rl:29
+//line parser_uri.rl:29
 				uri.port = pl{m, p}
 			case 8:
-//line uri_parser.rl:30
+//line parser_uri.rl:30
 				uri.params = pl{m, p}
-//line uri_parser.go:1280
+//line parser_uri.go:1280
 			}
 		}
 
@@ -1288,10 +1288,10 @@ func URIParse(data []byte) *URI {
 			_acts++
 			switch _uri_actions[_acts-1] {
 			case 3:
-//line uri_parser.rl:21
+//line parser_uri.rl:21
 				uri.scheme = pl{0, p}
 				uri.id = URIabs
-//line uri_parser.go:1293
+//line parser_uri.go:1293
 			}
 		}
 
@@ -1313,21 +1313,21 @@ func URIParse(data []byte) *URI {
 				__acts++
 				switch _uri_actions[__acts-1] {
 				case 0:
-//line uri_parser.rl:18
+//line parser_uri.rl:18
 					m = p
 				case 5:
-//line uri_parser.rl:27
+//line parser_uri.rl:27
 					uri.host = pl{m, p}
 				case 7:
-//line uri_parser.rl:29
+//line parser_uri.rl:29
 					uri.port = pl{m, p}
 				case 8:
-//line uri_parser.rl:30
+//line parser_uri.rl:30
 					uri.params = pl{m, p}
 				case 9:
-//line uri_parser.rl:31
+//line parser_uri.rl:31
 					uri.headers = pl{m, p}
-//line uri_parser.go:1326
+//line parser_uri.go:1326
 				}
 			}
 		}
@@ -1337,7 +1337,7 @@ func URIParse(data []byte) *URI {
 		}
 	}
 
-//line uri_parser.rl:50
+//line parser_uri.rl:50
 	if cs >= uri_first_final {
 		return uri
 	}

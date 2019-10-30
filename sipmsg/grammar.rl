@@ -17,6 +17,8 @@
     EQUAL           = SWS "=" SWS;          # equal
     RAQUOT          = ">" SWS;              # right angle quote
     LAQUOT          = SWS "<";              # left angle quote
+    LDQUOT          = SWS DQUOTE;           # open double quotation mark
+    RDQUOT          = DQUOTE SWS;           # close double quotation mark
     SEMI            = SWS ";" SWS;          # semicolon
     COMMA           = SWS "," SWS;          # comma
     SLASH           = SWS "/" SWS;          # slash
@@ -29,6 +31,7 @@
                       ( 0xF8..0xFB UTF8_CONT{4} ) |
                       ( 0xFC..0xFD UTF8_CONT{5} );
     TEXT_UTF8CHAR   = 0x21..0x7E | UTF8_NONASCII;
+    LHEX            = digit | 0x61..0x66;    # lowercase a-f
 
     quoted_pair     = '\\' (0x00..0x09 | 0x0B..0x0C | 0x0E..0x7F);
     qdtext          = LWS | 0x21 | 0x23..0x5B | 0x5D..0x7E | UTF8_NONASCII;

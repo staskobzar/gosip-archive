@@ -1,4 +1,4 @@
-//line msg_parser.rl:1
+//line parser_msg.rl:1
 // -*-go-*-
 //
 // SIP headers and first line parser
@@ -10,9 +10,9 @@ import (
 
 var ErrorSIPHeader = errorNew("Invalid SIP Header")
 
-//line msg_parser.rl:13
+//line parser_msg.rl:13
 
-//line msg_parser.go:18
+//line parser_msg.go:18
 var _msg_actions []byte = []byte{
 	0, 1, 0, 1, 1, 1, 2, 1, 3,
 	1, 4, 1, 5, 1, 6, 1, 7,
@@ -17544,7 +17544,7 @@ const msg_error int = 0
 
 const msg_en_siphdr int = 1
 
-//line msg_parser.rl:14
+//line parser_msg.rl:14
 
 func parseHeader(msg *Message, data []byte) (HdrType, error) {
 	cs := 0 // current state. entery point = 0
@@ -17572,16 +17572,16 @@ func parseHeader(msg *Message, data []byte) (HdrType, error) {
 		return MsgEOF, nil
 	}
 
-//line msg_parser.rl:249
+//line parser_msg.rl:249
 
-//line msg_parser.go:17582
+//line parser_msg.go:17582
 	{
 		cs = msg_start
 	}
 
-//line msg_parser.rl:251
+//line parser_msg.rl:251
 
-//line msg_parser.go:17589
+//line parser_msg.go:17589
 	{
 		var _klen int
 		var _trans int
@@ -17662,42 +17662,42 @@ func parseHeader(msg *Message, data []byte) (HdrType, error) {
 			_acts++
 			switch _msg_actions[_acts-1] {
 			case 0:
-//line msg_parser.rl:42
+//line parser_msg.rl:42
 				m = p
 			case 1:
-//line msg_parser.rl:43
+//line parser_msg.rl:43
 				pos = append(pos, pl{m, p})
 			case 2:
-//line msg_parser.rl:44
+//line parser_msg.rl:44
 				tag = pl{m, p}
 			case 3:
-//line msg_parser.rl:45
+//line parser_msg.rl:45
 				dname.p = m
 				dname.l = p
 			case 4:
-//line msg_parser.rl:46
+//line parser_msg.rl:46
 				addr.p = m
 				addr.l = p
 			case 5:
-//line msg_parser.rl:47
+//line parser_msg.rl:47
 				port.p = m
 				port.l = p
 			case 6:
-//line msg_parser.rl:48
+//line parser_msg.rl:48
 				trans.p = m
 				trans.l = p
 			case 7:
-//line msg_parser.rl:49
+//line parser_msg.rl:49
 				params = append(params, pl{m, p})
 			case 8:
-//line msg_parser.rl:50
+//line parser_msg.rl:50
 				hidx = msg.Contacts.Count()
 				params = make([]pl, 0, 12)
 			case 9:
-//line msg_parser.rl:51
+//line parser_msg.rl:51
 				hidx = msg.Vias.Count()
 			case 10:
-//line msg_parser.rl:52
+//line parser_msg.rl:52
 
 				branch.p = 0
 				branch.l = 0
@@ -17709,186 +17709,186 @@ func parseHeader(msg *Message, data []byte) (HdrType, error) {
 				recvd.l = 0
 
 			case 11:
-//line msg_parser.rl:58
+//line parser_msg.rl:58
 				msg.setContact(data[:], pos[0], dname, addr, params, hidx)
 			case 12:
-//line msg_parser.rl:59
+//line parser_msg.rl:59
 
 				msg.setVia(data[:], pos[0], trans, addr, port, branch, ttl, maddr, recvd, hidx)
 
 			case 13:
-//line msg_parser.rl:62
+//line parser_msg.rl:62
 				params = make([]pl, 0, 12)
 			case 14:
-//line msg_parser.rl:63
+//line parser_msg.rl:63
 				msg.setRoute(id, data[:], pos[0], dname, addr, params)
 			case 15:
-//line msg_parser.rl:77
+//line parser_msg.rl:77
 				ttl.p = m
 				ttl.l = p
 			case 16:
-//line msg_parser.rl:78
+//line parser_msg.rl:78
 				maddr.p = m
 				maddr.l = p
 			case 17:
-//line msg_parser.rl:79
+//line parser_msg.rl:79
 				recvd.p = m
 				recvd.l = p
 			case 18:
-//line msg_parser.rl:80
+//line parser_msg.rl:80
 				branch.p = m
 				branch.l = p
 			case 19:
-//line msg_parser.rl:90
+//line parser_msg.rl:90
 				id = msg.setStatusLine(data, pos)
 			case 20:
-//line msg_parser.rl:93
+//line parser_msg.rl:93
 				id = msg.setRequestLine(data, pos)
 			case 21:
-//line msg_parser.rl:96
+//line parser_msg.rl:96
 				id = msg.setCSeq(data, pos)
 			case 22:
-//line msg_parser.rl:99
+//line parser_msg.rl:99
 				id = msg.setCallID(data, pos)
 			case 23:
-//line msg_parser.rl:102
+//line parser_msg.rl:102
 				id = msg.setContentLen(data, pos)
 			case 24:
-//line msg_parser.rl:105
+//line parser_msg.rl:105
 				id = msg.setFrom(data, params, pos[0], dname, addr, tag)
 			case 25:
-//line msg_parser.rl:108
+//line parser_msg.rl:108
 				id = msg.setTo(data, params, pos[0], dname, addr, tag)
 			case 26:
-//line msg_parser.rl:111
+//line parser_msg.rl:111
 				msg.setContactStar()
 			case 27:
-//line msg_parser.rl:113
+//line parser_msg.rl:113
 				id = SIPHdrContact
 			case 28:
-//line msg_parser.rl:116
+//line parser_msg.rl:116
 				id = SIPHdrVia
 			case 29:
-//line msg_parser.rl:118
+//line parser_msg.rl:118
 				id = SIPHdrRoute
 			case 30:
-//line msg_parser.rl:121
+//line parser_msg.rl:121
 				id = SIPHdrRecordRoute
 			case 31:
-//line msg_parser.rl:125
+//line parser_msg.rl:125
 				id = msg.setExpires(data[m:p])
 			case 32:
-//line msg_parser.rl:126
+//line parser_msg.rl:126
 				msg.pushHeader(SIPHdrExpires, data, pos[0], pl{m, p})
 			case 33:
-//line msg_parser.rl:129
+//line parser_msg.rl:129
 				id = msg.setMaxFwd(data[m:p])
 			case 34:
-//line msg_parser.rl:130
+//line parser_msg.rl:130
 				msg.pushHeader(SIPHdrMaxForwards, data, pos[0], pl{m, p})
 			case 35:
-//line msg_parser.rl:133
+//line parser_msg.rl:133
 				id = msg.setGenericHeader(data, pos, SIPHdrAccept)
 			case 36:
-//line msg_parser.rl:135
+//line parser_msg.rl:135
 				id = msg.setGenericHeader(data, pos, SIPHdrAcceptEncoding)
 			case 37:
-//line msg_parser.rl:137
+//line parser_msg.rl:137
 				id = msg.setGenericHeader(data, pos, SIPHdrAcceptLanguage)
 			case 38:
-//line msg_parser.rl:139
+//line parser_msg.rl:139
 				id = msg.setGenericHeader(data, pos, SIPHdrAlertInfo)
 			case 39:
-//line msg_parser.rl:141
+//line parser_msg.rl:141
 				id = msg.setGenericHeader(data, pos, SIPHdrAllow)
 			case 40:
-//line msg_parser.rl:143
+//line parser_msg.rl:143
 				id = msg.setGenericHeader(data, pos, SIPHdrAuthenticationInfo)
 			case 41:
-//line msg_parser.rl:145
+//line parser_msg.rl:145
 				id = msg.setGenericHeader(data, pos, SIPHdrAuthorization)
 			case 42:
-//line msg_parser.rl:147
+//line parser_msg.rl:147
 				id = msg.setGenericHeader(data, pos, SIPHdrCallInfo)
 			case 43:
-//line msg_parser.rl:149
+//line parser_msg.rl:149
 				id = msg.setGenericHeader(data, pos, SIPHdrContentDisposition)
 			case 44:
-//line msg_parser.rl:151
+//line parser_msg.rl:151
 				id = msg.setGenericHeader(data, pos, SIPHdrContentEncoding)
 			case 45:
-//line msg_parser.rl:153
+//line parser_msg.rl:153
 				id = msg.setGenericHeader(data, pos, SIPHdrContentLanguage)
 			case 46:
-//line msg_parser.rl:155
+//line parser_msg.rl:155
 				id = msg.setGenericHeader(data, pos, SIPHdrContentType)
 			case 47:
-//line msg_parser.rl:157
+//line parser_msg.rl:157
 				id = msg.setGenericHeader(data, pos, SIPHdrDate)
 			case 48:
-//line msg_parser.rl:159
+//line parser_msg.rl:159
 				id = msg.setGenericHeader(data, pos, SIPHdrErrorInfo)
 			case 49:
-//line msg_parser.rl:161
+//line parser_msg.rl:161
 				id = msg.setGenericHeader(data, pos, SIPHdrInReplyTo)
 			case 50:
-//line msg_parser.rl:163
+//line parser_msg.rl:163
 				id = msg.setGenericHeader(data, pos, SIPHdrMIMEVersion)
 			case 51:
-//line msg_parser.rl:165
+//line parser_msg.rl:165
 				id = msg.setGenericHeader(data, pos, SIPHdrMinExpires)
 			case 52:
-//line msg_parser.rl:167
+//line parser_msg.rl:167
 				id = msg.setGenericHeader(data, pos, SIPHdrOrganization)
 			case 53:
-//line msg_parser.rl:169
+//line parser_msg.rl:169
 				id = msg.setGenericHeader(data, pos, SIPHdrPriority)
 			case 54:
-//line msg_parser.rl:171
+//line parser_msg.rl:171
 				id = msg.setGenericHeader(data, pos, SIPHdrProxyAuthenticate)
 			case 55:
-//line msg_parser.rl:173
+//line parser_msg.rl:173
 				id = msg.setGenericHeader(data, pos, SIPHdrProxyAuthorization)
 			case 56:
-//line msg_parser.rl:175
+//line parser_msg.rl:175
 				id = msg.setGenericHeader(data, pos, SIPHdrProxyRequire)
 			case 57:
-//line msg_parser.rl:177
+//line parser_msg.rl:177
 				id = msg.setGenericHeader(data, pos, SIPHdrReplyTo)
 			case 58:
-//line msg_parser.rl:179
+//line parser_msg.rl:179
 				id = msg.setGenericHeader(data, pos, SIPHdrRequire)
 			case 59:
-//line msg_parser.rl:181
+//line parser_msg.rl:181
 				id = msg.setGenericHeader(data, pos, SIPHdrRetryAfter)
 			case 60:
-//line msg_parser.rl:183
+//line parser_msg.rl:183
 				id = msg.setGenericHeader(data, pos, SIPHdrServer)
 			case 61:
-//line msg_parser.rl:185
+//line parser_msg.rl:185
 				id = msg.setGenericHeader(data, pos, SIPHdrSubject)
 			case 62:
-//line msg_parser.rl:187
+//line parser_msg.rl:187
 				id = msg.setGenericHeader(data, pos, SIPHdrSupported)
 			case 63:
-//line msg_parser.rl:189
+//line parser_msg.rl:189
 				id = msg.setGenericHeader(data, pos, SIPHdrTimestamp)
 			case 64:
-//line msg_parser.rl:191
+//line parser_msg.rl:191
 				id = msg.setGenericHeader(data, pos, SIPHdrUnsupported)
 			case 65:
-//line msg_parser.rl:193
+//line parser_msg.rl:193
 				id = msg.setGenericHeader(data, pos, SIPHdrUserAgent)
 			case 66:
-//line msg_parser.rl:195
+//line parser_msg.rl:195
 				id = msg.setGenericHeader(data, pos, SIPHdrWarning)
 			case 67:
-//line msg_parser.rl:197
+//line parser_msg.rl:197
 				id = msg.setGenericHeader(data, pos, SIPHdrWWWAuthenticate)
 			case 68:
-//line msg_parser.rl:200
+//line parser_msg.rl:200
 				id = msg.setGenericHeader(data, pos, SIPHdrGeneric)
-//line msg_parser.go:17882
+//line parser_msg.go:17882
 			}
 		}
 
@@ -17908,7 +17908,7 @@ func parseHeader(msg *Message, data []byte) (HdrType, error) {
 		}
 	}
 
-//line msg_parser.rl:252
+//line parser_msg.rl:252
 	if cs >= msg_first_final {
 		return id, nil
 	}
