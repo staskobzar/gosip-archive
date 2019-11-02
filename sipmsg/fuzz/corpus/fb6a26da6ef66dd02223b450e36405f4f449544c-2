@@ -1,0 +1,4 @@
+SIP/2.0 100 
+CSeq:5 g
+CSeq:6 R
+CSeq:5 g

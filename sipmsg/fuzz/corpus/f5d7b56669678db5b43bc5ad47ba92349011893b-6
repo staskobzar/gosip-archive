@@ -1,0 +1,6 @@
+E p:m SIP/2.0
+V:SIP/2.0/P h
+v:SIP/2.0/P h,SIP/2.0/P m
+V:SIP/2.0/P h
+V:SIP/2.0/P h
+v:SIP/2.0/P h,SIP/2.0/S h,SIP/2.0/P 2.8.5.1

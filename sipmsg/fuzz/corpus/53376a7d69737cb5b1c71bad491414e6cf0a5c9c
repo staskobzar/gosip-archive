@@ -1,0 +1,9 @@
+SIP/2.0 100 Trying
+Via:SIP/2.0/P c:0;branch=z9hG4bK7
+Via:SIP/2.0/TLS ss1.example.com:5061
+     ;branch=z9hG4bK83754
+T: B <p:.>
+From: B <p:.>;tag=8
+D:30@998sdasdh09
+CSeq: 1826 REGISTER
+

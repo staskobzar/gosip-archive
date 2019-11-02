@@ -1,0 +1,13 @@
+SIP/2.0 200 OK
+Via:SIP/2.0/TLS ss1.example.com:5061
+     ;branch=z9hG4bK83754
+Via:SIP/2.0/S 4.m:1
+ ;branch=z9hG4bK7
+	 ;received=192.0.2.105
+s:
+m:<s:m>;g
+o:
+D:
+q:
+Content-Length: 0
+

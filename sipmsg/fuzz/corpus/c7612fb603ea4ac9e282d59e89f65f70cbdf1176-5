@@ -1,0 +1,11 @@
+SIP/2.0 100 
+V:SIP/2.0/P c
+V:SIP/2.0/S m
+m:<pp:.>
+m:<p:.>
+V:SIP/2.0/P m
+V:SIP/2.0/P h
+v:SIP/2.0/P h
+v:SIP/2.0/P m
+V:SIP/2.0/S md
+V:SIP/2.0/P h

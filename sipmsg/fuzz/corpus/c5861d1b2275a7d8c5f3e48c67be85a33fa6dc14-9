@@ -1,0 +1,15 @@
+E p:m SIP/2.5
+Content-Length:00
+cseq:0909090909 E
+content-Length:00
+cseq:09 E
+Content-Length:0000
+cseq:090909 E
+Content-Length:00
+cseq:0909090909 E
+cseq:09 E
+content-Length:735662099
+cseq:09 E
+Content-Length:0000
+cseq:0909090909 E
+cseq:09 E

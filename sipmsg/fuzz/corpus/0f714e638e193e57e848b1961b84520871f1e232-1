@@ -1,0 +1,6 @@
+R p:m SIP/2.0
+Max-Forwards:70
+CSeq:1826 R
+Expires:1036553067
+Content-Length:0
+

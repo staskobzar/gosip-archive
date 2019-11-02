@@ -1,0 +1,14 @@
+SIP/2.0 200 
+V:SIP/2.0/S m:1
+ ;h
+V:SIP/2.4/S m:1
+ ;h
+ ;4
+V:SIP/2.0/S m:1
+ ;d
+m:<s:m>
+o:
+D:
+q:
+h:
+

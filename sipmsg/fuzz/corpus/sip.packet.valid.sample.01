@@ -1,0 +1,13 @@
+SIP/2.0 200 OK
+Via: SIP/2.0/TLS ss1.example.com:5061
+     ;branch=z9hG4bK83754
+Via: SIP/2.0/TLS client4.biloxi.example.com:5061
+ ;branch=z9hG4bKnashds7
+	 ;received=192.0.2.105
+Max-Forwards: 69
+From: Bob <sips:bob@biloxi.example.com>;tag=7137136
+To: Alice <sips:alice@atlanta.example.com>;tag=1234567
+Call-ID: 12345600@atlanta.example.com
+CSeq: 1 BYE
+Content-Length: 0
+

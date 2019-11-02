@@ -1,0 +1,10 @@
+SIP/2.0 100 
+Via:SIP/2.0/P c;h
+Via:SIP/2.0/S 1.m
+ ;h
+T:<p:.>
+From:<p:.>;g
+D:aS
+Via: SIP/2.0/UDP funky.esdh09
+CSeq: 1826 RhGISTER
+

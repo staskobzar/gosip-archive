@@ -1,0 +1,22 @@
+E p:m SIP/2.0
+O:
+p:
+S:
+D:
+h:
+s:
+r:
+q:
+V:SIP/2.0/P h
+s:
+r:
+e:
+e:
+p:
+S:
+D:
+h:
+s:
+r:
+Route:<p:m> ;m =e ;m ;q =3
+

@@ -1,0 +1,8 @@
+CANCEL sips:bob@client.biloxi.example.com SIP/2.0
+Via: SIP/2.0/TLS ss1.example.com:5061;branch=z9hG4bK83749.1
+Max-Forwards: 70
+From: Alice <sips:alice@atlanta.example.com>;tag=1234567
+To: Bob <sips:bob@biloxi.example.com>
+Call-ID: 12345600@atlanta.example.com
+CSeq: 1 CANCEL
+Content-Length: 0

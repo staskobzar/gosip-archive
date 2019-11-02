@@ -1,0 +1,14 @@
+SIP/2.0 200 
+V:SIP/2.0/S m
+ ;h
+V:SIP/2.4/S m
+ ;h
+ ;4
+V:SIP/2.0/S m
+ ;d
+m:<p:m>
+V:SIP/2.0/P 2.0.2.h
+Route:<p:e>
+v:SIP/2.0/P h,SIP/2.0/P 2.8.5.9
+m:"\"\""<p:m>
+

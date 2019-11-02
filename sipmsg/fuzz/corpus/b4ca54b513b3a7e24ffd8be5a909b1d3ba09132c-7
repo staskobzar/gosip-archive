@@ -1,0 +1,18 @@
+SIP/2.0 100 
+CSeq:5 f
+CSeq:6 R
+CSeq:5 f
+CSeq:6 R
+CSeq:5 f
+CSeq:5 f
+CSeq:6 R
+CSeq:5 f
+CSeq:9 E
+Content-Length:0
+Content-Length:0
+cseq:9 E
+cseq:9 E
+cseq:9 E
+cseq:9 E
+cseq:9 E
+cseq:9 E

@@ -1,0 +1,9 @@
+SIP/2.0 100 Trying
+Via: SIP/2.0/UDP bobspc.biloxi.com:5060;branch=z9hG4bKnashds7
+Via: SIP/2.0/TLS ss1.example.com:5061
+     ;branch=z9hG4bK83754
+To: Bob <sip:bob@biloxi.com>
+From: Bob <sip:bob@biloxi.com>;tag=456248
+Call-ID: 843817637684230@998sdasdh09
+CSeq: 1826 REGISTER
+

@@ -1,0 +1,20 @@
+S p:m SIP/2.0
+T:p:m
+F:s:h
+F:s:1
+F:s:h
+T:p:h
+F:s:1
+F:s:h
+T:<p:.>
+F:<p:.>
+F:s:h
+F:s:0
+T:p:t
+F:s:h
+F:s:1
+F:s:h
+T:<p:.>
+F:<p:.>
+F:s:h
+F:s:1
