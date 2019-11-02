@@ -47,4 +47,6 @@ tags
 # Persistent undo
 [._]*.un~
 
+# fuzz
+*-fuzz.zip
 # End of https://www.gitignore.io/api/go,vim,gcov

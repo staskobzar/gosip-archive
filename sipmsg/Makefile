@@ -2,7 +2,7 @@
 # SIP message (rfc3261) parser and builder
 #
 
-.PHONY: clean cov test
+.PHONY: clean cov test fuzz
 
 test: parser_uri.go parser_msg.go parser_challenge.go parser_cred.go
 	go fmt
@@ -17,6 +17,10 @@ bench:
 
 lint:
 	golint $(filter-out $(wildcard *_parser.go),$(wildcard *.go))
+
+fuzz:
+	go-fuzz-build
+	go-fuzz -bin=sipmsg-fuzz.zip -workdir=fuzz
 
 %.go: %.rl
 	ragel -Z -o $@ $<
