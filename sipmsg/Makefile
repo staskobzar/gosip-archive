@@ -4,7 +4,7 @@
 
 .PHONY: clean cov test fuzz
 
-test: parser_uri.go parser_msg.go parser_challenge.go parser_cred.go
+test: parser_uri.go parser_msg.go parser_challenge.go parser_cred.go parser_ctype.go
 	go fmt
 	go test	-race -cover
 

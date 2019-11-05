@@ -1,16 +1,12 @@
 //line parser_challenge.rl:1
 // -*-go-*-
 //
-// Parsing HTTP challenge data
+// HTTP Challenge parser
 package sipmsg
 
-// --------------------------------------------------------------------------------
-// HTTP Challenge parser
-// --------------------------------------------------------------------------------
+//line parser_challenge.rl:7
 
-//line parser_challenge.rl:10
-
-//line parser_challenge.go:15
+//line parser_challenge.go:12
 var _challenge_actions []byte = []byte{
 	0, 1, 0, 1, 1, 1, 2, 1, 3,
 	1, 4, 1, 5, 1, 6, 1, 7,
@@ -548,7 +544,7 @@ const challenge_error int = 0
 
 const challenge_en_challenge int = 1
 
-//line parser_challenge.rl:11
+//line parser_challenge.rl:8
 
 func parseChallenge(data []byte) (*Challenge, error) {
 	cs := 0
@@ -556,16 +552,16 @@ func parseChallenge(data []byte) (*Challenge, error) {
 	var p, m, pe, eof ptr = 0, 0, l, l
 	ch := &Challenge{}
 
-//line parser_challenge.rl:42
+//line parser_challenge.rl:39
 
-//line parser_challenge.go:567
+//line parser_challenge.go:564
 	{
 		cs = challenge_start
 	}
 
-//line parser_challenge.rl:45
+//line parser_challenge.rl:42
 
-//line parser_challenge.go:574
+//line parser_challenge.go:571
 	{
 		var _klen int
 		var _trans int
@@ -645,39 +641,39 @@ func parseChallenge(data []byte) (*Challenge, error) {
 			_acts++
 			switch _challenge_actions[_acts-1] {
 			case 0:
-//line parser_challenge.rl:19
+//line parser_challenge.rl:16
 				m = p
 			case 1:
-//line parser_challenge.rl:20
+//line parser_challenge.rl:17
 				ch.realm = data[m+1 : p-1]
 			case 2:
-//line parser_challenge.rl:21
+//line parser_challenge.rl:18
 				ch.domain = data[m:p]
 			case 3:
-//line parser_challenge.rl:22
+//line parser_challenge.rl:19
 				ch.nonce = data[m+1 : p-1]
 			case 4:
-//line parser_challenge.rl:23
+//line parser_challenge.rl:20
 				ch.opaque = data[m+1 : p-1]
 			case 5:
-//line parser_challenge.rl:27
+//line parser_challenge.rl:24
 				ch.qop |= QOPAuth
 			case 6:
-//line parser_challenge.rl:27
+//line parser_challenge.rl:24
 				ch.qop |= QOPAuthInt
 			case 7:
-//line parser_challenge.rl:34
+//line parser_challenge.rl:31
 				ch.stale = true
 			case 8:
-//line parser_challenge.rl:34
+//line parser_challenge.rl:31
 				ch.stale = false
 			case 9:
-//line parser_challenge.rl:36
+//line parser_challenge.rl:33
 				ch.algo = AlgoMD5
 			case 10:
-//line parser_challenge.rl:36
+//line parser_challenge.rl:33
 				ch.algo = AlgoMD5sess
-//line parser_challenge.go:685
+//line parser_challenge.go:682
 			}
 		}
 
@@ -700,27 +696,27 @@ func parseChallenge(data []byte) (*Challenge, error) {
 				__acts++
 				switch _challenge_actions[__acts-1] {
 				case 1:
-//line parser_challenge.rl:20
+//line parser_challenge.rl:17
 					ch.realm = data[m+1 : p-1]
 				case 3:
-//line parser_challenge.rl:22
+//line parser_challenge.rl:19
 					ch.nonce = data[m+1 : p-1]
 				case 4:
-//line parser_challenge.rl:23
+//line parser_challenge.rl:20
 					ch.opaque = data[m+1 : p-1]
 				case 7:
-//line parser_challenge.rl:34
+//line parser_challenge.rl:31
 					ch.stale = true
 				case 8:
-//line parser_challenge.rl:34
+//line parser_challenge.rl:31
 					ch.stale = false
 				case 9:
-//line parser_challenge.rl:36
+//line parser_challenge.rl:33
 					ch.algo = AlgoMD5
 				case 10:
-//line parser_challenge.rl:36
+//line parser_challenge.rl:33
 					ch.algo = AlgoMD5sess
-//line parser_challenge.go:725
+//line parser_challenge.go:722
 				}
 			}
 		}
@@ -730,7 +726,7 @@ func parseChallenge(data []byte) (*Challenge, error) {
 		}
 	}
 
-//line parser_challenge.rl:46
+//line parser_challenge.rl:43
 
 	if cs >= challenge_first_final {
 		return ch, nil

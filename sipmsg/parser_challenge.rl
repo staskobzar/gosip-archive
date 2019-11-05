@@ -1,11 +1,8 @@
 // -*-go-*-
 //
-// Parsing HTTP challenge data
+// HTTP Challenge parser
 package sipmsg
 
-// --------------------------------------------------------------------------------
-// HTTP Challenge parser
-// --------------------------------------------------------------------------------
 %% machine challenge;
 %% write data;
 

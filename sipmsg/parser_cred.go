@@ -1,18 +1,14 @@
 //line parser_cred.rl:1
 // -*-go-*-
 //
-// Parsing HTTP challenge data
+// HTTP Credentials parser
 package sipmsg
 
 import "strconv"
 
-// --------------------------------------------------------------------------------
-// HTTP Credentials parser
-// --------------------------------------------------------------------------------
+//line parser_cred.rl:9
 
-//line parser_cred.rl:12
-
-//line parser_cred.go:17
+//line parser_cred.go:14
 var _credentials_actions []byte = []byte{
 	0, 1, 0, 1, 1, 1, 2, 1, 3,
 	1, 4, 1, 5, 1, 6, 1, 7,
@@ -1729,7 +1725,7 @@ const credentials_error int = 0
 
 const credentials_en_credentials int = 1
 
-//line parser_cred.rl:13
+//line parser_cred.rl:10
 
 func parseCredentials(data []byte) (*Credentials, error) {
 	cs := 0
@@ -1737,16 +1733,16 @@ func parseCredentials(data []byte) (*Credentials, error) {
 	var p, m, pe, eof ptr = 0, 0, l, l
 	cr := &Credentials{}
 
-//line parser_cred.rl:57
+//line parser_cred.rl:54
 
-//line parser_cred.go:1748
+//line parser_cred.go:1745
 	{
 		cs = credentials_start
 	}
 
-//line parser_cred.rl:60
+//line parser_cred.rl:57
 
-//line parser_cred.go:1755
+//line parser_cred.go:1752
 	{
 		var _klen int
 		var _trans int
@@ -1827,31 +1823,31 @@ func parseCredentials(data []byte) (*Credentials, error) {
 			_acts++
 			switch _credentials_actions[_acts-1] {
 			case 0:
-//line parser_cred.rl:21
+//line parser_cred.rl:18
 				m = p
 			case 1:
-//line parser_cred.rl:22
+//line parser_cred.rl:19
 				cr.username = data[m+1 : p-1]
 			case 2:
-//line parser_cred.rl:23
+//line parser_cred.rl:20
 				cr.realm = data[m+1 : p-1]
 			case 3:
-//line parser_cred.rl:24
+//line parser_cred.rl:21
 				cr.nonce = data[m+1 : p-1]
 			case 4:
-//line parser_cred.rl:25
+//line parser_cred.rl:22
 				cr.uri = data[m:p]
 			case 5:
-//line parser_cred.rl:26
+//line parser_cred.rl:23
 				cr.response = data[m:p]
 			case 6:
-//line parser_cred.rl:27
+//line parser_cred.rl:24
 				cr.cnonce = data[m+1 : p-1]
 			case 7:
-//line parser_cred.rl:28
+//line parser_cred.rl:25
 				cr.opaque = data[m+1 : p-1]
 			case 8:
-//line parser_cred.rl:29
+//line parser_cred.rl:26
 
 				n, err := strconv.ParseUint(string(data[m:p]), 16, 32)
 				if err != nil {
@@ -1860,18 +1856,18 @@ func parseCredentials(data []byte) (*Credentials, error) {
 				cr.nc = uint(n)
 
 			case 9:
-//line parser_cred.rl:39
+//line parser_cred.rl:36
 				cr.qop |= QOPAuth
 			case 10:
-//line parser_cred.rl:39
+//line parser_cred.rl:36
 				cr.qop |= QOPAuthInt
 			case 11:
-//line parser_cred.rl:49
+//line parser_cred.rl:46
 				cr.algo = AlgoMD5
 			case 12:
-//line parser_cred.rl:49
+//line parser_cred.rl:46
 				cr.algo = AlgoMD5sess
-//line parser_cred.go:1879
+//line parser_cred.go:1876
 			}
 		}
 
@@ -1894,22 +1890,22 @@ func parseCredentials(data []byte) (*Credentials, error) {
 				__acts++
 				switch _credentials_actions[__acts-1] {
 				case 1:
-//line parser_cred.rl:22
+//line parser_cred.rl:19
 					cr.username = data[m+1 : p-1]
 				case 2:
-//line parser_cred.rl:23
+//line parser_cred.rl:20
 					cr.realm = data[m+1 : p-1]
 				case 3:
-//line parser_cred.rl:24
+//line parser_cred.rl:21
 					cr.nonce = data[m+1 : p-1]
 				case 6:
-//line parser_cred.rl:27
+//line parser_cred.rl:24
 					cr.cnonce = data[m+1 : p-1]
 				case 7:
-//line parser_cred.rl:28
+//line parser_cred.rl:25
 					cr.opaque = data[m+1 : p-1]
 				case 8:
-//line parser_cred.rl:29
+//line parser_cred.rl:26
 
 					n, err := strconv.ParseUint(string(data[m:p]), 16, 32)
 					if err != nil {
@@ -1918,18 +1914,18 @@ func parseCredentials(data []byte) (*Credentials, error) {
 					cr.nc = uint(n)
 
 				case 9:
-//line parser_cred.rl:39
+//line parser_cred.rl:36
 					cr.qop |= QOPAuth
 				case 10:
-//line parser_cred.rl:39
+//line parser_cred.rl:36
 					cr.qop |= QOPAuthInt
 				case 11:
-//line parser_cred.rl:49
+//line parser_cred.rl:46
 					cr.algo = AlgoMD5
 				case 12:
-//line parser_cred.rl:49
+//line parser_cred.rl:46
 					cr.algo = AlgoMD5sess
-//line parser_cred.go:1934
+//line parser_cred.go:1931
 				}
 			}
 		}
@@ -1939,7 +1935,7 @@ func parseCredentials(data []byte) (*Credentials, error) {
 		}
 	}
 
-//line parser_cred.rl:61
+//line parser_cred.rl:58
 
 	if cs >= credentials_first_final {
 		return cr, nil

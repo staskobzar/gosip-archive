@@ -138,20 +138,33 @@ func TestMessageParseHeadersList(t *testing.T) {
 	assert.Equal(t, 12, msg.Headers.Count())
 }
 
-func BenchmarkMessageParse(b *testing.B) {
-	str := "REGISTER sip:registrar.biloxi.com SIP/2.0\r\n" +
-		"Via: SIP/2.0/UDP bobspc.biloxi.com:5060;branch=z9hG4bKnashds7\r\n" +
+func TestMessageParseWithBody(t *testing.T) {
+	sipmsg := "INVITE sips:bob@biloxi.example.com SIP/2.0\r\n" +
+		"Via: SIP/2.0/TLS client.atlanta.example.com:5061;branch=z9hG4bK74bf9\r\n" +
 		"Max-Forwards: 70\r\n" +
-		"To: Bob <sip:bob@biloxi.com>\r\n" +
-		"From: Bob <sip:bob@biloxi.com>;tag=456248\r\n" +
-		"Call-ID: 843817637684230@998sdasdh09\r\n" +
-		"CSeq: 1826 REGISTER\r\n" +
-		"Contact: <sip:bob@192.0.2.4>\r\n" +
-		"Expires: 7200\r\n" +
-		"Content-Length: 0\r\n\r\n"
-	for i := 0; i < b.N; i++ {
-		MsgParse([]byte(str))
-	}
+		"From: Alice <sips:alice@atlanta.example.com>;tag=1234567\r\n" +
+		"To: Bob <sips:bob@biloxi.example.com>\r\n" +
+		"Call-ID: 12345601@atlanta.example.com\r\n" +
+		"CSeq: 1 INVITE\r\n" +
+		"Contact: <sips:alice@client.atlanta.example.com>\r\n" +
+		"Allow: INVITE, ACK, CANCEL, OPTIONS, BYE, REFER, NOTIFY\r\n" +
+		"Supported: replaces\r\n" +
+		"Content-Type: application/sdp\r\n" +
+		"Content-Length: 165\r\n\r\n"
+
+	sdpmsg := "v=0\r\n" +
+		"o=alice 2890844526 2890844526 IN IP4 client.atlanta.example.com\r\n" +
+		"s=\r\n" +
+		"c=IN IP4 client.atlanta.example.com\r\n" +
+		"t=0 0\r\n" +
+		"m=audio 49170 RTP/AVP 0\r\n" +
+		"a=rtpmap:0 PCMU/8000\r\n"
+
+	msg, err := MsgParse([]byte(sipmsg + sdpmsg))
+	assert.Nil(t, err)
+	assert.Equal(t, uint(165), msg.ContentLen)
+	assert.Equal(t, sdpmsg, string(msg.Body))
+	assert.Equal(t, int(msg.ContentLen), len(msg.Body))
 }
 
 func TestMessageRequestToBytes(t *testing.T) {
@@ -335,4 +348,47 @@ func TestMessageCreateRemoveHeader(t *testing.T) {
 
 	removed = msg.RemoveHeader("subject")
 	assert.False(t, removed)
+}
+
+func TestMessageContentType(t *testing.T) {
+	sipmsg := "INVITE sips:bob@biloxi.example.com SIP/2.0\r\n" +
+		"Via: SIP/2.0/TLS client.atlanta.example.com:5061;branch=z9hG4bK74bf9\r\n" +
+		"Max-Forwards: 70\r\n" +
+		"From: Alice <sips:alice@atlanta.example.com>;tag=1234567\r\n" +
+		"To: Bob <sips:bob@biloxi.example.com>\r\n" +
+		"Call-ID: 12345601@atlanta.example.com\r\n" +
+		"CSeq: 1 INVITE\r\n" +
+		"Contact: <sips:alice@client.atlanta.example.com>\r\n" +
+		"Allow: INVITE, ACK, CANCEL, OPTIONS, BYE, REFER, NOTIFY\r\n" +
+		"Supported: replaces\r\n" +
+		"Content-Type: application/sdp\r\n" +
+		"Content-Length: 165\r\n\r\n"
+
+	sdpmsg := "v=0\r\n" +
+		"o=alice 2890844526 2890844526 IN IP4 client.atlanta.example.com\r\n" +
+		"s=\r\n" +
+		"c=IN IP4 client.atlanta.example.com\r\n" +
+		"t=0 0\r\n" +
+		"m=audio 49170 RTP/AVP 0\r\n" +
+		"a=rtpmap:0 PCMU/8000\r\n"
+	msg, err := MsgParse([]byte(sipmsg + sdpmsg))
+	assert.Nil(t, err)
+
+	assert.True(t, msg.HasSDP())
+}
+
+func BenchmarkMessageParse(b *testing.B) {
+	str := "REGISTER sip:registrar.biloxi.com SIP/2.0\r\n" +
+		"Via: SIP/2.0/UDP bobspc.biloxi.com:5060;branch=z9hG4bKnashds7\r\n" +
+		"Max-Forwards: 70\r\n" +
+		"To: Bob <sip:bob@biloxi.com>\r\n" +
+		"From: Bob <sip:bob@biloxi.com>;tag=456248\r\n" +
+		"Call-ID: 843817637684230@998sdasdh09\r\n" +
+		"CSeq: 1826 REGISTER\r\n" +
+		"Contact: <sip:bob@192.0.2.4>\r\n" +
+		"Expires: 7200\r\n" +
+		"Content-Length: 0\r\n\r\n"
+	for i := 0; i < b.N; i++ {
+		MsgParse([]byte(str))
+	}
 }

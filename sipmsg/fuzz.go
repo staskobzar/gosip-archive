@@ -1,4 +1,5 @@
 // +build gofuzz
+
 package sipmsg
 
 func Fuzz(data []byte) int {
@@ -10,6 +11,6 @@ func Fuzz(data []byte) int {
 		return 0
 	}
 
-	_ := msg.String()
+	_ = msg.String()
 	return 1
 }

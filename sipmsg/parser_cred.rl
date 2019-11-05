@@ -1,13 +1,10 @@
 // -*-go-*-
 //
-// Parsing HTTP challenge data
+// HTTP Credentials parser
 package sipmsg
 
 import "strconv"
 
-// --------------------------------------------------------------------------------
-// HTTP Credentials parser
-// --------------------------------------------------------------------------------
 %% machine credentials;
 %% write data;
 

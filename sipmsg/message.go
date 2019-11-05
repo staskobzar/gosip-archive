@@ -37,6 +37,7 @@ type Message struct {
 	Expires    uint
 	MaxFwd     uint
 	Headers    HeadersList
+	Body       []byte
 }
 
 func initMessage() *Message {
@@ -75,6 +76,7 @@ func MsgParse(data []byte) (*Message, error) {
 				return nil, err
 			}
 			if hid == MsgEOF {
+				start += 2
 				break
 			}
 			start = i
@@ -85,6 +87,10 @@ func MsgParse(data []byte) (*Message, error) {
 	// must be CRLF in the end of the SIP Message
 	if hid != MsgEOF {
 		return nil, ErrorSIPMsgParse.msg("Message must be finished with CRLF (%d)", hid)
+	}
+
+	if start < len(data) {
+		msg.Body = data[start:]
 	}
 	return msg, nil
 }
@@ -164,6 +170,21 @@ func (m *Message) IsResponse() bool { return m.StatusLine != nil }
 func (m *Message) Bytes() []byte {
 	b := m.buffer()
 	return b.Bytes()
+}
+
+// HasSDP returns true if content type is application/sdp and body present
+func (m *Message) HasSDP() bool {
+	hdr := m.Headers.Find(SIPHdrContentType)
+	if hdr == nil {
+		return false
+	}
+
+	ct, err := parseContentType([]byte(hdr.Value()))
+	if err != nil {
+		return false
+	}
+
+	return ct.IsSDP()
 }
 
 // AddToTag appends tag parameter to To header if not exists.
