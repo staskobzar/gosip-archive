@@ -26,4 +26,12 @@ func TestParseMinSDP(t *testing.T) {
 	assert.Equal(t, "IN", msg.Origin.NetType())
 	assert.Equal(t, "IP4", msg.Origin.AddrType())
 	assert.Equal(t, "client.atlanta.example.com", msg.Origin.UnicastAddr())
+
+	assert.Equal(t, "", msg.Subject())
+
+	assert.Equal(t, "IN", msg.Conn.NetType())
+	assert.Equal(t, "IP4", msg.Conn.AddrType())
+	assert.Equal(t, "client.atlanta.example.com", msg.Conn.Address())
+
+	assert.Equal(t, 0, msg.Timing)
 }

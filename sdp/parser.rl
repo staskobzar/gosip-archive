@@ -76,8 +76,10 @@ func Parse(data []byte) (*Message, error) {
     uri_field     = "u=" URI CRLF;  # optional
     email_field   = "e=" EMAIL CRLF; # zero or more
     phone_field   = "p=" PHONE CRLF; # zero or more
-    conn_field    = "c=" nettype SP addrtype SP conn_addr CRLF; # optional
-                                    # not required if included in all media
+    conn_field    = "c=" TOKEN >sm %{ msg.Conn.netType = data[m:p] } SP
+                         TOKEN >sm %{ msg.Conn.addrType = data[m:p] } SP
+                         conn_addr >sm %{ msg.Conn.address = data[m:p] } CRLF; # optional
+                         # not required if included in all media
     bwidth_field  = "b=" bwtype ":" bandwidth CRLF; # zero or more bandwidth information lines
     time_field    = "t=" start_time SP stop_time CRLF;
     repeat_field  = "r=" typed_time (SP typed_time)+ CRLF; 

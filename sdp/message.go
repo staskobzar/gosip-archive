@@ -7,13 +7,21 @@ var ErrorSDPParsing = errorNew("Error parding SDP message")
 
 // Message SDP message structure
 type Message struct {
-	ver    byte
-	Origin Origin
+	ver     byte
+	subject []byte
+	Origin  Origin
+	Conn    Conn
+	Media   Medias
 }
 
-// Version SDP message version
+// Version SDP message version field
 func (m *Message) Version() int {
 	return int(m.ver - 0x30)
+}
+
+// Subject SDP message subject field
+func (m *Message) Subject() string {
+	return string(m.subject)
 }
 
 // Origin SDP origin field (RFC4566 #5.2)
@@ -62,4 +70,33 @@ func (o Origin) AddrType() string {
 // UnicastAddr SDP origin field unicast address
 func (o Origin) UnicastAddr() string {
 	return string(o.unicAddr)
+}
+
+// Conn SDP connection data field (RFC4566 #5.7)
+type Conn struct {
+	netType  []byte
+	addrType []byte
+	address  []byte
+}
+
+// NetType SDP connection data field net type
+func (c Conn) NetType() string {
+	return string(c.netType)
+}
+
+// AddrType SDP connection data field address type
+func (c Conn) AddrType() string {
+	return string(c.addrType)
+}
+
+// Address SDP connection data field unicast address
+func (c Conn) Address() string {
+	return string(c.address)
+}
+
+// Medias list of session medias
+type Medias []Media
+
+// Media media description of SDP session
+type Media struct {
 }
