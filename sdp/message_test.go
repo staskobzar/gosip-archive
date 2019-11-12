@@ -33,5 +33,17 @@ func TestParseMinSDP(t *testing.T) {
 	assert.Equal(t, "IP4", msg.Conn.AddrType())
 	assert.Equal(t, "client.atlanta.example.com", msg.Conn.Address())
 
-	assert.Equal(t, 0, msg.Timing)
+	m := msg.Medias[0]
+	assert.Equal(t, 1, len(msg.Medias))
+	assert.Equal(t, "audio", m.Type())
+	assert.Equal(t, 49170, m.Port())
+	assert.Equal(t, 0, m.NumPort())
+	assert.Equal(t, "RTP/AVP", m.Proto())
+	assert.Equal(t, "0", m.Fmt())
+
+	// attributes
+	//		"a=rtpmap:0 PCMU/8000\r\n"
+	// assert.Equal(t, 1, len(m.attr))
+	// a := m.attr[0]
+	// assert.Equal(t)
 }

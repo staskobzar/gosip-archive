@@ -11,7 +11,7 @@ type Message struct {
 	subject []byte
 	Origin  Origin
 	Conn    Conn
-	Media   Medias
+	Medias  Medias
 }
 
 // Version SDP message version field
@@ -99,4 +99,42 @@ type Medias []Media
 
 // Media media description of SDP session
 type Media struct {
+	mtype []byte
+	port  []byte
+	nport []byte
+	proto []byte
+	fmt   []byte
+}
+
+// Type SDP media field type
+func (m Media) Type() string {
+	return string(m.mtype)
+}
+
+// Port SDP media field port
+func (m Media) Port() int {
+	port, err := strconv.Atoi(string(m.port))
+	if err != nil {
+		return -1
+	}
+	return port
+}
+
+// NumPort SDP media field ports number
+func (m Media) NumPort() int {
+	n, err := strconv.Atoi(string(m.nport))
+	if err != nil {
+		return 0
+	}
+	return n
+}
+
+// Proto SDP media field protocol
+func (m Media) Proto() string {
+	return string(m.proto)
+}
+
+// Fmt SDP media field formats list
+func (m Media) Fmt() string {
+	return string(m.fmt)
 }

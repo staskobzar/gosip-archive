@@ -10,11 +10,20 @@ func Parse(data []byte) (*Message, error) {
     var cs, p, pe, m int
     pe = len(data)
 
+    mediaIdx := 0
     msg := &Message{}
 
 %%{
     # ACTIONS
-    action sm { m = p }
+    action sm        { m = p }
+    action media_set {
+        if mediaIdx == 0 {
+            msg.Medias = make(Medias, 1)
+        } else {
+            mediaIdx++
+            msg.Medias = append(msg.Medias, Media{})
+        }
+    }
 
     # GRAMMAR
     CRLF          = "\r\n";
@@ -86,10 +95,14 @@ func Parse(data []byte) (*Message, error) {
     zone_adjust   = "z=" time SP "-"? typed_time (SP time SP "-"? typed_time)* CRLF;
     key_field     = "k=" key_type CRLF;
     attr_field    = "a=" attribute CRLF; # zero or more session attribute lines
-    media_field   = "m=" media SP port ("/" digit+)? SP proto (SP TOKEN)+ CRLF;
+    media_field   = "m=" media >sm %{ msg.Medias[mediaIdx].mtype = data[m:p] } SP
+                    port >sm %{ msg.Medias[mediaIdx].port = data[m:p] }
+                    ("/" digit+ >sm %{ msg.Medias[mediaIdx].nport = data[m:p] })? SP
+                    proto >sm %{ msg.Medias[mediaIdx].proto = data[m:p] }
+                    (SP TOKEN >sm)+ %{ msg.Medias[mediaIdx].fmt = data[m:p] } CRLF;
 
     time_fields   = time_field repeat_field* zone_adjust?;
-    medias        = media_field
+    medias        = media_field >media_set
                     info_field?
                     conn_field?
                     bwidth_field*
