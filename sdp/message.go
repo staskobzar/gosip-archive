@@ -6,17 +6,23 @@ import (
 )
 
 // ErrorSDPParsing returned when failed to parse SDP message
-var ErrorSDPParsing = errorNew("Error parding SDP message")
+var ErrorSDPParsing = errorNew("Error parsing SDP message")
 
 // Message SDP message structure
 type Message struct {
-	ver     byte
-	subject []byte
-	Origin  Origin
-	Conn    Conn
-	Time    []TimeDesc
-	Attr    []Attribute
-	Medias  Medias
+	ver       byte
+	Origin    Origin
+	subject   []byte
+	info      []byte
+	uri       []byte
+	Email     [][]byte
+	Phone     [][]byte
+	Conn      Conn
+	BandWidth []BandWidth
+	Time      []TimeDesc
+	tzones    []byte
+	Attr      []Attribute
+	Medias    Medias
 }
 
 // Version SDP message version field
@@ -27,6 +33,21 @@ func (m *Message) Version() int {
 // Subject SDP message subject field
 func (m *Message) Subject() string {
 	return string(bytes.TrimSpace(m.subject))
+}
+
+// Info SDP message session information field
+func (m *Message) Info() string {
+	return string(bytes.TrimSpace(m.info))
+}
+
+// UriString SDP message session uri field as string
+func (m *Message) UriString() string {
+	return string(bytes.TrimSpace(m.uri))
+}
+
+// TimeZones SDP message session time zones adjust field as string
+func (m *Message) TimeZones() string {
+	return string(bytes.TrimSpace(m.tzones))
 }
 
 // Origin SDP origin field (RFC4566 #5.2)
@@ -99,10 +120,31 @@ func (c Conn) Address() string {
 	return string(c.address)
 }
 
+// BandWidth information structure
+type BandWidth struct {
+	bt []byte // type
+	bw []byte // bandwidth
+}
+
+// Type bandwidth field type
+func (b BandWidth) Type() string {
+	return string(b.bt)
+}
+
+// BW bandwidth field value
+func (b BandWidth) BW() int {
+	bw, err := strconv.Atoi(string(b.bw))
+	if err != nil {
+		return -1
+	}
+	return bw
+}
+
 // TimeDesc time description structure that contains time and repeat time fields
 type TimeDesc struct {
-	start []byte
-	stop  []byte
+	start  []byte
+	stop   []byte
+	Repeat [][]byte
 }
 
 // StartTime time description field

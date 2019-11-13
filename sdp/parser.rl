@@ -6,6 +6,7 @@ package sdp
 %% machine sdp;
 %% write data;
 
+// Parse scan and parse bytes array to SDP Message structure
 func Parse(data []byte) (*Message, error) {
     var cs, p, pe, m int
     pe = len(data)
@@ -61,12 +62,22 @@ func Parse(data []byte) (*Message, error) {
         }
     }
     action start_time {
-        msg.Time = append(msg.Time, TimeDesc{})
-        msg.Time[0].start = data[m:p]
+        msg.Time = append(msg.Time, TimeDesc{start: data[m:p]})
     }
     action stop_time {
         i := len(msg.Time) - 1
         msg.Time[i].stop = data[m:p]
+    }
+    action repeat {
+        i := len(msg.Time) - 1
+        msg.Time[i].Repeat = append(msg.Time[i].Repeat, data[m:p])
+    }
+    action bw_set {
+        msg.BandWidth = append(msg.BandWidth, BandWidth{bt: data[m:p]})
+    }
+    action bw_val {
+        i := len(msg.BandWidth) - 1
+        msg.BandWidth[i].bw = data[m:p]
     }
 
     # GRAMMAR
@@ -90,9 +101,9 @@ func Parse(data []byte) (*Message, error) {
     IP6_MCAST     = hexpart ( "/" digit )?;
     FQDN          = (alnum | "-" | "."){4,};
     EXTEN_ADDR    = TOKEN;
-    URI           = any+;
-    EMAIL         = any+;
-    PHONE         = any+;
+    URI           = TEXT;
+    EMAIL         = TEXT;
+    PHONE         = TEXT;
 
     username      = NONE_WS_STR >sm %{ msg.Origin.username = data[m:p] };
     sess_id       = digit+ >sm %{ msg.Origin.sessID = data[m:p] };
@@ -110,8 +121,8 @@ func Parse(data []byte) (*Message, error) {
     typed_time    = digit+ ("d" | "h" | "m" | "s")?;
     ktype_prompt  = "prompt";
     ktype_clear   = "clear:" TEXT;
-    ktype_base64  = "base64:" any+;
-    ktype_uri     = "uri:" any+;
+    ktype_base64  = "base64:" TEXT;
+    ktype_uri     = "uri:" TEXT;
     key_type      = ktype_prompt | ktype_clear | ktype_base64 | ktype_uri;
     attr_kv       = TOKEN >sm %attr_fkey ":" TEXT >sm %attr_fval;
     attr_flag     = TOKEN >sm %attr_flag;
@@ -122,23 +133,30 @@ func Parse(data []byte) (*Message, error) {
 
 
     # SDP members
-    proto_ver     = "v=" digit >sm %{msg.ver = data[m]} CRLF;
+    proto_ver     = "v=" digit >sm %{ msg.ver = data[m] } CRLF;
     origin_field  = "o=" username SP sess_id SP sess_ver SP
                          nettype SP addrtype SP unicast_addr >sm
                          %{ msg.Origin.unicAddr = data[m:p] } CRLF;
-    session_name  = "s=" TEXT >sm %{msg.subject = data[m:p] } CRLF;
-    info_field    = "i=" TEXT CRLF; # optional
-    uri_field     = "u=" URI CRLF;  # optional
-    email_field   = "e=" EMAIL CRLF; # zero or more
-    phone_field   = "p=" PHONE CRLF; # zero or more
+    session_name  = "s=" TEXT >sm %{ msg.subject = data[m:p] } CRLF;
+    # TODO: unit test
+    info_field    = "i=" TEXT >sm %{ msg.info = data[m:p] } CRLF; # optional
+    uri_field     = "u=" URI  >sm %{ msg.uri = data[m:p] } CRLF;  # optional
+    # zero or more email fields
+    email_field   = "e=" EMAIL >sm %{ msg.Email = append(msg.Email, data[m:p]) } CRLF;
+    # zero or more phone fields
+    phone_field   = "p=" PHONE >sm %{ msg.Phone = append(msg.Phone, data[m:p]) } CRLF;
     conn_field    = "c=" TOKEN >sm %{ msg.Conn.netType = data[m:p] } SP
                          TOKEN >sm %{ msg.Conn.addrType = data[m:p] } SP
                          conn_addr >sm %{ msg.Conn.address = data[m:p] } CRLF; # optional
                          # not required if included in all media
-    bwidth_field  = "b=" bwtype ":" bandwidth CRLF; # zero or more bandwidth information lines
+    # TODO: unit test
+    # zero or more bandwidth information lines
+    bwidth_field  = "b=" bwtype >sm %bw_set ":" bandwidth >sm %bw_val CRLF;
     time_field    = "t=" start_time >sm %start_time SP stop_time >sm %stop_time CRLF;
-    repeat_field  = "r=" typed_time (SP typed_time)+ CRLF; 
-    zone_adjust   = "z=" time SP "-"? typed_time (SP time SP "-"? typed_time)* CRLF;
+    repeat_field  = "r=" typed_time >sm (SP typed_time)+ %repeat CRLF;
+    zone_adjust   = "z=" time >sm SP "-"? typed_time (SP time SP "-"? typed_time)*
+                    %{ msg.tzones = data[m:p] } CRLF;
+    # TODO: unit test
     key_field     = "k=" key_type CRLF;
     attr_field    = "a=" attribute CRLF; # zero or more session attribute lines
     media_field   = "m=" media >sm %{ msg.Medias[mediaIdx].mtype = data[m:p] } SP
@@ -147,7 +165,7 @@ func Parse(data []byte) (*Message, error) {
                     proto >sm %{ msg.Medias[mediaIdx].proto = data[m:p] }
                     (SP TOKEN)+ >sm %{ msg.Medias[mediaIdx].fmt = data[m:p] } CRLF;
 
-    time_fields   = time_field repeat_field* zone_adjust?;
+    time_fields   = time_field repeat_field*;
     medias        = media_field >media_set
                     info_field?
                     conn_field?
@@ -167,7 +185,8 @@ func Parse(data []byte) (*Message, error) {
             phone_field*
             conn_field?
             bwidth_field*
-            time_fields
+            time_fields+
+            zone_adjust?
             key_field?
             attr_field*
             medias*;

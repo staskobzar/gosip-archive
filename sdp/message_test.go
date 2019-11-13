@@ -79,6 +79,7 @@ func TestParseSDPNoMedia(t *testing.T) {
 	assert.Equal(t, 1, len(time))
 	assert.Equal(t, 0, time[0].StartTime())
 	assert.Equal(t, 0, time[0].StopTime())
+	assert.Equal(t, 0, len(time[0].Repeat))
 
 	assert.Equal(t, 0, len(msg.Medias))
 }
@@ -187,6 +188,147 @@ func TestParseMultiMediasMultiAttributes(t *testing.T) {
 	assert.Empty(t, a.Key())
 	assert.Empty(t, a.Value())
 	assert.Equal(t, "sendonly", a.Flag())
+}
+
+func TestParseSessionOptionalUniFields(t *testing.T) {
+	str := "v=0\r\n" +
+		"o=jdoe 2890844565 2808844566 IN IP4 10.47.16.5\r\n" +
+		"s=SDP Seminar\r\n" +
+		"i=A Seminar on the session description protocol\r\n" +
+		"u=http://www.example.com/seminars/sdp.pdf\r\n" +
+		"e=j.doe@example.com (Jane Doe)\r\n" +
+		"p=+1 617 555-6011\r\n" +
+		"c=IN IP4 224.2.17.12/127\r\n" +
+		"b=CT:384\r\n" +
+		"t=3034423619 3042462419\r\n" +
+		"a=recvonly\r\n" +
+		"m=audio 49170 RTP/AVP 0\r\n" +
+		"m=video 51372 RTP/AVP 99\r\n" +
+		"a=rtpmap:99 h263-1998/90000\r\n"
+	msg, err := Parse([]byte(str))
+	assert.Nil(t, err)
+	assert.NotNil(t, msg)
+
+	assert.Equal(t, "SDP Seminar", msg.Subject())
+	assert.Equal(t, "A Seminar on the session description protocol", msg.Info())
+	assert.Equal(t, "http://www.example.com/seminars/sdp.pdf", msg.UriString())
+
+	assert.Equal(t, 1, len(msg.Email))
+	assert.Equal(t, "j.doe@example.com (Jane Doe)", string(msg.Email[0]))
+
+	assert.Equal(t, 1, len(msg.Phone))
+	assert.Equal(t, "+1 617 555-6011", string(msg.Phone[0]))
+
+	assert.Equal(t, 1, len(msg.BandWidth))
+	assert.Equal(t, "CT", msg.BandWidth[0].Type())
+	assert.Equal(t, 384, msg.BandWidth[0].BW())
+
+	assert.Equal(t, 1, len(msg.Time))
+	assert.Equal(t, 1, len(msg.Attr))
+	assert.Equal(t, 2, len(msg.Medias))
+}
+
+func TestParseMultiEmailPhoneFields(t *testing.T) {
+	str := "v=0\r\n" +
+		"o=jdoe 2890844565 2808844566 IN IP4 10.47.16.5\r\n" +
+		"s=SDP Seminar\r\n" +
+		"e=j.doe@example.com (Jane Doe)\r\n" +
+		"e=Jane Doe <j.doe@example.com>\r\n" +
+		"p=+1 617 555-6011\r\n" +
+		"p=617 555-6011\r\n" +
+		"p=+1 800 555-4455\r\n" +
+		"c=IN IP4 224.2.17.12/127\r\n" +
+		"t=0 0\r\n"
+	msg, err := Parse([]byte(str))
+	assert.Nil(t, err)
+	assert.NotNil(t, msg)
+
+	assert.Equal(t, 2, len(msg.Email))
+	assert.Equal(t, "j.doe@example.com (Jane Doe)", string(msg.Email[0]))
+	assert.Equal(t, "Jane Doe <j.doe@example.com>", string(msg.Email[1]))
+
+	assert.Equal(t, 3, len(msg.Phone))
+	assert.Equal(t, "+1 617 555-6011", string(msg.Phone[0]))
+	assert.Equal(t, "617 555-6011", string(msg.Phone[1]))
+	assert.Equal(t, "+1 800 555-4455", string(msg.Phone[2]))
+}
+
+func TestParseSessionBandwidthFields(t *testing.T) {
+	str := "v=0\r\n" +
+		"o=jdoe 2890844565 2808844566 IN IP4 10.47.16.5\r\n" +
+		"s=SDP Seminar\r\n" +
+		"c=IN IP4 224.2.17.12/127\r\n" +
+		"b=CT:154798\r\n" +
+		"b=AS:66781\r\n" +
+		"t=0 0\r\n" +
+		"m=audio 49170 RTP/AVP 0\r\n"
+	msg, err := Parse([]byte(str))
+	assert.Nil(t, err)
+	assert.NotNil(t, msg)
+
+	assert.Equal(t, 2, len(msg.BandWidth))
+	assert.Equal(t, "CT", msg.BandWidth[0].Type())
+	assert.Equal(t, 154798, msg.BandWidth[0].BW())
+	assert.Equal(t, "AS", msg.BandWidth[1].Type())
+	assert.Equal(t, 66781, msg.BandWidth[1].BW())
+}
+
+func TestParseTimeRepeatAdjustFields(t *testing.T) {
+	str := "v=0\r\n" +
+		"o=jdoe 2890844565 2808844566 IN IP4 10.47.16.5\r\n" +
+		"s=SDP Seminar\r\n" +
+		"t=2873397496 2873404696\r\n" +
+		"r=604800 3600 0 90000\r\n" +
+		"t=3034423619 3042462419\r\n" +
+		"r=7d 3600 0 25h\r\n" +
+		"r=604810 1h 0 25h\r\n" +
+		"z=2882844526 -1h 2898848070 0\r\n"
+	msg, err := Parse([]byte(str))
+	assert.Nil(t, err)
+	assert.NotNil(t, msg)
+	assert.Equal(t, 2, len(msg.Time))
+
+	tm := msg.Time[0]
+	assert.Equal(t, 2873397496, tm.StartTime())
+	assert.Equal(t, 2873404696, tm.StopTime())
+	assert.Equal(t, 1, len(tm.Repeat))
+	assert.Equal(t, "604800 3600 0 90000", string(tm.Repeat[0]))
+	tm = msg.Time[1]
+	assert.Equal(t, 3034423619, tm.StartTime())
+	assert.Equal(t, 3042462419, tm.StopTime())
+	assert.Equal(t, 2, len(tm.Repeat))
+	assert.Equal(t, "7d 3600 0 25h", string(tm.Repeat[0]))
+	assert.Equal(t, "604810 1h 0 25h", string(tm.Repeat[1]))
+
+	assert.Equal(t, "2882844526 -1h 2898848070 0", msg.TimeZones())
+
+	// no repeat field without time field
+	str = "v=0\r\n" +
+		"o=jdoe 2890844565 2808844566 IN IP4 10.47.16.5\r\n" +
+		"s=SDP Seminar\r\n" +
+		"r=604810 1h 0 25h\r\n" +
+		"z=2882844526 -1h 2898848070 0\r\n"
+	_, err = Parse([]byte(str))
+	assert.NotNil(t, err)
+}
+
+func TestParseMediaWithAllFields(t *testing.T) {
+	str := "v=0\r\n" +
+		"o=alice 2890844526 2890844526 IN IP4 host.anywhere.com\r\n" +
+		"s= \r\n" +
+		"t=0 0\r\n" +
+		"z=2882844526 -1h 2898848070 0\r\n"
+	msg, err := Parse([]byte(str))
+	assert.Nil(t, err)
+	assert.NotNil(t, msg)
+}
+
+func TestParseErrorInvalidOrder(t *testing.T) {
+	t.Skip("skip invalid order")
+}
+
+func TestParseErrorInvalidField(t *testing.T) {
+	t.Skip("skip invalid field")
 }
 
 func BenchmarkParseSDPMessage(b *testing.B) {
