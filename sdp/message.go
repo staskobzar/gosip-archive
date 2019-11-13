@@ -1,6 +1,9 @@
 package sdp
 
-import "strconv"
+import (
+	"bytes"
+	"strconv"
+)
 
 // ErrorSDPParsing returned when failed to parse SDP message
 var ErrorSDPParsing = errorNew("Error parding SDP message")
@@ -11,6 +14,8 @@ type Message struct {
 	subject []byte
 	Origin  Origin
 	Conn    Conn
+	Time    []TimeDesc
+	Attr    []Attribute
 	Medias  Medias
 }
 
@@ -21,7 +26,7 @@ func (m *Message) Version() int {
 
 // Subject SDP message subject field
 func (m *Message) Subject() string {
-	return string(m.subject)
+	return string(bytes.TrimSpace(m.subject))
 }
 
 // Origin SDP origin field (RFC4566 #5.2)
@@ -94,6 +99,30 @@ func (c Conn) Address() string {
 	return string(c.address)
 }
 
+// TimeDesc time description structure that contains time and repeat time fields
+type TimeDesc struct {
+	start []byte
+	stop  []byte
+}
+
+// StartTime time description field
+func (t TimeDesc) StartTime() int {
+	time, err := strconv.Atoi(string(t.start))
+	if err != nil {
+		return -1
+	}
+	return time
+}
+
+// StopTime time description field
+func (t TimeDesc) StopTime() int {
+	time, err := strconv.Atoi(string(t.stop))
+	if err != nil {
+		return -1
+	}
+	return time
+}
+
 // Medias list of session medias
 type Medias []Media
 
@@ -104,6 +133,7 @@ type Media struct {
 	nport []byte
 	proto []byte
 	fmt   []byte
+	attr  []Attribute
 }
 
 // Type SDP media field type
@@ -136,5 +166,25 @@ func (m Media) Proto() string {
 
 // Fmt SDP media field formats list
 func (m Media) Fmt() string {
-	return string(m.fmt)
+	return string(bytes.TrimSpace(m.fmt))
 }
+
+// Attribute SDP field
+type Attribute struct {
+	isFlag bool
+	key    []byte
+	value  []byte
+	flag   []byte
+}
+
+// IsFlag returns true if attribute is flag (a=sendonly)
+func (a Attribute) IsFlag() bool { return a.isFlag }
+
+// Key attribute key (a=key:value)
+func (a Attribute) Key() string { return string(a.key) }
+
+// Value attribute value (a=key:value)
+func (a Attribute) Value() string { return string(a.value) }
+
+// Flag attribute (a=flag)
+func (a Attribute) Flag() string { return string(a.flag) }

@@ -10,19 +10,63 @@ func Parse(data []byte) (*Message, error) {
     var cs, p, pe, m int
     pe = len(data)
 
-    mediaIdx := 0
+    // when media index is >= then it is media fields context
+    // otherwise it is session context
+    mediaIdx := -1
     msg := &Message{}
 
 %%{
     # ACTIONS
     action sm        { m = p }
     action media_set {
-        if mediaIdx == 0 {
+        if mediaIdx == -1 {
             msg.Medias = make(Medias, 1)
+            mediaIdx = 0
         } else {
             mediaIdx++
             msg.Medias = append(msg.Medias, Media{})
         }
+    }
+    action attr_fkey {
+        if mediaIdx == -1 {
+            msg.Attr = append(msg.Attr, Attribute{})
+            i := len(msg.Attr) - 1
+            msg.Attr[i].key = data[m:p]
+        } else {
+            msg.Medias[mediaIdx].attr = append(msg.Medias[mediaIdx].attr, Attribute{})
+            i := len(msg.Medias[mediaIdx].attr) - 1
+            msg.Medias[mediaIdx].attr[i].key = data[m:p]
+        }
+    }
+    action attr_fval {
+        if mediaIdx == -1 {
+            i := len(msg.Attr) - 1
+            msg.Attr[i].value = data[m:p]
+        } else {
+            i := len(msg.Medias[mediaIdx].attr) - 1
+            msg.Medias[mediaIdx].attr[i].value = data[m:p]
+        }
+    }
+    action attr_flag {
+        if mediaIdx == -1 {
+            msg.Attr = append(msg.Attr, Attribute{})
+            i := len(msg.Attr) - 1
+            msg.Attr[i].flag = data[m:p]
+            msg.Attr[i].isFlag = true
+        } else {
+            msg.Medias[mediaIdx].attr = append(msg.Medias[mediaIdx].attr, Attribute{})
+            i := len(msg.Medias[mediaIdx].attr) - 1
+            msg.Medias[mediaIdx].attr[i].flag = data[m:p]
+            msg.Medias[mediaIdx].attr[i].isFlag = true
+        }
+    }
+    action start_time {
+        msg.Time = append(msg.Time, TimeDesc{})
+        msg.Time[0].start = data[m:p]
+    }
+    action stop_time {
+        i := len(msg.Time) - 1
+        msg.Time[i].stop = data[m:p]
     }
 
     # GRAMMAR
@@ -69,7 +113,9 @@ func Parse(data []byte) (*Message, error) {
     ktype_base64  = "base64:" any+;
     ktype_uri     = "uri:" any+;
     key_type      = ktype_prompt | ktype_clear | ktype_base64 | ktype_uri;
-    attribute     = (TOKEN ":" TEXT) | TOKEN;
+    attr_kv       = TOKEN >sm %attr_fkey ":" TEXT >sm %attr_fval;
+    attr_flag     = TOKEN >sm %attr_flag;
+    attribute     = attr_kv | attr_flag;
     media         = "audio" | "video" | "text" | "application" | TOKEN;
     proto         = TOKEN ("/" TOKEN)*; # typically "RTP/AVP" or "udp"
     time          = POS_DIGIT digit{9,};
@@ -80,7 +126,7 @@ func Parse(data []byte) (*Message, error) {
     origin_field  = "o=" username SP sess_id SP sess_ver SP
                          nettype SP addrtype SP unicast_addr >sm
                          %{ msg.Origin.unicAddr = data[m:p] } CRLF;
-    session_name  = "s=" TEXT CRLF;
+    session_name  = "s=" TEXT >sm %{msg.subject = data[m:p] } CRLF;
     info_field    = "i=" TEXT CRLF; # optional
     uri_field     = "u=" URI CRLF;  # optional
     email_field   = "e=" EMAIL CRLF; # zero or more
@@ -90,7 +136,7 @@ func Parse(data []byte) (*Message, error) {
                          conn_addr >sm %{ msg.Conn.address = data[m:p] } CRLF; # optional
                          # not required if included in all media
     bwidth_field  = "b=" bwtype ":" bandwidth CRLF; # zero or more bandwidth information lines
-    time_field    = "t=" start_time SP stop_time CRLF;
+    time_field    = "t=" start_time >sm %start_time SP stop_time >sm %stop_time CRLF;
     repeat_field  = "r=" typed_time (SP typed_time)+ CRLF; 
     zone_adjust   = "z=" time SP "-"? typed_time (SP time SP "-"? typed_time)* CRLF;
     key_field     = "k=" key_type CRLF;
@@ -99,7 +145,7 @@ func Parse(data []byte) (*Message, error) {
                     port >sm %{ msg.Medias[mediaIdx].port = data[m:p] }
                     ("/" digit+ >sm %{ msg.Medias[mediaIdx].nport = data[m:p] })? SP
                     proto >sm %{ msg.Medias[mediaIdx].proto = data[m:p] }
-                    (SP TOKEN >sm)+ %{ msg.Medias[mediaIdx].fmt = data[m:p] } CRLF;
+                    (SP TOKEN)+ >sm %{ msg.Medias[mediaIdx].fmt = data[m:p] } CRLF;
 
     time_fields   = time_field repeat_field* zone_adjust?;
     medias        = media_field >media_set
