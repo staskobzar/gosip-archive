@@ -10,6 +10,7 @@ var ErrorSDPParsing = errorNew("Error parsing SDP message")
 
 // Message SDP message structure
 type Message struct {
+	mediaIdx  int
 	ver       byte
 	Origin    Origin
 	subject   []byte
@@ -25,6 +26,146 @@ type Message struct {
 	Attr      []Attribute
 	Medias    Medias
 }
+
+// -- private methods
+
+func (m *Message) isSessCtx() bool {
+	return m.mediaIdx == -1
+}
+
+func (m *Message) setInfo(data []byte) {
+	if m.isSessCtx() {
+		m.info = data
+	} else {
+		i := len(m.Medias) - 1
+		m.Medias[i].info = data
+	}
+}
+
+func (m *Message) setConnNetType(data []byte) {
+	if m.isSessCtx() {
+		m.Conn.netType = data
+	} else {
+		i := len(m.Medias) - 1
+		m.Medias[i].Conn.netType = data
+	}
+}
+
+func (m *Message) setConnAddrType(data []byte) {
+	if m.isSessCtx() {
+		m.Conn.addrType = data
+	} else {
+		i := len(m.Medias) - 1
+		m.Medias[i].Conn.addrType = data
+	}
+}
+
+func (m *Message) setConnAddress(data []byte) {
+	if m.isSessCtx() {
+		m.Conn.address = data
+	} else {
+		i := len(m.Medias) - 1
+		m.Medias[i].Conn.address = data
+	}
+}
+
+func (m *Message) setMedia() {
+	if m.isSessCtx() {
+		m.Medias = make(Medias, 1, 4)
+	} else {
+		m.Medias = append(m.Medias, Media{})
+	}
+	m.mediaIdx++
+}
+
+func (m *Message) setAttrKey(data []byte) {
+	if m.isSessCtx() {
+		m.Attr = append(m.Attr, Attribute{})
+		i := len(m.Attr) - 1
+		m.Attr[i].key = data
+	} else {
+		m.Medias[m.mediaIdx].Attr = append(m.Medias[m.mediaIdx].Attr, Attribute{})
+		i := len(m.Medias[m.mediaIdx].Attr) - 1
+		m.Medias[m.mediaIdx].Attr[i].key = data
+	}
+}
+
+func (m *Message) setAttrValue(data []byte) {
+	if m.isSessCtx() {
+		i := len(m.Attr) - 1
+		m.Attr[i].value = data
+	} else {
+		i := len(m.Medias[m.mediaIdx].Attr) - 1
+		m.Medias[m.mediaIdx].Attr[i].value = data
+	}
+}
+
+func (m *Message) setAttrFlag(data []byte) {
+	if m.isSessCtx() {
+		m.Attr = append(m.Attr, Attribute{})
+		i := len(m.Attr) - 1
+		m.Attr[i].flag = data
+		m.Attr[i].isFlag = true
+	} else {
+		m.Medias[m.mediaIdx].Attr = append(m.Medias[m.mediaIdx].Attr, Attribute{})
+		i := len(m.Medias[m.mediaIdx].Attr) - 1
+		m.Medias[m.mediaIdx].Attr[i].flag = data
+		m.Medias[m.mediaIdx].Attr[i].isFlag = true
+	}
+}
+
+func (m *Message) setStartTime(data []byte) {
+	m.Time = append(m.Time, TimeDesc{start: data})
+}
+
+func (m *Message) setStopTime(data []byte) {
+	i := len(m.Time) - 1
+	m.Time[i].stop = data
+}
+
+func (m *Message) setRepeatField(data []byte) {
+	i := len(m.Time) - 1
+	m.Time[i].Repeat = append(m.Time[i].Repeat, data)
+}
+
+func (m *Message) setBandwidth(data []byte) {
+	if m.isSessCtx() {
+		m.BandWidth = append(m.BandWidth, BandWidth{bt: data})
+	} else {
+		i := len(m.Medias) - 1
+		m.Medias[i].BandWidth = append(m.Medias[i].BandWidth, BandWidth{bt: data})
+	}
+}
+
+func (m *Message) setBwidthValue(data []byte) {
+	if m.isSessCtx() {
+		i := len(m.BandWidth) - 1
+		m.BandWidth[i].bw = data
+	} else {
+		i := len(m.Medias) - 1
+		j := len(m.Medias[i].BandWidth) - 1
+		m.Medias[i].BandWidth[j].bw = data
+	}
+}
+
+func (m *Message) setEncKey(data []byte) {
+	if m.isSessCtx() {
+		m.encKey = data
+	} else {
+		i := len(m.Medias) - 1
+		m.Medias[i].encKey = data
+	}
+}
+
+func byteToInt(data []byte) int {
+	num, err := strconv.Atoi(string(data))
+	if err != nil {
+		return -1
+	}
+	return num
+}
+
+// -- public methods
 
 // Version SDP message version field
 func (m *Message) Version() int {
@@ -73,20 +214,12 @@ func (o Origin) Username() string {
 
 // SessionID SDP origin field session id
 func (o Origin) SessionID() int {
-	id, err := strconv.Atoi(string(o.sessID))
-	if err != nil {
-		return -1
-	}
-	return id
+	return byteToInt(o.sessID)
 }
 
 // SessionVer SDP origin field session version
 func (o Origin) SessionVer() int {
-	ver, err := strconv.Atoi(string(o.sessVer))
-	if err != nil {
-		return -1
-	}
-	return ver
+	return byteToInt(o.sessVer)
 }
 
 // NetType SDP origin field net type
@@ -139,11 +272,7 @@ func (b BandWidth) Type() string {
 
 // BW bandwidth field value
 func (b BandWidth) BW() int {
-	bw, err := strconv.Atoi(string(b.bw))
-	if err != nil {
-		return -1
-	}
-	return bw
+	return byteToInt(b.bw)
 }
 
 // TimeDesc time description structure that contains time and repeat time fields
@@ -155,20 +284,12 @@ type TimeDesc struct {
 
 // StartTime time description field
 func (t TimeDesc) StartTime() int {
-	time, err := strconv.Atoi(string(t.start))
-	if err != nil {
-		return -1
-	}
-	return time
+	return byteToInt(t.start)
 }
 
 // StopTime time description field
 func (t TimeDesc) StopTime() int {
-	time, err := strconv.Atoi(string(t.stop))
-	if err != nil {
-		return -1
-	}
-	return time
+	return byteToInt(t.stop)
 }
 
 // Medias list of session medias
@@ -195,20 +316,15 @@ func (m Media) Type() string {
 
 // Port SDP media field port
 func (m Media) Port() int {
-	port, err := strconv.Atoi(string(m.port))
-	if err != nil {
-		return -1
-	}
-	return port
+	return byteToInt(m.port)
 }
 
 // NumPort SDP media field ports number
 func (m Media) NumPort() int {
-	n, err := strconv.Atoi(string(m.nport))
-	if err != nil {
-		return 0
+	if n := byteToInt(m.nport); n >= 0 {
+		return n
 	}
-	return n
+	return 0
 }
 
 // Proto SDP media field protocol

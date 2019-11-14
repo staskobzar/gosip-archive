@@ -736,19 +736,19 @@ func Parse(data []byte) (*Message, error) {
 	var cs, p, pe, m int
 	pe = len(data)
 
+	msg := &Message{}
 	// when media index is >= then it is media fields context
 	// otherwise it is session context
-	mediaIdx := -1
-	msg := &Message{}
+	msg.mediaIdx = -1
 
-//line parser.rl:238
+//line parser.rl:141
 
 //line parser.go:752
 	{
 		cs = sdp_start
 	}
 
-//line parser.rl:240
+//line parser.rl:143
 
 //line parser.go:759
 	{
@@ -835,195 +835,98 @@ func Parse(data []byte) (*Message, error) {
 				m = p
 			case 1:
 //line parser.rl:22
-
-				if mediaIdx == -1 {
-					msg.info = data[m:p]
-				} else {
-					i := len(msg.Medias) - 1
-					msg.Medias[i].info = data[m:p]
-				}
-
+				msg.setInfo(data[m:p])
 			case 2:
-//line parser.rl:30
-
-				if mediaIdx == -1 {
-					msg.Conn.netType = data[m:p]
-				} else {
-					i := len(msg.Medias) - 1
-					msg.Medias[i].Conn.netType = data[m:p]
-				}
-
+//line parser.rl:23
+				msg.setConnNetType(data[m:p])
 			case 3:
-//line parser.rl:38
-
-				if mediaIdx == -1 {
-					msg.Conn.addrType = data[m:p]
-				} else {
-					i := len(msg.Medias) - 1
-					msg.Medias[i].Conn.addrType = data[m:p]
-				}
-
+//line parser.rl:24
+				msg.setConnAddrType(data[m:p])
 			case 4:
-//line parser.rl:46
-
-				if mediaIdx == -1 {
-					msg.Conn.address = data[m:p]
-				} else {
-					i := len(msg.Medias) - 1
-					msg.Medias[i].Conn.address = data[m:p]
-				}
-
+//line parser.rl:25
+				msg.setConnAddress(data[m:p])
 			case 5:
-//line parser.rl:54
-
-				if mediaIdx == -1 {
-					msg.Medias = make(Medias, 1)
-					mediaIdx = 0
-				} else {
-					mediaIdx++
-					msg.Medias = append(msg.Medias, Media{})
-				}
-
+//line parser.rl:26
+				msg.setMedia()
 			case 6:
-//line parser.rl:63
-
-				if mediaIdx == -1 {
-					msg.Attr = append(msg.Attr, Attribute{})
-					i := len(msg.Attr) - 1
-					msg.Attr[i].key = data[m:p]
-				} else {
-					msg.Medias[mediaIdx].Attr = append(msg.Medias[mediaIdx].Attr, Attribute{})
-					i := len(msg.Medias[mediaIdx].Attr) - 1
-					msg.Medias[mediaIdx].Attr[i].key = data[m:p]
-				}
-
+//line parser.rl:27
+				msg.setAttrKey(data[m:p])
 			case 7:
-//line parser.rl:74
-
-				if mediaIdx == -1 {
-					i := len(msg.Attr) - 1
-					msg.Attr[i].value = data[m:p]
-				} else {
-					i := len(msg.Medias[mediaIdx].Attr) - 1
-					msg.Medias[mediaIdx].Attr[i].value = data[m:p]
-				}
-
+//line parser.rl:28
+				msg.setAttrValue(data[m:p])
 			case 8:
-//line parser.rl:83
-
-				if mediaIdx == -1 {
-					msg.Attr = append(msg.Attr, Attribute{})
-					i := len(msg.Attr) - 1
-					msg.Attr[i].flag = data[m:p]
-					msg.Attr[i].isFlag = true
-				} else {
-					msg.Medias[mediaIdx].Attr = append(msg.Medias[mediaIdx].Attr, Attribute{})
-					i := len(msg.Medias[mediaIdx].Attr) - 1
-					msg.Medias[mediaIdx].Attr[i].flag = data[m:p]
-					msg.Medias[mediaIdx].Attr[i].isFlag = true
-				}
-
+//line parser.rl:29
+				msg.setAttrFlag(data[m:p])
 			case 9:
-//line parser.rl:96
-
-				msg.Time = append(msg.Time, TimeDesc{start: data[m:p]})
-
+//line parser.rl:30
+				msg.setStartTime(data[m:p])
 			case 10:
-//line parser.rl:99
-
-				i := len(msg.Time) - 1
-				msg.Time[i].stop = data[m:p]
-
+//line parser.rl:31
+				msg.setStopTime(data[m:p])
 			case 11:
-//line parser.rl:103
-
-				i := len(msg.Time) - 1
-				msg.Time[i].Repeat = append(msg.Time[i].Repeat, data[m:p])
-
+//line parser.rl:32
+				msg.setRepeatField(data[m:p])
 			case 12:
-//line parser.rl:107
-
-				if mediaIdx == -1 {
-					msg.BandWidth = append(msg.BandWidth, BandWidth{bt: data[m:p]})
-				} else {
-					i := len(msg.Medias) - 1
-					msg.Medias[i].BandWidth = append(msg.Medias[i].BandWidth, BandWidth{bt: data[m:p]})
-				}
-
+//line parser.rl:33
+				msg.setBandwidth(data[m:p])
 			case 13:
-//line parser.rl:115
-
-				if mediaIdx == -1 {
-					i := len(msg.BandWidth) - 1
-					msg.BandWidth[i].bw = data[m:p]
-				} else {
-					i := len(msg.Medias) - 1
-					j := len(msg.Medias[i].BandWidth) - 1
-					msg.Medias[i].BandWidth[j].bw = data[m:p]
-				}
-
+//line parser.rl:34
+				msg.setBwidthValue(data[m:p])
 			case 14:
-//line parser.rl:125
-
-				if mediaIdx == -1 {
-					msg.encKey = data[m:p]
-				} else {
-					i := len(msg.Medias) - 1
-					msg.Medias[i].encKey = data[m:p]
-				}
-
+//line parser.rl:35
+				msg.setEncKey(data[m:p])
 			case 15:
-//line parser.rl:158
+//line parser.rl:61
 				msg.Origin.username = data[m:p]
 			case 16:
-//line parser.rl:159
+//line parser.rl:62
 				msg.Origin.sessID = data[m:p]
 			case 17:
-//line parser.rl:160
+//line parser.rl:63
 				msg.Origin.sessVer = data[m:p]
 			case 18:
-//line parser.rl:161
+//line parser.rl:64
 				msg.Origin.netType = data[m:p]
 			case 19:
-//line parser.rl:162
+//line parser.rl:65
 				msg.Origin.addrType = data[m:p]
 			case 20:
-//line parser.rl:181
+//line parser.rl:84
 				msg.ver = data[m]
 			case 21:
-//line parser.rl:184
+//line parser.rl:87
 				msg.Origin.unicAddr = data[m:p]
 			case 22:
-//line parser.rl:185
+//line parser.rl:88
 				msg.subject = data[m:p]
 			case 23:
-//line parser.rl:188
+//line parser.rl:91
 				msg.uri = data[m:p]
 			case 24:
-//line parser.rl:190
+//line parser.rl:93
 				msg.Email = append(msg.Email, data[m:p])
 			case 25:
-//line parser.rl:192
+//line parser.rl:95
 				msg.Phone = append(msg.Phone, data[m:p])
 			case 26:
-//line parser.rl:202
+//line parser.rl:105
 				msg.tzones = data[m:p]
 			case 27:
-//line parser.rl:207
-				msg.Medias[mediaIdx].mtype = data[m:p]
+//line parser.rl:110
+				msg.Medias[msg.mediaIdx].mtype = data[m:p]
 			case 28:
-//line parser.rl:208
-				msg.Medias[mediaIdx].port = data[m:p]
+//line parser.rl:111
+				msg.Medias[msg.mediaIdx].port = data[m:p]
 			case 29:
-//line parser.rl:209
-				msg.Medias[mediaIdx].nport = data[m:p]
+//line parser.rl:112
+				msg.Medias[msg.mediaIdx].nport = data[m:p]
 			case 30:
-//line parser.rl:210
-				msg.Medias[mediaIdx].proto = data[m:p]
+//line parser.rl:113
+				msg.Medias[msg.mediaIdx].proto = data[m:p]
 			case 31:
-//line parser.rl:211
-				msg.Medias[mediaIdx].fmt = data[m:p]
-//line parser.go:1031
+//line parser.rl:114
+				msg.Medias[msg.mediaIdx].fmt = data[m:p]
+//line parser.go:934
 			}
 		}
 
@@ -1043,7 +946,7 @@ func Parse(data []byte) (*Message, error) {
 		}
 	}
 
-//line parser.rl:241
+//line parser.rl:144
 	if cs >= sdp_first_final {
 		return msg, nil
 	}

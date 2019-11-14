@@ -11,125 +11,28 @@ func Parse(data []byte) (*Message, error) {
     var cs, p, pe, m int
     pe = len(data)
 
+    msg := &Message{}
     // when media index is >= then it is media fields context
     // otherwise it is session context
-    mediaIdx := -1
-    msg := &Message{}
+    msg.mediaIdx = -1
 
 %%{
     # ACTIONS
-    action sm        { m = p }
-    action info_field {
-        if mediaIdx == -1 {
-            msg.info = data[m:p]
-        } else {
-            i := len(msg.Medias) - 1
-            msg.Medias[i].info = data[m:p]
-        }
-    }
-    action conn_nettype {
-        if mediaIdx == -1 {
-            msg.Conn.netType = data[m:p]
-        } else {
-            i := len(msg.Medias) - 1
-            msg.Medias[i].Conn.netType = data[m:p]
-        }
-    }
-    action conn_addrtype {
-        if mediaIdx == -1 {
-            msg.Conn.addrType = data[m:p]
-        } else {
-            i := len(msg.Medias) - 1
-            msg.Medias[i].Conn.addrType = data[m:p]
-        }
-    }
-    action conn_addr {
-        if mediaIdx == -1 {
-            msg.Conn.address = data[m:p]
-        } else {
-            i := len(msg.Medias) - 1
-            msg.Medias[i].Conn.address = data[m:p]
-        }
-    }
-    action media_set {
-        if mediaIdx == -1 {
-            msg.Medias = make(Medias, 1)
-            mediaIdx = 0
-        } else {
-            mediaIdx++
-            msg.Medias = append(msg.Medias, Media{})
-        }
-    }
-    action attr_fkey {
-        if mediaIdx == -1 {
-            msg.Attr = append(msg.Attr, Attribute{})
-            i := len(msg.Attr) - 1
-            msg.Attr[i].key = data[m:p]
-        } else {
-            msg.Medias[mediaIdx].Attr = append(msg.Medias[mediaIdx].Attr, Attribute{})
-            i := len(msg.Medias[mediaIdx].Attr) - 1
-            msg.Medias[mediaIdx].Attr[i].key = data[m:p]
-        }
-    }
-    action attr_fval {
-        if mediaIdx == -1 {
-            i := len(msg.Attr) - 1
-            msg.Attr[i].value = data[m:p]
-        } else {
-            i := len(msg.Medias[mediaIdx].Attr) - 1
-            msg.Medias[mediaIdx].Attr[i].value = data[m:p]
-        }
-    }
-    action attr_flag {
-        if mediaIdx == -1 {
-            msg.Attr = append(msg.Attr, Attribute{})
-            i := len(msg.Attr) - 1
-            msg.Attr[i].flag = data[m:p]
-            msg.Attr[i].isFlag = true
-        } else {
-            msg.Medias[mediaIdx].Attr = append(msg.Medias[mediaIdx].Attr, Attribute{})
-            i := len(msg.Medias[mediaIdx].Attr) - 1
-            msg.Medias[mediaIdx].Attr[i].flag = data[m:p]
-            msg.Medias[mediaIdx].Attr[i].isFlag = true
-        }
-    }
-    action start_time {
-        msg.Time = append(msg.Time, TimeDesc{start: data[m:p]})
-    }
-    action stop_time {
-        i := len(msg.Time) - 1
-        msg.Time[i].stop = data[m:p]
-    }
-    action repeat {
-        i := len(msg.Time) - 1
-        msg.Time[i].Repeat = append(msg.Time[i].Repeat, data[m:p])
-    }
-    action bw_set {
-        if mediaIdx == -1 {
-            msg.BandWidth = append(msg.BandWidth, BandWidth{bt: data[m:p]})
-        } else {
-            i := len(msg.Medias) - 1
-            msg.Medias[i].BandWidth = append(msg.Medias[i].BandWidth, BandWidth{bt: data[m:p]})
-        }
-    }
-    action bw_val {
-        if mediaIdx == -1 {
-            i := len(msg.BandWidth) - 1
-            msg.BandWidth[i].bw = data[m:p]
-        } else {
-            i := len(msg.Medias) - 1
-            j := len(msg.Medias[i].BandWidth) - 1
-            msg.Medias[i].BandWidth[j].bw = data[m:p]
-        }
-    }
-    action enc_key {
-        if mediaIdx == -1 {
-            msg.encKey = data[m:p]
-        } else {
-            i := len(msg.Medias) - 1
-            msg.Medias[i].encKey = data[m:p]
-        }
-    }
+    action sm            { m = p }
+    action info_field    { msg.setInfo(data[m:p]) }
+    action conn_nettype  { msg.setConnNetType(data[m:p]) }
+    action conn_addrtype { msg.setConnAddrType(data[m:p]) }
+    action conn_addr     { msg.setConnAddress(data[m:p]) }
+    action media_set     { msg.setMedia() }
+    action attr_fkey     { msg.setAttrKey(data[m:p]) }
+    action attr_fval     { msg.setAttrValue(data[m:p]) }
+    action attr_flag     { msg.setAttrFlag(data[m:p]) }
+    action start_time    { msg.setStartTime(data[m:p]) }
+    action stop_time     { msg.setStopTime(data[m:p]) }
+    action repeat        { msg.setRepeatField(data[m:p]) }
+    action bw_set        { msg.setBandwidth(data[m:p]) }
+    action bw_val        { msg.setBwidthValue(data[m:p]) }
+    action enc_key       { msg.setEncKey(data[m:p]) }
     # GRAMMAR
     CRLF          = "\r\n";
     SP            = 0x20;
@@ -204,11 +107,11 @@ func Parse(data []byte) (*Message, error) {
     # does anyone use this anyway???!!!
     key_field     = "k=" TEXT >sm %enc_key CRLF;
     attr_field    = "a=" attribute CRLF; # zero or more session attribute lines
-    media_field   = "m=" media >sm %{ msg.Medias[mediaIdx].mtype = data[m:p] } SP
-                    port >sm %{ msg.Medias[mediaIdx].port = data[m:p] }
-                    ("/" digit+ >sm %{ msg.Medias[mediaIdx].nport = data[m:p] })? SP
-                    proto >sm %{ msg.Medias[mediaIdx].proto = data[m:p] }
-                    (SP TOKEN)+ >sm %{ msg.Medias[mediaIdx].fmt = data[m:p] } CRLF;
+    media_field   = "m=" media >sm %{ msg.Medias[msg.mediaIdx].mtype = data[m:p] } SP
+                    port >sm %{ msg.Medias[msg.mediaIdx].port = data[m:p] }
+                    ("/" digit+ >sm %{ msg.Medias[msg.mediaIdx].nport = data[m:p] })? SP
+                    proto >sm %{ msg.Medias[msg.mediaIdx].proto = data[m:p] }
+                    (SP TOKEN)+ >sm %{ msg.Medias[msg.mediaIdx].fmt = data[m:p] } CRLF;
 
     time_fields   = time_field repeat_field*;
     medias        = media_field >media_set
