@@ -1,0 +1,5 @@
+v=0
+o=alice 2890844526 2890844526 IN IP4 host.anywhere.com
+s=-
+c=IN IP4 host.anywhere.com
+t=0 0

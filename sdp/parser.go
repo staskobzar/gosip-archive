@@ -1047,5 +1047,14 @@ func Parse(data []byte) (*Message, error) {
 	if cs >= sdp_first_final {
 		return msg, nil
 	}
-	return nil, ErrorSDPParsing.msg("'%s' [%d]", data[:p], p)
+	// improve error message
+	e := pe
+	if (p + 12) < e {
+		e = p + 12
+	}
+	s := 0
+	if (p - 24) > 0 {
+		s = p - 24
+	}
+	return nil, ErrorSDPParsing.msg("%q... [position=%d]", data[s:e], p)
 }

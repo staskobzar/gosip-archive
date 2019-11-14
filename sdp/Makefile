@@ -16,9 +16,9 @@ bench:
 #lint:
 #	golint $(filter-out $(wildcard *_parser.go),$(wildcard *.go))
 
-#fuzz:
-#	go-fuzz-build
-#	go-fuzz -bin=sipmsg-fuzz.zip -workdir=fuzz
+fuzz:
+	go-fuzz-build
+	go-fuzz -bin=sdp-fuzz.zip -workdir=fuzz
 
 %.go: %.rl
 	ragel -Z -o $@ $<

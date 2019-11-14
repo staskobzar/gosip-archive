@@ -1,0 +1,11 @@
+v=0
+o=e 6 7 N 4 m
+s=m
+t=0 0
+m=o 0 P 0
+m=o 0 P 1
+a=0
+m=o 0 P 2
+a=p:0
+m=o 53122 RTP/AVP 110
+map:110 telep

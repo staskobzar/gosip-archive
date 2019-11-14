@@ -401,11 +401,84 @@ func TestParseMediaWithAllFields(t *testing.T) {
 }
 
 func TestParseErrorInvalidOrder(t *testing.T) {
-	t.Skip("skip invalid order")
+	str := "v=0\r\n" +
+		"o=root 2890844526 2890844526 IN IP4 host.anywhere.com\r\n" +
+		"s=-\r\n" +
+		"i=Multimedia session\r\n" +
+		"c=IN IP4 host.atlanta.com\r\n" +
+		"b=CT:384\r\n" +
+		"a=sendrecv\r\n" +
+		"t=0 0\r\n"
+	msg, err := Parse([]byte(str))
+	assert.NotNil(t, err)
+	assert.Nil(t, msg)
+
+	str = "v=0\r\n" +
+		"o=root 2890844566 2890844566 IN IP4 host.atlanta.example.com\r\n" +
+		"c=IN IP4 h1.atlanta.example.com\r\n" +
+		"s=-\r\n" +
+		"t=0 0\r\n"
+	msg, err = Parse([]byte(str))
+	assert.NotNil(t, err)
+	assert.Nil(t, msg)
+
+	str = "v=0\r\n" +
+		"o=jdoe 2890844565 2808844566 IN IP4 10.47.16.5\r\n" +
+		"s=SDP Seminar\r\n" +
+		"t=0 0\r\n" +
+		"b=CT:384\r\n" +
+		"a=sendrecv\r\n"
+	msg, err = Parse([]byte(str))
+	assert.NotNil(t, err)
+	assert.Nil(t, msg)
 }
 
 func TestParseErrorInvalidField(t *testing.T) {
-	t.Skip("skip invalid field")
+	// missing mandatory field
+	str := "v=0\r\n" +
+		"o=root 2890844566 2890844566 IN IP4 host.atlanta.example.com\r\n" +
+		"c=IN IP4 h1.atlanta.example.com\r\n" +
+		"t=0 0\r\n"
+	msg, err := Parse([]byte(str))
+	assert.NotNil(t, err)
+	assert.Nil(t, msg)
+
+	str = "v=0\r\n" +
+		"o=root 535635648 535635648 IN IP4 199.182.134.111\r\n" +
+		"s=Modulis PBX\r\n" +
+		"c=IN IP4 199.182.134.111\r\n" +
+		"g=CT:384\r\n" +
+		"t=0 0\r\n"
+	msg, err = Parse([]byte(str))
+	assert.NotNil(t, err)
+	assert.Nil(t, msg)
+	assert.Contains(t, err.Error(), "g=CT:")
+
+	str = "v=0\r\n" +
+		"o=root 535635648 535635648 IN IP4 199.182.134.111\r\n" +
+		"s=Modulis PBX\r\n" +
+		"c=IN IP4 199.182.134.111\r\n" +
+		"t=0 0\r\n" +
+		"@=foo\r\n"
+	msg, err = Parse([]byte(str))
+	assert.NotNil(t, err)
+	assert.Nil(t, msg)
+	assert.Contains(t, err.Error(), "@=foo")
+
+	str = "o=root 535635648 535635648 IN IP4 199.182.134.111\r\n" +
+		"s=Modulis PBX\r\n" +
+		"c=IN IP4 199.182.134.111\r\n"
+	msg, err = Parse([]byte(str))
+	assert.NotNil(t, err)
+	assert.Nil(t, msg)
+	assert.Contains(t, err.Error(), "o=root")
+
+	str = "v=0\r\n" +
+		"o=root 535635648 535635648 IN IP4 199.182.134.111\r\n"
+	msg, err = Parse([]byte(str))
+	assert.NotNil(t, err)
+	assert.Nil(t, msg)
+	assert.Contains(t, err.Error(), "IN IP4")
 }
 
 func BenchmarkParseSDPMessage(b *testing.B) {

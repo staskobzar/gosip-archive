@@ -1,0 +1,11 @@
+v=0
+o=alice 6 6 N 4 m
+s= 
+c=N 4 m
+t=0 0
+m=o 0 P/P 0
+a=p:0 PCMU/8000
+m=o 2 P/P 31
+a=p:31 H261/90000
+m=o 0 P/P 32
+a=p:32 MPV/90000

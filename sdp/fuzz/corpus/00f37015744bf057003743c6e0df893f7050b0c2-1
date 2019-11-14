@@ -1,0 +1,4 @@
+v=0
+o=alice 2890844526 2890844526 IN IP4 host.atlanta.example.com
+s=SDP Media
+c=IN IP4 host.atlan
