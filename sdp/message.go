@@ -21,6 +21,7 @@ type Message struct {
 	BandWidth []BandWidth
 	Time      []TimeDesc
 	tzones    []byte
+	encKey    []byte
 	Attr      []Attribute
 	Medias    Medias
 }
@@ -48,6 +49,11 @@ func (m *Message) UriString() string {
 // TimeZones SDP message session time zones adjust field as string
 func (m *Message) TimeZones() string {
 	return string(bytes.TrimSpace(m.tzones))
+}
+
+// EncKey SDP message session encryption key value
+func (m *Message) EncKey() string {
+	return string(bytes.TrimSpace(m.encKey))
 }
 
 // Origin SDP origin field (RFC4566 #5.2)
@@ -170,12 +176,16 @@ type Medias []Media
 
 // Media media description of SDP session
 type Media struct {
-	mtype []byte
-	port  []byte
-	nport []byte
-	proto []byte
-	fmt   []byte
-	attr  []Attribute
+	mtype     []byte
+	port      []byte
+	nport     []byte
+	proto     []byte
+	fmt       []byte
+	info      []byte
+	Conn      Conn
+	BandWidth []BandWidth
+	encKey    []byte
+	Attr      []Attribute
 }
 
 // Type SDP media field type
@@ -209,6 +219,11 @@ func (m Media) Proto() string {
 // Fmt SDP media field formats list
 func (m Media) Fmt() string {
 	return string(bytes.TrimSpace(m.fmt))
+}
+
+// EncKey SDP message media encryption key value
+func (m Media) EncKey() string {
+	return string(bytes.TrimSpace(m.encKey))
 }
 
 // Attribute SDP field

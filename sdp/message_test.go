@@ -42,8 +42,8 @@ func TestParseShortSDP(t *testing.T) {
 	assert.Equal(t, "RTP/AVP", m.Proto())
 	assert.Equal(t, "0", m.Fmt())
 
-	assert.Equal(t, 1, len(m.attr))
-	a := m.attr[0]
+	assert.Equal(t, 1, len(m.Attr))
+	a := m.Attr[0]
 	assert.False(t, a.IsFlag())
 	assert.Equal(t, "rtpmap", a.Key())
 	assert.Equal(t, "0 PCMU/8000", a.Value())
@@ -137,20 +137,20 @@ func TestParseMultiMediasMultiAttributes(t *testing.T) {
 	assert.Equal(t, "RTP/AVP", m.Proto())
 	assert.Equal(t, "0 8 97", m.Fmt())
 
-	assert.Equal(t, 3, len(m.attr))
-	a := m.attr[0]
+	assert.Equal(t, 3, len(m.Attr))
+	a := m.Attr[0]
 	assert.False(t, a.IsFlag())
 	assert.Equal(t, "rtpmap", a.Key())
 	assert.Equal(t, "0 PCMU/8000", a.Value())
 	assert.Empty(t, a.Flag())
 
-	a = m.attr[1]
+	a = m.Attr[1]
 	assert.False(t, a.IsFlag())
 	assert.Equal(t, "rtpmap", a.Key())
 	assert.Equal(t, "8 PCMA/8000", a.Value())
 	assert.Empty(t, a.Flag())
 
-	a = m.attr[2]
+	a = m.Attr[2]
 	assert.False(t, a.IsFlag())
 	assert.Equal(t, "rtpmap", a.Key())
 	assert.Equal(t, "97 iLBC/8000", a.Value())
@@ -163,27 +163,27 @@ func TestParseMultiMediasMultiAttributes(t *testing.T) {
 	assert.Equal(t, "RTP/AVP", m.Proto())
 	assert.Equal(t, "31 32", m.Fmt())
 
-	assert.Equal(t, 4, len(m.attr))
+	assert.Equal(t, 4, len(m.Attr))
 
-	a = m.attr[0]
+	a = m.Attr[0]
 	assert.False(t, a.IsFlag())
 	assert.Equal(t, "rtpmap", a.Key())
 	assert.Equal(t, "31 H261/90000", a.Value())
 	assert.Empty(t, a.Flag())
 
-	a = m.attr[1]
+	a = m.Attr[1]
 	assert.False(t, a.IsFlag())
 	assert.Equal(t, "rtpmap", a.Key())
 	assert.Equal(t, "32 MPV/90000", a.Value())
 	assert.Empty(t, a.Flag())
 
-	a = m.attr[2]
+	a = m.Attr[2]
 	assert.False(t, a.IsFlag())
 	assert.Equal(t, "fmtp", a.Key())
 	assert.Equal(t, "31 redundant-pic-cap=0;parameter-add=0;packetization-mode=0", a.Value())
 	assert.Empty(t, a.Flag())
 
-	a = m.attr[3]
+	a = m.Attr[3]
 	assert.True(t, a.IsFlag())
 	assert.Empty(t, a.Key())
 	assert.Empty(t, a.Value())
@@ -312,15 +312,92 @@ func TestParseTimeRepeatAdjustFields(t *testing.T) {
 	assert.NotNil(t, err)
 }
 
+func TestParseEncryptionKey(t *testing.T) {
+	str := "v=0\r\n" +
+		"o=jdoe 2890844565 2808844566 IN IP4 10.47.16.5\r\n" +
+		"s=SDP Seminar\r\n" +
+		"t=0 0\r\n"
+	key := "k=prompt\r\n"
+
+	msg, err := Parse([]byte(str + key))
+	assert.Nil(t, err)
+	assert.NotNil(t, msg)
+	assert.Equal(t, "prompt", msg.EncKey())
+
+	key = "k=clear:u34wvpmdq9my8fqsvmv\r\n"
+	msg, err = Parse([]byte(str + key))
+	assert.Nil(t, err)
+	assert.Equal(t, "clear:u34wvpmdq9my8fqsvmv", msg.EncKey())
+}
+
 func TestParseMediaWithAllFields(t *testing.T) {
 	str := "v=0\r\n" +
-		"o=alice 2890844526 2890844526 IN IP4 host.anywhere.com\r\n" +
-		"s= \r\n" +
+		"o=root 2890844526 2890844526 IN IP4 host.anywhere.com\r\n" +
+		"s=-\r\n" +
+		"i=Multimedia session\r\n" +
+		"c=IN IP4 host.atlanta.com\r\n" +
+		"b=CT:384\r\n" +
 		"t=0 0\r\n" +
-		"z=2882844526 -1h 2898848070 0\r\n"
+		"a=sendrecv\r\n" +
+		// media audio
+		"m=audio 49170 RTP/AVP 0\r\n" +
+		"i=Main media session\r\n" +
+		"c=IN IP4 audio.atlanta.com\r\n" +
+		"b=CT:154798\r\n" +
+		"b=AS:332\r\n" +
+		"k=clear:0qn1sfs1yl81a1ee0tt\r\n" +
+		"a=rtpmap:0 PCMU/8000\r\n" +
+		// media video
+		"m=video 12746 RTP/AVP 99\r\n" +
+		"i=Main video session\r\n" +
+		"b=AS:66781\r\n" +
+		"a=rtpmap:99 H264/90000\r\n" +
+		"a=fmtp:99 redundant-pic-cap=0;parameter-add=0\r\n"
+
 	msg, err := Parse([]byte(str))
 	assert.Nil(t, err)
 	assert.NotNil(t, msg)
+	assert.Equal(t, "root", msg.Origin.Username())
+	assert.Equal(t, "Multimedia session", msg.Info())
+	assert.Equal(t, "host.atlanta.com", msg.Conn.Address())
+	assert.Equal(t, 1, len(msg.BandWidth))
+	assert.Equal(t, "CT", msg.BandWidth[0].Type())
+	assert.Equal(t, 384, msg.BandWidth[0].BW())
+	assert.Equal(t, 1, len(msg.Attr))
+	assert.True(t, msg.Attr[0].IsFlag())
+	assert.Equal(t, "sendrecv", msg.Attr[0].Flag())
+
+	// medias
+	assert.Equal(t, 2, len(msg.Medias))
+	m := msg.Medias[0]
+	assert.Equal(t, "audio", m.Type())
+	assert.Equal(t, 49170, m.Port())
+	assert.Equal(t, "RTP/AVP", m.Proto())
+	assert.Equal(t, "audio.atlanta.com", m.Conn.Address())
+	assert.Equal(t, 2, len(m.BandWidth))
+	assert.Equal(t, "CT", m.BandWidth[0].Type())
+	assert.Equal(t, 154798, m.BandWidth[0].BW())
+	assert.Equal(t, "AS", m.BandWidth[1].Type())
+	assert.Equal(t, 332, m.BandWidth[1].BW())
+	assert.Equal(t, "clear:0qn1sfs1yl81a1ee0tt", m.EncKey())
+	assert.Equal(t, 1, len(m.Attr))
+	assert.Equal(t, "rtpmap", m.Attr[0].Key())
+	assert.Equal(t, "0 PCMU/8000", m.Attr[0].Value())
+
+	m = msg.Medias[1]
+	assert.Equal(t, "video", m.Type())
+	assert.Equal(t, 12746, m.Port())
+	assert.Equal(t, "RTP/AVP", m.Proto())
+	assert.Equal(t, 1, len(m.BandWidth))
+	assert.Equal(t, "AS", m.BandWidth[0].Type())
+	assert.Equal(t, 66781, m.BandWidth[0].BW())
+	assert.Empty(t, m.Conn.Address())
+	assert.Empty(t, m.EncKey())
+	assert.Equal(t, 2, len(m.Attr))
+	assert.Equal(t, "rtpmap", m.Attr[0].Key())
+	assert.Equal(t, "99 H264/90000", m.Attr[0].Value())
+	assert.Equal(t, "fmtp", m.Attr[1].Key())
+	assert.Equal(t, "99 redundant-pic-cap=0;parameter-add=0", m.Attr[1].Value())
 }
 
 func TestParseErrorInvalidOrder(t *testing.T) {
@@ -372,9 +449,9 @@ func BenchmarkParseSDPMessage1(b *testing.B) {
 		"p=12345\r\n" +
 		"c=IN IP4 224.2.17.12/127\r\n" +
 		"b=CT:154798\r\n" +
-		"z=2882844526 -1h 2898848070 0\r\n" +
 		"t=2873397496 2873404696\r\n" +
 		"r=7d 3600 0 25h\r\n" +
+		"z=2882844526 -1h 2898848070 0\r\n" +
 		"k=clear:ab8c4df8b8f4as8v8iuy8re\r\n" +
 		"a=recvonly\r\n" +
 		"m=audio 49170 RTP/AVP 0\r\n" +

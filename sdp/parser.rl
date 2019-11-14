@@ -19,6 +19,38 @@ func Parse(data []byte) (*Message, error) {
 %%{
     # ACTIONS
     action sm        { m = p }
+    action info_field {
+        if mediaIdx == -1 {
+            msg.info = data[m:p]
+        } else {
+            i := len(msg.Medias) - 1
+            msg.Medias[i].info = data[m:p]
+        }
+    }
+    action conn_nettype {
+        if mediaIdx == -1 {
+            msg.Conn.netType = data[m:p]
+        } else {
+            i := len(msg.Medias) - 1
+            msg.Medias[i].Conn.netType = data[m:p]
+        }
+    }
+    action conn_addrtype {
+        if mediaIdx == -1 {
+            msg.Conn.addrType = data[m:p]
+        } else {
+            i := len(msg.Medias) - 1
+            msg.Medias[i].Conn.addrType = data[m:p]
+        }
+    }
+    action conn_addr {
+        if mediaIdx == -1 {
+            msg.Conn.address = data[m:p]
+        } else {
+            i := len(msg.Medias) - 1
+            msg.Medias[i].Conn.address = data[m:p]
+        }
+    }
     action media_set {
         if mediaIdx == -1 {
             msg.Medias = make(Medias, 1)
@@ -34,9 +66,9 @@ func Parse(data []byte) (*Message, error) {
             i := len(msg.Attr) - 1
             msg.Attr[i].key = data[m:p]
         } else {
-            msg.Medias[mediaIdx].attr = append(msg.Medias[mediaIdx].attr, Attribute{})
-            i := len(msg.Medias[mediaIdx].attr) - 1
-            msg.Medias[mediaIdx].attr[i].key = data[m:p]
+            msg.Medias[mediaIdx].Attr = append(msg.Medias[mediaIdx].Attr, Attribute{})
+            i := len(msg.Medias[mediaIdx].Attr) - 1
+            msg.Medias[mediaIdx].Attr[i].key = data[m:p]
         }
     }
     action attr_fval {
@@ -44,8 +76,8 @@ func Parse(data []byte) (*Message, error) {
             i := len(msg.Attr) - 1
             msg.Attr[i].value = data[m:p]
         } else {
-            i := len(msg.Medias[mediaIdx].attr) - 1
-            msg.Medias[mediaIdx].attr[i].value = data[m:p]
+            i := len(msg.Medias[mediaIdx].Attr) - 1
+            msg.Medias[mediaIdx].Attr[i].value = data[m:p]
         }
     }
     action attr_flag {
@@ -55,10 +87,10 @@ func Parse(data []byte) (*Message, error) {
             msg.Attr[i].flag = data[m:p]
             msg.Attr[i].isFlag = true
         } else {
-            msg.Medias[mediaIdx].attr = append(msg.Medias[mediaIdx].attr, Attribute{})
-            i := len(msg.Medias[mediaIdx].attr) - 1
-            msg.Medias[mediaIdx].attr[i].flag = data[m:p]
-            msg.Medias[mediaIdx].attr[i].isFlag = true
+            msg.Medias[mediaIdx].Attr = append(msg.Medias[mediaIdx].Attr, Attribute{})
+            i := len(msg.Medias[mediaIdx].Attr) - 1
+            msg.Medias[mediaIdx].Attr[i].flag = data[m:p]
+            msg.Medias[mediaIdx].Attr[i].isFlag = true
         }
     }
     action start_time {
@@ -73,13 +105,31 @@ func Parse(data []byte) (*Message, error) {
         msg.Time[i].Repeat = append(msg.Time[i].Repeat, data[m:p])
     }
     action bw_set {
-        msg.BandWidth = append(msg.BandWidth, BandWidth{bt: data[m:p]})
+        if mediaIdx == -1 {
+            msg.BandWidth = append(msg.BandWidth, BandWidth{bt: data[m:p]})
+        } else {
+            i := len(msg.Medias) - 1
+            msg.Medias[i].BandWidth = append(msg.Medias[i].BandWidth, BandWidth{bt: data[m:p]})
+        }
     }
     action bw_val {
-        i := len(msg.BandWidth) - 1
-        msg.BandWidth[i].bw = data[m:p]
+        if mediaIdx == -1 {
+            i := len(msg.BandWidth) - 1
+            msg.BandWidth[i].bw = data[m:p]
+        } else {
+            i := len(msg.Medias) - 1
+            j := len(msg.Medias[i].BandWidth) - 1
+            msg.Medias[i].BandWidth[j].bw = data[m:p]
+        }
     }
-
+    action enc_key {
+        if mediaIdx == -1 {
+            msg.encKey = data[m:p]
+        } else {
+            i := len(msg.Medias) - 1
+            msg.Medias[i].encKey = data[m:p]
+        }
+    }
     # GRAMMAR
     CRLF          = "\r\n";
     SP            = 0x20;
@@ -119,11 +169,6 @@ func Parse(data []byte) (*Message, error) {
     start_time    = digit+;
     stop_time     = digit+;
     typed_time    = digit+ ("d" | "h" | "m" | "s")?;
-    ktype_prompt  = "prompt";
-    ktype_clear   = "clear:" TEXT;
-    ktype_base64  = "base64:" TEXT;
-    ktype_uri     = "uri:" TEXT;
-    key_type      = ktype_prompt | ktype_clear | ktype_base64 | ktype_uri;
     attr_kv       = TOKEN >sm %attr_fkey ":" TEXT >sm %attr_fval;
     attr_flag     = TOKEN >sm %attr_flag;
     attribute     = attr_kv | attr_flag;
@@ -139,15 +184,14 @@ func Parse(data []byte) (*Message, error) {
                          %{ msg.Origin.unicAddr = data[m:p] } CRLF;
     session_name  = "s=" TEXT >sm %{ msg.subject = data[m:p] } CRLF;
     # TODO: unit test
-    info_field    = "i=" TEXT >sm %{ msg.info = data[m:p] } CRLF; # optional
+    info_field    = "i=" TEXT >sm %info_field CRLF; # optional
     uri_field     = "u=" URI  >sm %{ msg.uri = data[m:p] } CRLF;  # optional
     # zero or more email fields
     email_field   = "e=" EMAIL >sm %{ msg.Email = append(msg.Email, data[m:p]) } CRLF;
     # zero or more phone fields
     phone_field   = "p=" PHONE >sm %{ msg.Phone = append(msg.Phone, data[m:p]) } CRLF;
-    conn_field    = "c=" TOKEN >sm %{ msg.Conn.netType = data[m:p] } SP
-                         TOKEN >sm %{ msg.Conn.addrType = data[m:p] } SP
-                         conn_addr >sm %{ msg.Conn.address = data[m:p] } CRLF; # optional
+    conn_field    = "c=" TOKEN >sm %conn_nettype SP TOKEN >sm %conn_addrtype SP
+                         conn_addr >sm %conn_addr CRLF; # optional
                          # not required if included in all media
     # TODO: unit test
     # zero or more bandwidth information lines
@@ -157,7 +201,8 @@ func Parse(data []byte) (*Message, error) {
     zone_adjust   = "z=" time >sm SP "-"? typed_time (SP time SP "-"? typed_time)*
                     %{ msg.tzones = data[m:p] } CRLF;
     # TODO: unit test
-    key_field     = "k=" key_type CRLF;
+    # does anyone use this anyway???!!!
+    key_field     = "k=" TEXT >sm %enc_key CRLF;
     attr_field    = "a=" attribute CRLF; # zero or more session attribute lines
     media_field   = "m=" media >sm %{ msg.Medias[mediaIdx].mtype = data[m:p] } SP
                     port >sm %{ msg.Medias[mediaIdx].port = data[m:p] }
