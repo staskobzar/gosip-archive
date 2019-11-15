@@ -3,6 +3,8 @@
 // SDP message parser
 package sdp
 
+import "bytes"
+
 %% machine sdp;
 %% write data;
 
@@ -110,8 +112,8 @@ func Parse(data []byte) (*Message, error) {
     media_field   = "m=" media >sm %{ msg.Medias[msg.mediaIdx].mtype = data[m:p] } SP
                     port >sm %{ msg.Medias[msg.mediaIdx].port = data[m:p] }
                     ("/" digit+ >sm %{ msg.Medias[msg.mediaIdx].nport = data[m:p] })? SP
-                    proto >sm %{ msg.Medias[msg.mediaIdx].proto = data[m:p] }
-                    (SP TOKEN)+ >sm %{ msg.Medias[msg.mediaIdx].fmt = data[m:p] } CRLF;
+                    proto >sm %{ msg.Medias[msg.mediaIdx].proto = data[m:p] } (SP TOKEN)+ >sm
+					%{ msg.Medias[msg.mediaIdx].fmt = bytes.TrimSpace(data[m:p]) } CRLF;
 
     time_fields   = time_field repeat_field*;
     medias        = media_field >media_set

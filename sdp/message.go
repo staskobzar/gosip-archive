@@ -197,6 +197,11 @@ func (m *Message) EncKey() string {
 	return string(bytes.TrimSpace(m.encKey))
 }
 
+// AddMedia add media to SDP Session
+func (m *Message) AddMedia(media Media) {
+	m.Medias = append(m.Medias, media)
+}
+
 // Origin SDP origin field (RFC4566 #5.2)
 type Origin struct {
 	username []byte

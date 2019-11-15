@@ -4,9 +4,11 @@
 // SDP message parser
 package sdp
 
-//line parser.rl:7
+import "bytes"
 
-//line parser.go:12
+//line parser.rl:9
+
+//line parser.go:14
 var _sdp_actions []byte = []byte{
 	0, 1, 0, 1, 1, 1, 2, 1, 3,
 	1, 4, 1, 5, 1, 6, 1, 7,
@@ -729,7 +731,7 @@ const sdp_error int = 0
 
 const sdp_en_main int = 1
 
-//line parser.rl:8
+//line parser.rl:10
 
 // Parse scan and parse bytes array to SDP Message structure
 func Parse(data []byte) (*Message, error) {
@@ -741,16 +743,16 @@ func Parse(data []byte) (*Message, error) {
 	// otherwise it is session context
 	msg.mediaIdx = -1
 
-//line parser.rl:141
+//line parser.rl:143
 
-//line parser.go:752
+//line parser.go:754
 	{
 		cs = sdp_start
 	}
 
-//line parser.rl:143
+//line parser.rl:145
 
-//line parser.go:759
+//line parser.go:761
 	{
 		var _klen int
 		var _trans int
@@ -831,102 +833,102 @@ func Parse(data []byte) (*Message, error) {
 			_acts++
 			switch _sdp_actions[_acts-1] {
 			case 0:
-//line parser.rl:21
+//line parser.rl:23
 				m = p
 			case 1:
-//line parser.rl:22
+//line parser.rl:24
 				msg.setInfo(data[m:p])
 			case 2:
-//line parser.rl:23
+//line parser.rl:25
 				msg.setConnNetType(data[m:p])
 			case 3:
-//line parser.rl:24
+//line parser.rl:26
 				msg.setConnAddrType(data[m:p])
 			case 4:
-//line parser.rl:25
+//line parser.rl:27
 				msg.setConnAddress(data[m:p])
 			case 5:
-//line parser.rl:26
+//line parser.rl:28
 				msg.setMedia()
 			case 6:
-//line parser.rl:27
+//line parser.rl:29
 				msg.setAttrKey(data[m:p])
 			case 7:
-//line parser.rl:28
+//line parser.rl:30
 				msg.setAttrValue(data[m:p])
 			case 8:
-//line parser.rl:29
+//line parser.rl:31
 				msg.setAttrFlag(data[m:p])
 			case 9:
-//line parser.rl:30
+//line parser.rl:32
 				msg.setStartTime(data[m:p])
 			case 10:
-//line parser.rl:31
+//line parser.rl:33
 				msg.setStopTime(data[m:p])
 			case 11:
-//line parser.rl:32
+//line parser.rl:34
 				msg.setRepeatField(data[m:p])
 			case 12:
-//line parser.rl:33
+//line parser.rl:35
 				msg.setBandwidth(data[m:p])
 			case 13:
-//line parser.rl:34
+//line parser.rl:36
 				msg.setBwidthValue(data[m:p])
 			case 14:
-//line parser.rl:35
+//line parser.rl:37
 				msg.setEncKey(data[m:p])
 			case 15:
-//line parser.rl:61
+//line parser.rl:63
 				msg.Origin.username = data[m:p]
 			case 16:
-//line parser.rl:62
+//line parser.rl:64
 				msg.Origin.sessID = data[m:p]
 			case 17:
-//line parser.rl:63
+//line parser.rl:65
 				msg.Origin.sessVer = data[m:p]
 			case 18:
-//line parser.rl:64
+//line parser.rl:66
 				msg.Origin.netType = data[m:p]
 			case 19:
-//line parser.rl:65
+//line parser.rl:67
 				msg.Origin.addrType = data[m:p]
 			case 20:
-//line parser.rl:84
+//line parser.rl:86
 				msg.ver = data[m]
 			case 21:
-//line parser.rl:87
+//line parser.rl:89
 				msg.Origin.unicAddr = data[m:p]
 			case 22:
-//line parser.rl:88
+//line parser.rl:90
 				msg.subject = data[m:p]
 			case 23:
-//line parser.rl:91
+//line parser.rl:93
 				msg.uri = data[m:p]
 			case 24:
-//line parser.rl:93
+//line parser.rl:95
 				msg.Email = append(msg.Email, data[m:p])
 			case 25:
-//line parser.rl:95
+//line parser.rl:97
 				msg.Phone = append(msg.Phone, data[m:p])
 			case 26:
-//line parser.rl:105
+//line parser.rl:107
 				msg.tzones = data[m:p]
 			case 27:
-//line parser.rl:110
+//line parser.rl:112
 				msg.Medias[msg.mediaIdx].mtype = data[m:p]
 			case 28:
-//line parser.rl:111
+//line parser.rl:113
 				msg.Medias[msg.mediaIdx].port = data[m:p]
 			case 29:
-//line parser.rl:112
+//line parser.rl:114
 				msg.Medias[msg.mediaIdx].nport = data[m:p]
 			case 30:
-//line parser.rl:113
+//line parser.rl:115
 				msg.Medias[msg.mediaIdx].proto = data[m:p]
 			case 31:
-//line parser.rl:114
-				msg.Medias[msg.mediaIdx].fmt = data[m:p]
-//line parser.go:934
+//line parser.rl:116
+				msg.Medias[msg.mediaIdx].fmt = bytes.TrimSpace(data[m:p])
+//line parser.go:936
 			}
 		}
 
@@ -946,7 +948,7 @@ func Parse(data []byte) (*Message, error) {
 		}
 	}
 
-//line parser.rl:144
+//line parser.rl:146
 	if cs >= sdp_first_final {
 		return msg, nil
 	}
