@@ -88,7 +88,6 @@ func Parse(data []byte) (*Message, error) {
                          nettype SP addrtype SP unicast_addr >sm
                          %{ msg.Origin.unicAddr = data[m:p] } CRLF;
     session_name  = "s=" TEXT >sm %{ msg.subject = data[m:p] } CRLF;
-    # TODO: unit test
     info_field    = "i=" TEXT >sm %info_field CRLF; # optional
     uri_field     = "u=" URI  >sm %{ msg.uri = data[m:p] } CRLF;  # optional
     # zero or more email fields
@@ -98,14 +97,12 @@ func Parse(data []byte) (*Message, error) {
     conn_field    = "c=" TOKEN >sm %conn_nettype SP TOKEN >sm %conn_addrtype SP
                          conn_addr >sm %conn_addr CRLF; # optional
                          # not required if included in all media
-    # TODO: unit test
     # zero or more bandwidth information lines
     bwidth_field  = "b=" bwtype >sm %bw_set ":" bandwidth >sm %bw_val CRLF;
     time_field    = "t=" start_time >sm %start_time SP stop_time >sm %stop_time CRLF;
     repeat_field  = "r=" typed_time >sm (SP typed_time)+ %repeat CRLF;
     zone_adjust   = "z=" time >sm SP "-"? typed_time (SP time SP "-"? typed_time)*
                     %{ msg.tzones = data[m:p] } CRLF;
-    # TODO: unit test
     # does anyone use this anyway???!!!
     key_field     = "k=" TEXT >sm %enc_key CRLF;
     attr_field    = "a=" attribute CRLF; # zero or more session attribute lines
@@ -113,7 +110,7 @@ func Parse(data []byte) (*Message, error) {
                     port >sm %{ msg.Medias[msg.mediaIdx].port = data[m:p] }
                     ("/" digit+ >sm %{ msg.Medias[msg.mediaIdx].nport = data[m:p] })? SP
                     proto >sm %{ msg.Medias[msg.mediaIdx].proto = data[m:p] } (SP TOKEN)+ >sm
-					%{ msg.Medias[msg.mediaIdx].fmt = bytes.TrimSpace(data[m:p]) } CRLF;
+                    %{ msg.Medias[msg.mediaIdx].fmt = bytes.TrimSpace(data[m:p]) } CRLF;
 
     time_fields   = time_field repeat_field*;
     medias        = media_field >media_set

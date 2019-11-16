@@ -309,8 +309,8 @@ func (b *buffer) a(attributes []Attribute) {
 			b.Write(attr.key)
 			b.WriteByte(':')
 			b.Write(attr.value)
+			b.crlf()
 		}
-		b.crlf()
 	}
 }
 

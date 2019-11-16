@@ -743,14 +743,14 @@ func Parse(data []byte) (*Message, error) {
 	// otherwise it is session context
 	msg.mediaIdx = -1
 
-//line parser.rl:143
+//line parser.rl:140
 
 //line parser.go:754
 	{
 		cs = sdp_start
 	}
 
-//line parser.rl:145
+//line parser.rl:142
 
 //line parser.go:761
 	{
@@ -902,31 +902,31 @@ func Parse(data []byte) (*Message, error) {
 //line parser.rl:90
 				msg.subject = data[m:p]
 			case 23:
-//line parser.rl:93
+//line parser.rl:92
 				msg.uri = data[m:p]
 			case 24:
-//line parser.rl:95
+//line parser.rl:94
 				msg.Email = append(msg.Email, data[m:p])
 			case 25:
-//line parser.rl:97
+//line parser.rl:96
 				msg.Phone = append(msg.Phone, data[m:p])
 			case 26:
-//line parser.rl:107
+//line parser.rl:105
 				msg.tzones = data[m:p]
 			case 27:
-//line parser.rl:112
+//line parser.rl:109
 				msg.Medias[msg.mediaIdx].mtype = data[m:p]
 			case 28:
-//line parser.rl:113
+//line parser.rl:110
 				msg.Medias[msg.mediaIdx].port = data[m:p]
 			case 29:
-//line parser.rl:114
+//line parser.rl:111
 				msg.Medias[msg.mediaIdx].nport = data[m:p]
 			case 30:
-//line parser.rl:115
+//line parser.rl:112
 				msg.Medias[msg.mediaIdx].proto = data[m:p]
 			case 31:
-//line parser.rl:116
+//line parser.rl:113
 				msg.Medias[msg.mediaIdx].fmt = bytes.TrimSpace(data[m:p])
 //line parser.go:936
 			}
@@ -948,7 +948,7 @@ func Parse(data []byte) (*Message, error) {
 		}
 	}
 
-//line parser.rl:146
+//line parser.rl:143
 	if cs >= sdp_first_final {
 		return msg, nil
 	}

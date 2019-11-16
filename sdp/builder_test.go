@@ -300,6 +300,6 @@ func TestParseBuild(t *testing.T) {
 	assert.Nil(t, err)
 	assert.NotNil(t, msg)
 
-	// assert.Equal(t, msg.String(), str)
-	// fmt.Printf("%s", msg.String())
+	// match parsed and generated message
+	assert.Equal(t, msg.String(), str)
 }
