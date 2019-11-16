@@ -34,6 +34,11 @@ func (m *Message) String() string {
 	return b.String()
 }
 
+// SetOriginUser set session origin username o=
+func (m *Message) SetOriginUser(username string) {
+	m.Origin.username = []byte(username)
+}
+
 // SetSubject session subject s=* field set
 func (m *Message) SetSubject(subj string) {
 	m.subject = []byte(subj)

@@ -303,3 +303,92 @@ func TestParseBuild(t *testing.T) {
 	// match parsed and generated message
 	assert.Equal(t, msg.String(), str)
 }
+
+func TestBuildMultiMedias(t *testing.T) {
+	id := string(idFromNTP())
+	str := "v=0\r\n" +
+		"o=root " + id + " " + id + " IN IP4 203.182.134.111\r\n" +
+		"s=VoIP PBX\r\n" +
+		"c=IN IP4 203.182.134.111\r\n" +
+		"b=CT:384\r\n" +
+		"t=0 0\r\n" +
+		"m=audio 13912 RTP/AVP 0 9 97 110 101\r\n" +
+		"a=rtpmap:0 PCMU/8000\r\n" +
+		"a=rtpmap:9 G722/8000\r\n" +
+		"a=rtpmap:97 iLBC/8000\r\n" +
+		"a=fmtp:97 mode=30\r\n" +
+		"a=rtpmap:110 speex/8000\r\n" +
+		"a=rtpmap:101 telephone-event/8000\r\n" +
+		"a=fmtp:101 0-16\r\n" +
+		"a=ptime:20\r\n" +
+		"a=sendrecv\r\n" +
+		"m=video 19308 RTP/AVP 99\r\n" +
+		"a=rtpmap:99 H264/90000\r\n" +
+		"a=fmtp:99 redundant-pic-cap=0;packetization-mode=0;level-asymmetry-allowed=0\r\n" +
+		"a=sendrecv\r\n"
+
+	msg := NewMessage("203.182.134.111")
+	assert.NotNil(t, msg)
+
+	msg.SetOriginUser("root")
+	msg.SetSubject("VoIP PBX")
+	msg.SetSessionConn("203.182.134.111")
+	msg.SetBandWidth("CT", 384)
+
+	media := NewMedia("audio", 13912, "RTP/AVP", "0 9 97 110 101")
+	media.SetSessAttr("rtpmap", "0 PCMU/8000")
+	media.SetSessAttr("rtpmap", "9 G722/8000")
+	media.SetSessAttr("rtpmap", "97 iLBC/8000")
+	media.SetSessAttr("fmtp", "97 mode=30")
+	media.SetSessAttr("rtpmap", "110 speex/8000")
+	media.SetSessAttr("rtpmap", "101 telephone-event/8000")
+	media.SetSessAttr("fmtp", "101 0-16")
+	media.SetSessAttr("ptime", "20")
+	media.SetSessAttrFlag("sendrecv")
+	msg.AddMedia(media)
+
+	media = NewMedia("video", 19308, "RTP/AVP", "99")
+	media.SetSessAttr("rtpmap", "99 H264/90000")
+	media.SetSessAttr("fmtp",
+		"99 redundant-pic-cap=0;packetization-mode=0;level-asymmetry-allowed=0")
+	media.SetSessAttrFlag("sendrecv")
+	msg.AddMedia(media)
+
+	assert.Equal(t, msg.String(), str)
+}
+
+func BenchmarkBuildSDP(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		msg := NewMessage("203.182.134.111")
+
+		msg.SetOriginUser("root")
+		msg.SetSubject("VoIP PBX")
+		msg.SetInfo("SIP and SDP with certification")
+		msg.SetURI("http://lib.sip.com/2019-11-02/readme.pdf")
+		msg.SetSessionConn("203.182.134.111")
+		msg.SetBandWidth("CT", 384)
+		msg.SetEmail("Jane Doe <j.doe@example.com>")
+		msg.SetPhone("+1 555-845-9685")
+
+		media := NewMedia("audio", 13912, "RTP/AVP", "0 9 97 110 101")
+		media.SetSessAttr("rtpmap", "0 PCMU/8000")
+		media.SetSessAttr("rtpmap", "9 G722/8000")
+		media.SetSessAttr("rtpmap", "97 iLBC/8000")
+		media.SetSessAttr("fmtp", "97 mode=30")
+		media.SetSessAttr("rtpmap", "110 speex/8000")
+		media.SetSessAttr("rtpmap", "101 telephone-event/8000")
+		media.SetSessAttr("fmtp", "101 0-16")
+		media.SetSessAttr("ptime", "20")
+		media.SetSessAttrFlag("sendrecv")
+		msg.AddMedia(media)
+
+		media = NewMedia("video", 19308, "RTP/AVP", "99")
+		media.SetSessAttr("rtpmap", "99 H264/90000")
+		media.SetSessAttr("fmtp",
+			"99 redundant-pic-cap=0;packetization-mode=0;level-asymmetry-allowed=0")
+		media.SetSessAttrFlag("sendrecv")
+		msg.AddMedia(media)
+
+		_ = msg.String()
+	}
+}
