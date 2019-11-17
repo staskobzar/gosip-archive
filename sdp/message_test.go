@@ -211,7 +211,7 @@ func TestParseSessionOptionalUniFields(t *testing.T) {
 
 	assert.Equal(t, "SDP Seminar", msg.Subject())
 	assert.Equal(t, "A Seminar on the session description protocol", msg.Info())
-	assert.Equal(t, "http://www.example.com/seminars/sdp.pdf", msg.UriString())
+	assert.Equal(t, "http://www.example.com/seminars/sdp.pdf", msg.URIString())
 
 	assert.Equal(t, 1, len(msg.Email))
 	assert.Equal(t, "j.doe@example.com (Jane Doe)", string(msg.Email[0]))

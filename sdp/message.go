@@ -182,8 +182,8 @@ func (m *Message) Info() string {
 	return string(bytes.TrimSpace(m.info))
 }
 
-// UriString SDP message session uri field as string
-func (m *Message) UriString() string {
+// URIString SDP message session uri field as string
+func (m *Message) URIString() string {
 	return string(bytes.TrimSpace(m.uri))
 }
 

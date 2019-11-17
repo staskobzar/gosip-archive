@@ -1,5 +1,5 @@
 # Go package staskobzar/gosip/sip
-# SIP message (rfc3261) parser and builder
+# SDP message (rfc4566) parser and builder
 #
 
 test: parser.go
@@ -13,8 +13,8 @@ cov:
 bench:
 	go test -bench=. -benchmem
 
-#lint:
-#	golint $(filter-out $(wildcard *_parser.go),$(wildcard *.go))
+lint:
+	golint builder*.go message*.go
 
 fuzz:
 	go-fuzz-build
