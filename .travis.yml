@@ -8,7 +8,7 @@ before_install:
   - go get ./...
 
 script:
-  - go test -race -coverprofile=coverage.txt -covermode=atomic
+  - go test -race -coverprofile=coverage.txt -covermode=atomic ./...
 
 after_success:
   - bash <(curl -s https://codecov.io/bash) -t 4786b1ae-5a98-46f7-a5b1-37974229b999
