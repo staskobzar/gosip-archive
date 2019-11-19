@@ -74,9 +74,9 @@ func (h *Header) Encode() []byte {
 	}
 
 	// first byte
-	buf[0] = (h.Ver & 0b11) << 6
-	buf[0] |= (b2i(h.Pad) & 1) << 5
-	buf[0] |= (b2i(h.Ext) & 1) << 4
+	buf[0] = (h.Ver & 0x03) << 6
+	buf[0] |= (b2i(h.Pad) & 0x01) << 5
+	buf[0] |= (b2i(h.Ext) & 0x01) << 4
 	buf[0] |= (h.CCount & 0x0f)
 
 	// second byte
