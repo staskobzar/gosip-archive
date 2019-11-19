@@ -10,6 +10,9 @@ const minHeaderLen = 12
 // ErrorRTPDecode error raised when failed to decode RTP packet
 var ErrorRTPDecode = errors.New("RTP Packet decode failed")
 
+// ErrorRTPHeaderCSRC error raised when CSRC values number overflows
+var ErrorRTPHeaderCSRC = errors.New("Overflow number of CSRC values")
+
 // Header RTP header structure as defined in RFC 3550
 /*
 	0                   1                   2                   3
@@ -38,6 +41,7 @@ type Header struct {
 	CSRC      []uint32 // 0 to 15 of contributing sources
 }
 
+// NewHeader initiates new Header
 func NewHeader() *Header {
 	return &Header{Ver: 2}
 }
@@ -59,12 +63,18 @@ func (h *Header) Decode(data []byte) error {
 	h.Timestamp = binary.BigEndian.Uint32(data[4:8])
 	h.SSRC = binary.BigEndian.Uint32(data[8:12])
 
+	for i := 0; i < int(h.CCount); i++ {
+		p := 12 + i*4
+		l := p + 4
+		h.CSRC = append(h.CSRC, binary.BigEndian.Uint32(data[p:l]))
+	}
+
 	return nil
 }
 
 // Encode RTP header to byte array
 func (h *Header) Encode() []byte {
-	buf := make([]byte, minHeaderLen)
+	buf := make([]byte, minHeaderLen+(int(h.CCount)*4))
 
 	b2i := func(v bool) byte {
 		if v {
@@ -86,6 +96,11 @@ func (h *Header) Encode() []byte {
 	binary.BigEndian.PutUint16(buf[2:], h.SeqNum)
 	binary.BigEndian.PutUint32(buf[4:], h.Timestamp)
 	binary.BigEndian.PutUint32(buf[8:], h.SSRC)
+
+	for i := 0; i < int(h.CCount); i++ {
+		p := 12 + (i * 4)
+		binary.BigEndian.PutUint32(buf[p:], h.CSRC[i])
+	}
 	return buf
 }
 
@@ -102,7 +117,7 @@ func (h *Header) PayloadType() int { return int(h.PType) }
 func (h *Header) SequenceNumber() int { return int(h.SeqNum) }
 
 // Len RTP header sequence number feild
-func (h *Header) Len() int { return minHeaderLen + len(h.CSRC) }
+func (h *Header) Len() int { return minHeaderLen + (int(h.CCount) * 4) }
 
 // SetSeqNum set sequence number of the header
 func (h *Header) SetSeqNum(num int) {
@@ -132,3 +147,13 @@ func (h *Header) SetExtension() { h.Ext = true }
 
 // SetMarker set header marker field to True
 func (h *Header) SetMarker() { h.Marker = true }
+
+// PushCSRC add item to CSRC stack
+func (h *Header) PushCSRC(csrc int) error {
+	if h.CCount > 15 {
+		return ErrorRTPHeaderCSRC
+	}
+	h.CSRC = append(h.CSRC, uint32(csrc))
+	h.CCount++
+	return nil
+}

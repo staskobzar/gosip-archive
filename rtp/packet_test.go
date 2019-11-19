@@ -53,7 +53,7 @@ func TestRTPEncode(t *testing.T) {
 	assert.Equal(t, bin, enc)
 }
 
-func TestRTPCSRC(t *testing.T) {
+func TestRTPHeaderSetters(t *testing.T) {
 	hdr := NewHeader()
 	hdr.SetSeqNum(235)
 	hdr.SetTimestamp(2995562743)
@@ -81,5 +81,43 @@ func TestRTPCSRC(t *testing.T) {
 	assert.Equal(t, uint32(876456347), rtp.SSRC)
 }
 
-// TODO: CSRC identifiers
+func TestRTPCSRC(t *testing.T) {
+	hdr := NewHeader()
+	hdr.SetSeqNum(235)
+	hdr.SetTimestamp(62743)
+	hdr.SetSSRC(456347)
+	hdr.SetPayloadType(99)
+
+	err := hdr.PushCSRC(9998881)
+	assert.Nil(t, err)
+	err = hdr.PushCSRC(9998882)
+	assert.Nil(t, err)
+	err = hdr.PushCSRC(9998883)
+	assert.Nil(t, err)
+
+	assert.Equal(t, 24, hdr.Len())
+
+	data := hdr.Encode()
+
+	h := NewHeader()
+	h.Decode(data)
+
+	assert.Equal(t, 24, h.Len())
+	assert.Equal(t, 3, h.CSRCCount())
+	assert.ElementsMatch(t, []uint32{9998881, 9998882, 9998883}, h.CSRC)
+}
+
+func TestRTPCSRCFailsMaxNum(t *testing.T) {
+	hdr := NewHeader()
+	for i := 0; i < 16; i++ {
+		err := hdr.PushCSRC(11122233 + i)
+		assert.Nil(t, err)
+	}
+	assert.Equal(t, 16, hdr.CSRCCount())
+	err := hdr.PushCSRC(22233344)
+	if assert.Error(t, err) {
+		assert.Equal(t, ErrorRTPHeaderCSRC, err)
+	}
+}
+
 // TODO: RTCPRead
