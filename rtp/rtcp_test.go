@@ -166,6 +166,15 @@ func TestRTCPDecodeSenderOneBlock(t *testing.T) {
 	assert.EqualValues(t, 0, b.Jitter)
 	assert.EqualValues(t, 2262761209, b.LSR)
 	assert.EqualValues(t, 252248, b.DLSR)
+
+	input = "\x81\xc8\x00\x0c\x58\xf3\x3d\xea\x00\x02\x4f\xf2\x07\xef\x9d\xa9" +
+		"\x11\x48\xe4\x02\x00\x00\x02\x4a\x00\x01\x6b\x25\xd2\xbd\x4e\x3e" +
+		"\x00\x00\x00\x00\x00\x00\x01\x05\x00\x00\x00\x00\x86\xde\xfe\xf9" +
+		"\x00\x03\x58"
+	data = []byte(input)
+	sr, err = rtcpSRDecode(data[4 : h.Len()-1])
+	assert.NotNil(t, err)
+	assert.Nil(t, sr)
 }
 
 func TestRTCPDecodeSenderMultiBlock(t *testing.T) {
@@ -193,6 +202,114 @@ func TestRTCPDecodeSenderMultiBlock(t *testing.T) {
 	assert.EqualValues(t, 31, b.Jitter)
 	assert.EqualValues(t, 2624998473, b.LSR)
 	assert.EqualValues(t, 165478, b.DLSR)
+}
+
+func TestRTCPDecodeReceiver(t *testing.T) {
+	input := "\x81\xc9\x00\x07\xd2\xbd\x4e\x3e\x58\xf3\x3d\xea\x00\x00\x00\x00" +
+		"\x00\x00\x2e\x9b\x00\x00\x0b\x3e\x86\xe4\x06\x24\x00\x00\x00\x01"
+	data := []byte(input)
+	h, err := rtcpHeaderDecode(data)
+	assert.Nil(t, err)
+	assert.Equal(t, len(data), h.Len())
+	assert.Equal(t, RTCPRR, h.Type)
+
+	rr, err := rtcpRRDecode(data[4:h.Len()])
+	assert.Nil(t, err)
+
+	assert.EqualValues(t, 3535621694, rr.SSRC)
+
+	// receiver report blocks
+	assert.Equal(t, 1, len(rr.RBlock))
+	b := rr.RBlock[0]
+	assert.EqualValues(t, 1492336106, b.SSRC)
+	assert.EqualValues(t, 0, b.Fract)
+	assert.EqualValues(t, 0, b.Lost)
+	assert.EqualValues(t, 11931, b.SeqNum)
+	assert.EqualValues(t, 2878, b.Jitter)
+	assert.EqualValues(t, 2263090724, b.LSR)
+	assert.EqualValues(t, 1, b.DLSR)
+}
+
+func TestRTCPDecodeReceiverNoBlocks(t *testing.T) {
+	input := "\x80\xc9\x00\x01\x22\x6a\x6a\xa1"
+	data := []byte(input)
+	h, err := rtcpHeaderDecode(data)
+	assert.Nil(t, err)
+	assert.Equal(t, len(data), h.Len())
+	assert.Equal(t, RTCPRR, h.Type)
+
+	rr, err := rtcpRRDecode(data[4:h.Len()])
+	assert.Nil(t, err)
+
+	assert.EqualValues(t, 577399457, rr.SSRC)
+
+	// receiver report blocks
+	assert.Equal(t, 0, len(rr.RBlock))
+}
+
+func TestRTCPDecodeReceiverWithTwoBlocks(t *testing.T) {
+	input := "\x88\xc9\x00\x0d\xf5\x58\x94\x70\x00\x00\x00\x00\x00\x00\x00\x00" +
+		"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" +
+		"\x43\x8b\xac\x37\x00\x00\x00\x00\x00\x00\x26\xe7\x00\x00\x00\x00" +
+		"\x00\x00\x00\x00\x00\x00\x00\x00"
+	data := []byte(input)
+	h, err := rtcpHeaderDecode(data)
+	assert.Nil(t, err)
+	assert.Equal(t, len(data), h.Len())
+	assert.Equal(t, RTCPRR, h.Type)
+
+	rr, err := rtcpRRDecode(data[4:h.Len()])
+	assert.Nil(t, err)
+
+	assert.EqualValues(t, 4116223088, rr.SSRC)
+
+	// receiver report blocks
+	assert.Equal(t, 2, len(rr.RBlock))
+
+	b := rr.RBlock[0]
+	assert.EqualValues(t, 0, b.SSRC)
+	assert.EqualValues(t, 0, b.Fract)
+	assert.EqualValues(t, 0, b.Lost)
+	assert.EqualValues(t, 0, b.SeqNum)
+	assert.EqualValues(t, 0, b.Jitter)
+	assert.EqualValues(t, 0, b.LSR)
+	assert.EqualValues(t, 0, b.DLSR)
+
+	b = rr.RBlock[1]
+	assert.EqualValues(t, 1133227063, b.SSRC)
+	assert.EqualValues(t, 0, b.Fract)
+	assert.EqualValues(t, 0, b.Lost)
+	assert.EqualValues(t, 9959, b.SeqNum)
+	assert.EqualValues(t, 0, b.Jitter)
+	assert.EqualValues(t, 0, b.LSR)
+	assert.EqualValues(t, 0, b.DLSR)
+}
+
+func TestRTCPDecodeSDES(t *testing.T) {
+	input := "\x81\xca\x00\x06\x43\x8b\xac\x37\x01\x0e\x51\x54\x53\x53\x31\x34" +
+		"\x31\x30\x32\x39\x32\x38\x35\x38\x00\x00\x00\x00"
+	data := []byte(input)
+	h, err := rtcpHeaderDecode(data)
+	assert.Nil(t, err)
+	assert.Equal(t, len(data), h.Len())
+	assert.Equal(t, RTCPSDES, h.Type)
+
+	sdes, err := rtcpSDESDecode(data[4:h.Len()])
+	assert.Nil(t, err)
+
+	// source description report blocks
+	assert.Equal(t, 1, len(sdes.Chunk))
+
+	c := sdes.Chunk[0]
+
+	assert.EqualValues(t, 1133227063, c.ID)
+
+	assert.Equal(t, 1, len(c.Item))
+	item := c.Item[0]
+
+	assert.Equal(t, SDESCNAME, item.Type)
+	assert.EqualValues(t, 14, item.Len)
+	assert.Equal(t, "QTSS1410292858", string(item.Text))
 }
 
 /*

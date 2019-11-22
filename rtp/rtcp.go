@@ -3,6 +3,7 @@ package rtp
 import (
 	"encoding/binary"
 	"errors"
+	"fmt"
 )
 
 // RTCP Errors
@@ -14,6 +15,8 @@ var (
 	// ErrorRTCPHeaderVer raised when RTCP version is not 2.
 	// Only ver. 2 is supported so far.
 	ErrorRTCPHeaderVer = errors.New("invalid RTCP header version")
+	// ErrorRTCPSDES raised when RTCP packet SDES has problem
+	ErrorRTCPSDES = errors.New("invalid SDES packet")
 )
 
 // RTCPType RTCP header type
@@ -71,7 +74,7 @@ type (
 
 	// SDESItem item of source description chunk
 	SDESItem struct {
-		Type RTCPType // item type
+		Type SDESType // item type
 		Len  uint8    // content length
 		Text []byte   // item content
 	}
@@ -169,6 +172,7 @@ func rtcpHeaderDecode(data []byte) (*RTCPHeader, error) {
 	return h, nil
 }
 
+// decode sender report
 func rtcpSRDecode(data []byte) (*RTCPSender, error) {
 	sr := &RTCPSender{}
 	sr.SSRC = binary.BigEndian.Uint32(data[:])
@@ -179,6 +183,9 @@ func rtcpSRDecode(data []byte) (*RTCPSender, error) {
 	sr.OctSent = binary.BigEndian.Uint32(data[20:])
 
 	for p := 24; p < len(data); p += 24 {
+		if len(data) < p+24 {
+			return nil, errors.New("invalid SR block")
+		}
 		b := RBlock{}
 		b.SSRC = binary.BigEndian.Uint32(data[p:])
 		lost := binary.BigEndian.Uint32(data[p+4:])
@@ -193,4 +200,86 @@ func rtcpSRDecode(data []byte) (*RTCPSender, error) {
 	}
 
 	return sr, nil
+}
+
+// receiver sender report
+func rtcpRRDecode(data []byte) (*RTCPReceiver, error) {
+	rr := &RTCPReceiver{}
+	rr.SSRC = binary.BigEndian.Uint32(data[:])
+
+	for p := 4; p < len(data); p += 24 {
+		if len(data) < p+24 {
+			return nil, errors.New("invalid RR block")
+		}
+		b := RBlock{}
+		b.SSRC = binary.BigEndian.Uint32(data[p:])
+		lost := binary.BigEndian.Uint32(data[p+4:])
+		b.Fract = data[p+4]
+		b.Lost = lost & 0x00ffffff
+		b.SeqNum = binary.BigEndian.Uint32(data[p+8:])
+		b.Jitter = binary.BigEndian.Uint32(data[p+12:])
+		b.LSR = binary.BigEndian.Uint32(data[p+16:])
+		b.DLSR = binary.BigEndian.Uint32(data[p+20:])
+
+		rr.RBlock = append(rr.RBlock, b)
+	}
+
+	return rr, nil
+}
+
+// receiver sender report
+func rtcpSDESDecode(data []byte) (*RTCPSDesc, error) {
+	sdes := &RTCPSDesc{}
+
+	if len(data) == 0 {
+		return sdes, nil
+	}
+
+	// read SDES chunks
+	p := 0
+	for {
+		c := SDESChunk{}
+		fmt.Printf("data len = %d, p = %d\n", len(data), p)
+		if c.ID, p = readUint32(data, p); p == -1 {
+			return nil, ErrorRTCPSDES
+		}
+
+		for {
+			if len(data) < p+2 {
+				return nil, ErrorRTCPSDES
+			}
+			item := SDESItem{}
+			item.Type = SDESType(data[p])
+			p++
+			if item.Type == SDESEND {
+				break
+			}
+			item.Len = data[p]
+			p++
+			l := int(item.Len)
+			fmt.Printf("len = %d\n", l)
+			if len(data) < p+l {
+				return nil, ErrorRTCPSDES
+			}
+			item.Text = data[p : p+l]
+
+			fmt.Printf("text = %s\n", string(item.Text))
+			p += l
+			c.Item = append(c.Item, item)
+		}
+
+		sdes.Chunk = append(sdes.Chunk, c)
+		if p >= len(data) {
+			break
+		}
+	}
+
+	return sdes, nil
+}
+
+func readUint32(data []byte, p int) (uint32, int) {
+	if len(data) < p+4 {
+		return 0, -1
+	}
+	return binary.BigEndian.Uint32(data[p:]), p + 4
 }
