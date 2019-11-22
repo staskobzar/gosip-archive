@@ -171,23 +171,26 @@ func rtcpHeaderDecode(data []byte) (*RTCPHeader, error) {
 
 func rtcpSRDecode(data []byte) (*RTCPSender, error) {
 	sr := &RTCPSender{}
-	sr.SSRC = 1492336106
-	sr.NTPMSW = 151538
-	sr.NTPLSW = 133143977
-	sr.RTPTime = 289989634
-	sr.PackSent = 586
-	sr.OctSent = 92965
+	sr.SSRC = binary.BigEndian.Uint32(data[:])
+	sr.NTPMSW = binary.BigEndian.Uint32(data[4:])
+	sr.NTPLSW = binary.BigEndian.Uint32(data[8:])
+	sr.RTPTime = binary.BigEndian.Uint32(data[12:])
+	sr.PackSent = binary.BigEndian.Uint32(data[16:])
+	sr.OctSent = binary.BigEndian.Uint32(data[20:])
 
-	b := RBlock{}
-	b.SSRC = 3535621694
-	b.Fract = 0
-	b.Lost = 0
-	b.SeqNum = 0
-	b.Jitter = 0
-	b.LSR = 2262761209
-	b.DLSR = 252248
+	for p := 24; p < len(data); p += 24 {
+		b := RBlock{}
+		b.SSRC = binary.BigEndian.Uint32(data[p:])
+		lost := binary.BigEndian.Uint32(data[p+4:])
+		b.Fract = data[p+4]
+		b.Lost = lost & 0x00ffffff
+		b.SeqNum = binary.BigEndian.Uint32(data[p+8:])
+		b.Jitter = binary.BigEndian.Uint32(data[p+12:])
+		b.LSR = binary.BigEndian.Uint32(data[p+16:])
+		b.DLSR = binary.BigEndian.Uint32(data[p+20:])
 
-	sr.RBlock = append(sr.RBlock, b)
+		sr.RBlock = append(sr.RBlock, b)
+	}
 
 	return sr, nil
 }
