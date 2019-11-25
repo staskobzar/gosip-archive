@@ -14,6 +14,8 @@ var (
 	// ErrorRTCPHeaderVer raised when RTCP version is not 2.
 	// Only ver. 2 is supported so far.
 	ErrorRTCPHeaderVer = errors.New("invalid RTCP header version")
+	// ErrorRTCPHeaderLen raised when RTCP packet header length is invalid
+	ErrorRTCPHeaderLen = errors.New("invalid RTCP header length")
 	// ErrorRTCPSDES raised when RTCP packet SDES has problem
 	ErrorRTCPSDES = errors.New("invalid SDES packet")
 	// ErrorRTCPBye raised when RTCP packet BYE has problem
@@ -178,18 +180,22 @@ func RTCPDecode(data []byte) ([]RTCPReport, error) {
 		if err != nil {
 			return nil, err
 		}
+		if len(data[p:]) < hdr.Len() {
+			return nil, ErrorRTCPHeaderLen
+		}
 
+		p += 4
 		switch hdr.Type {
 		case RTCPSR:
-			rprt, err = rtcpSRDecode(data[p+4:p+hdr.Len()], hdr)
+			rprt, err = rtcpSRDecode(data[p:], hdr)
 		case RTCPRR:
-			rprt, err = rtcpRRDecode(data[p+4:p+hdr.Len()], hdr)
+			rprt, err = rtcpRRDecode(data[p:], hdr)
 		case RTCPSDES:
-			rprt, err = rtcpSDESDecode(data[p+4:p+hdr.Len()], hdr)
+			rprt, err = rtcpSDESDecode(data[p:], hdr)
 		case RTCPBYE:
-			rprt, err = rtcpBYEDecode(data[p+4:], hdr)
+			rprt, err = rtcpBYEDecode(data[p:], hdr)
 		case RTCPAPP:
-			rprt, err = rtcpAPPDecode(data[p+4:], hdr)
+			rprt, err = rtcpAPPDecode(data[p:], hdr)
 		default:
 			return nil, ErrorRTCPHeaderType
 		}
@@ -199,7 +205,7 @@ func RTCPDecode(data []byte) ([]RTCPReport, error) {
 		}
 
 		reports = append(reports, rprt)
-		p += hdr.Len()
+		p += hdr.PLen()
 	}
 	return reports, nil
 }
@@ -249,7 +255,7 @@ func rtcpSRDecode(data []byte, hdr *RTCPHeader) (*RTCPSender, error) {
 	sr.PackSent = binary.BigEndian.Uint32(data[16:])
 	sr.OctSent = binary.BigEndian.Uint32(data[20:])
 
-	for p := 24; p < len(data); p += 24 {
+	for p := 24; p < hdr.PLen(); p += 24 {
 		if len(data) < p+24 {
 			return nil, errors.New("invalid SR block")
 		}
@@ -274,8 +280,8 @@ func rtcpRRDecode(data []byte, hdr *RTCPHeader) (*RTCPReceiver, error) {
 	rr := &RTCPReceiver{Hdr: hdr}
 	rr.SSRC = binary.BigEndian.Uint32(data[:])
 
-	for p := 4; p < len(data); p += 24 {
-		if len(data) < p+24 {
+	for p := 4; p < hdr.PLen(); p += 24 {
+		if hdr.PLen() < p+24 {
 			return nil, errors.New("invalid RR block")
 		}
 		b := RBlock{}
@@ -306,7 +312,7 @@ func rtcpSDESDecode(data []byte, hdr *RTCPHeader) (*RTCPSDesc, error) {
 	p := 0
 	for {
 		c := SDESChunk{}
-		if c.ID, p = readUint32(data, p); p == -1 {
+		if c.ID, p = readUint32(data[:hdr.PLen()], p); p == -1 {
 			break
 		}
 
@@ -316,7 +322,7 @@ func rtcpSDESDecode(data []byte, hdr *RTCPHeader) (*RTCPSDesc, error) {
 		}
 
 		for {
-			if hdr.PLen() < p+2 {
+			if hdr.Len() < p+2 {
 				return nil, ErrorRTCPSDES
 			}
 			item := SDESItem{}
@@ -325,10 +331,12 @@ func rtcpSDESDecode(data []byte, hdr *RTCPHeader) (*RTCPSDesc, error) {
 				break
 			}
 			p++
+
 			item.Len = data[p]
 			p++
+
 			l := int(item.Len)
-			if hdr.PLen() < p+l {
+			if hdr.Len() < p+l {
 				return nil, ErrorRTCPSDES
 			}
 			item.Text = data[p : p+l]
