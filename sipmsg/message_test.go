@@ -20,6 +20,7 @@ func TestMessageParse(t *testing.T) {
 	msg, err := MsgParse([]byte(str))
 	assert.Nil(t, err)
 	assert.True(t, msg.IsRequest())
+	assert.False(t, msg.IsInvite())
 	assert.False(t, msg.IsResponse())
 	assert.Equal(t, "sip:registrar.biloxi.com", msg.ReqLine.RequestURI())
 	assert.EqualValues(t, 7200, msg.Expires)
@@ -45,6 +46,7 @@ func TestMessageParseMultiLineHeaders(t *testing.T) {
 	msg, err := MsgParse([]byte(str))
 	assert.Nil(t, err)
 	assert.False(t, msg.IsRequest())
+	assert.False(t, msg.IsInvite())
 	assert.True(t, msg.IsResponse())
 	assert.EqualValues(t, 1, msg.CSeq.Num)
 	assert.Equal(t, "BYE", msg.CSeq.Method)
@@ -165,6 +167,7 @@ func TestMessageParseWithBody(t *testing.T) {
 	assert.Equal(t, uint(165), msg.ContentLen)
 	assert.Equal(t, sdpmsg, string(msg.Body))
 	assert.Equal(t, int(msg.ContentLen), len(msg.Body))
+	assert.True(t, msg.IsInvite())
 }
 
 func TestMessageRequestToBytes(t *testing.T) {

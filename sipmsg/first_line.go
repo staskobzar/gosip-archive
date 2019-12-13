@@ -1,5 +1,7 @@
 package sipmsg
 
+import "bytes"
+
 // RequestLine SIP message request line structure
 type RequestLine struct {
 	buf    buffer
@@ -24,6 +26,11 @@ func NewReqLine(method, ruri string) *RequestLine {
 
 // Method request line method
 func (s *RequestLine) Method() string { return s.buf.str(s.method) }
+
+// IsInvite returns true if request line method is INVITE
+func (s *RequestLine) IsInvite() bool {
+	return bytes.EqualFold([]byte("invite"), s.buf.byt(s.method))
+}
 
 // RequestURI request line URI as string
 func (s *RequestLine) RequestURI() string { return s.buf.str(s.uri) }

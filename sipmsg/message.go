@@ -111,8 +111,10 @@ func NewRequest(met, ruri string, via *Via, to, from *HeaderFromTo, cseq, maxfwd
 
 	msg.ReqLine = NewReqLine(met, ruri)
 
-	msg.Vias = append(msg.Vias, via)
-	msg.pushHeader(SIPHdrVia, via.buf.Bytes(), via.name, pl{via.name.l + 2, via.buf.plen()})
+	if via != nil {
+		msg.Vias = append(msg.Vias, via)
+		msg.pushHeader(SIPHdrVia, via.buf.Bytes(), via.name, pl{via.name.l + 2, via.buf.plen()})
+	}
 
 	msg.From = from
 	msg.From.AddTag()
@@ -165,6 +167,14 @@ func (m *Message) IsRequest() bool { return m.ReqLine != nil }
 
 // IsResponse returns true is SIP Message is response
 func (m *Message) IsResponse() bool { return m.StatusLine != nil }
+
+// IsInvite returns true if SIP message is INVITE request
+func (m *Message) IsInvite() bool {
+	if m.IsRequest() {
+		return m.ReqLine.IsInvite()
+	}
+	return false
+}
 
 // Bytes SIP message as bytes
 func (m *Message) Bytes() []byte {

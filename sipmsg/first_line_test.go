@@ -26,6 +26,7 @@ func TestHdrRequestLineParse(t *testing.T) {
 	assert.Equal(t, "sip:bob@biloxi.com", msg.ReqLine.RequestURI())
 	assert.Equal(t, "SIP/2.0", msg.ReqLine.Version())
 	assert.Equal(t, []byte("INVITE sip:bob@biloxi.com SIP/2.0\r\n"), msg.ReqLine.Bytes())
+	assert.True(t, msg.ReqLine.IsInvite())
 }
 
 func TestHdrRequestLineCreate(t *testing.T) {

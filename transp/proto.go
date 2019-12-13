@@ -14,6 +14,14 @@ type Addr struct {
 	addr net.Addr
 }
 
+func UDPAddr(address string) *Addr {
+	addr, err := net.ResolveUDPAddr("udp", address)
+	if err != nil {
+		return nil
+	}
+	return &Addr{addr}
+}
+
 func (a Addr) Proto() Proto {
 	switch a.addr.Network() {
 	case "udp", "udp4", "udp6":
