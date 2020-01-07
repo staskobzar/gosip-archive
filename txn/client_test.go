@@ -1,10 +1,13 @@
 package txn
 
 import (
+	"fmt"
+	"testing"
+	"time"
+
 	"github.com/staskobzar/gosip/sipmsg"
 	"github.com/staskobzar/gosip/transp"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 func initInvite() *sipmsg.Message {
@@ -40,8 +43,10 @@ func TestTxnClientInvalidReq(t *testing.T) {
 func TestTxnInitInviteClient(t *testing.T) {
 	msg := initInvite()
 	addr := transp.UDPAddr("10.0.0.1:5060")
-	cl, err := invClient(msg, addr)
+	timer := initTimer(10 * time.Millisecond)
+	cl, err := invClient(msg, addr, timer)
 	assert.Nil(t, err)
 	assert.NotNil(t, cl)
-	cl.cancel()
+	<-time.After(2 * time.Second)
+	fmt.Println(cl)
 }

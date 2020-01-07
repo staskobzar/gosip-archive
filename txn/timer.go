@@ -34,7 +34,7 @@ type Timer struct {
 	K time.Duration
 }
 
-func InitTimer(t1 time.Duration) *Timer {
+func initTimer(t1 time.Duration) *Timer {
 	t := &Timer{}
 
 	// T1 500ms; default RTT Estimate
@@ -77,4 +77,23 @@ func InitTimer(t1 time.Duration) *Timer {
 	t.K = t.T4
 
 	return t
+}
+
+func (t *Timer) nextA() <-chan struct{} {
+	t.A = t.A * 2
+	ch := make(chan struct{})
+	go func() {
+		defer close(ch)
+		<-time.After(t.A)
+	}()
+	return ch
+}
+
+func (t *Timer) fireB() <-chan struct{} {
+	ch := make(chan struct{})
+	go func() {
+		defer close(ch)
+		<-time.After(t.B)
+	}()
+	return ch
 }
