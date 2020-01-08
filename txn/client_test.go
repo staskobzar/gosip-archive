@@ -2,8 +2,8 @@ package txn
 
 import (
 	"fmt"
+	"sync"
 	"testing"
-	"time"
 
 	"github.com/staskobzar/gosip/sipmsg"
 	"github.com/staskobzar/gosip/transp"
@@ -22,19 +22,19 @@ func initInvite() *sipmsg.Message {
 }
 
 func TestTxnClientInvalidReq(t *testing.T) {
-	txn, err := NewClient(nil, transp.UDPAddr("192.168.0.1:5060"))
+	txn, err := NewClient(&Message{nil, transp.UDPAddr("192.168.0.1:5060")}, nil, nil)
 	assert.NotNil(t, err)
 	assert.Contains(t, err.Error(), "invalid sip message")
 	assert.Nil(t, txn)
 
 	msg := initInvite()
-	txn, err = NewClient(msg, nil)
+	txn, err = NewClient(&Message{msg, nil}, nil, nil)
 	assert.NotNil(t, err)
 	assert.Contains(t, err.Error(), "invalid transport address")
 	assert.Nil(t, txn)
 
 	resp, _ := msg.NewResponse(100, "Trying")
-	txn, err = NewClient(resp, transp.UDPAddr("10.0.0.1:5060"))
+	txn, err = NewClient(&Message{resp, transp.UDPAddr("10.0.0.1:5060")}, nil, nil)
 	assert.NotNil(t, err)
 	assert.Contains(t, err.Error(), "sip request expected")
 	assert.Nil(t, txn)
@@ -43,10 +43,26 @@ func TestTxnClientInvalidReq(t *testing.T) {
 func TestTxnInitInviteClient(t *testing.T) {
 	msg := initInvite()
 	addr := transp.UDPAddr("10.0.0.1:5060")
-	timer := initTimer(10 * time.Millisecond)
-	cl, err := invClient(msg, addr, timer)
-	assert.Nil(t, err)
-	assert.NotNil(t, cl)
-	<-time.After(2 * time.Second)
-	fmt.Println(cl)
+	timer := initTimer(0) //10 * time.Millisecond)
+	chtu := make(chan *Message)
+	chtr := make(chan *Message)
+	cl := &Client{
+		request:  msg,
+		addr:     addr,
+		mux:      &sync.Mutex{},
+		chTU:     chtu,
+		chTransp: chtr,
+	}
+	cl.invite(timer)
+Loop:
+	for {
+		select {
+		case tm := <-cl.chTU:
+			fmt.Println(tm.Msg.String())
+			break Loop
+		case tm := <-cl.chTransp:
+			fmt.Println(tm.Msg.String())
+		}
+	}
+	fmt.Println("DONE")
 }

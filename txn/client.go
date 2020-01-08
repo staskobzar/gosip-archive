@@ -26,57 +26,72 @@ const (
 	Terminated
 )
 
+// Message transaction message structure
+type Message struct {
+	// Msg SIP message structure from sipmsg module
+	Msg *sipmsg.Message
+	// Addr destination address
+	Addr *transp.Addr
+}
+
 // Client trunsaction structure (RFC3261#17.1)
 type Client struct {
-	state   State
-	request *sipmsg.Message
-	addr    *transp.Addr
-	cancel  context.CancelFunc
-	mux     *sync.Mutex
-	chTU    chan *sipmsg.Message
+	state    State
+	request  *sipmsg.Message
+	response *sipmsg.Message
+	addr     *transp.Addr
+	cancel   context.CancelFunc
+	mux      *sync.Mutex
+	chTU     chan *Message
+	chTransp chan *Message
 }
 
 // NewClient creates new client transaction RFC3261#17
 // If method is INVITE then creates INVITE transaction,
 // non-INVITE otherwise
-func NewClient(req *sipmsg.Message, addr *transp.Addr) (*Client, error) {
-	if req == nil {
+func NewClient(tm *Message, tu chan *Message, transp chan *Message) (*Client, error) {
+
+	if tm.Msg == nil {
 		return nil, ErrorTxnClient.msg("invalid sip message")
 	}
-	if addr == nil {
+	if tm.Addr == nil {
 		return nil, ErrorTxnClient.msg("invalid transport address")
 	}
-	if !req.IsRequest() {
+	if !tm.Msg.IsRequest() {
 		return nil, ErrorTxnClient.msg("sip request expected")
 	}
 
 	timer := initTimer(0)
-	if req.IsInvite() {
-		return invClient(req, addr, timer)
+	client := &Client{
+		request:  tm.Msg,
+		addr:     tm.Addr,
+		mux:      &sync.Mutex{},
+		chTU:     tu,
+		chTransp: transp,
+	}
+	if client.request.IsInvite() {
+		client.invite(timer)
+	} else {
+		client.nonInvite(timer)
 	}
 
-	return nonInvClient(req, addr)
+	return client, nil
 }
 
-func invClient(req *sipmsg.Message, addr *transp.Addr, timer *Timer) (*Client, error) {
+func (cl *Client) invite(timer *Timer) {
 	ctx, cancel := context.WithCancel(context.Background())
-	cl := &Client{
-		state:   Calling,
-		request: req,
-		addr:    addr,
-		cancel:  cancel,
-		mux:     &sync.Mutex{},
-	}
+	cl.cancel = cancel
+
 	cl.calling(ctx, timer)
-	cl.expireB(ctx, timer)
-	return cl, nil
+	cl.timerB(ctx, timer)
 }
 
 func (cl *Client) calling(ctx context.Context, timer *Timer) {
-	// send
 	fmt.Println("send req")
+	cl.state = Calling
 	go func() {
 		for {
+			cl.chTransp <- &Message{cl.request, cl.addr}
 			select {
 			case <-ctx.Done():
 				fmt.Println("calling expired")
@@ -85,20 +100,22 @@ func (cl *Client) calling(ctx context.Context, timer *Timer) {
 				if cl.state != Calling {
 					return
 				}
-				// send
 				fmt.Println("re-transmit A:", timer.A)
 			}
 		}
 	}()
 }
 
-func (cl *Client) expireB(ctx context.Context, timer *Timer) {
+func (cl *Client) timerB(ctx context.Context, timer *Timer) {
 	start := time.Now()
 	go func() {
 		select {
 		case <-ctx.Done():
 		case <-timer.fireB():
 			cl.cancel()
+			if toutResp, err := cl.request.NewResponse(408, "Request Timeout"); err == nil {
+				cl.chTU <- &Message{toutResp, nil}
+			}
 		}
 		cl.state = Terminated
 		t := time.Now()
@@ -106,6 +123,5 @@ func (cl *Client) expireB(ctx context.Context, timer *Timer) {
 	}()
 }
 
-func nonInvClient(req *sipmsg.Message, addr *transp.Addr) (*Client, error) {
-	return nil, nil
+func (cl *Client) nonInvite(timer *Timer) {
 }
