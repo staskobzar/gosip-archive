@@ -3,9 +3,7 @@ package txn
 
 import (
 	"context"
-	"fmt"
 	"sync"
-	"time"
 
 	"github.com/staskobzar/gosip/sipmsg"
 	"github.com/staskobzar/gosip/transp"
@@ -40,7 +38,9 @@ type Client struct {
 	request  *sipmsg.Message
 	response *sipmsg.Message
 	addr     *transp.Addr
+	ctx      context.Context
 	cancel   context.CancelFunc
+	timer    *Timer
 	mux      *sync.Mutex
 	chTU     chan *Message
 	chTransp chan *Message
@@ -61,67 +61,89 @@ func NewClient(tm *Message, tu chan *Message, transp chan *Message) (*Client, er
 		return nil, ErrorTxnClient.msg("sip request expected")
 	}
 
-	timer := initTimer(0)
 	client := &Client{
 		request:  tm.Msg,
 		addr:     tm.Addr,
 		mux:      &sync.Mutex{},
+		timer:    initTimer(0),
 		chTU:     tu,
 		chTransp: transp,
 	}
 	if client.request.IsInvite() {
-		client.invite(timer)
+		client.invite()
 	} else {
-		client.nonInvite(timer)
+		client.nonInvite()
 	}
 
 	return client, nil
 }
 
-func (cl *Client) invite(timer *Timer) {
-	ctx, cancel := context.WithCancel(context.Background())
-	cl.cancel = cancel
-
-	cl.calling(ctx, timer)
-	cl.timerB(ctx, timer)
+// Recv update client transaction with new SIP message
+func (cl *Client) Recv(tm *Message) error {
+	if tm.Msg == nil {
+		return ErrorTxnClient.msg("invalid sip message")
+	}
+	if tm.Msg.IsRequest() {
+		return ErrorTxnClient.msg("sip response expected")
+	}
+	go func() {
+		switch cl.state {
+		case Calling, Proceeding:
+			cl.terminate()
+			cl.chTU <- tm
+		}
+	}()
+	return nil
 }
 
-func (cl *Client) calling(ctx context.Context, timer *Timer) {
-	fmt.Println("send req")
+// IsTerminated returns true if Client state is Terminated
+func (cl *Client) IsTerminated() bool {
+	return cl.state == Terminated
+}
+
+func (cl *Client) invite() {
+	ctx, cancel := context.WithCancel(context.Background())
+	cl.cancel = cancel
+	cl.ctx = ctx
+
+	cl.calling(ctx)
+	cl.timerB(ctx)
+}
+
+func (cl *Client) calling(ctx context.Context) {
 	cl.state = Calling
 	go func() {
 		for {
 			cl.chTransp <- &Message{cl.request, cl.addr}
 			select {
 			case <-ctx.Done():
-				fmt.Println("calling expired")
 				return
-			case <-timer.nextA():
+			case <-cl.timer.nextA():
 				if cl.state != Calling {
 					return
 				}
-				fmt.Println("re-transmit A:", timer.A)
 			}
 		}
 	}()
 }
 
-func (cl *Client) timerB(ctx context.Context, timer *Timer) {
-	start := time.Now()
+func (cl *Client) timerB(ctx context.Context) {
 	go func() {
 		select {
 		case <-ctx.Done():
-		case <-timer.fireB():
-			cl.cancel()
+		case <-cl.timer.fireB():
+			cl.terminate()
 			if toutResp, err := cl.request.NewResponse(408, "Request Timeout"); err == nil {
 				cl.chTU <- &Message{toutResp, nil}
 			}
 		}
-		cl.state = Terminated
-		t := time.Now()
-		fmt.Println("timer B fired after ", t.Sub(start))
 	}()
 }
 
-func (cl *Client) nonInvite(timer *Timer) {
+func (cl *Client) terminate() {
+	cl.cancel()
+	cl.state = Terminated
+}
+
+func (cl *Client) nonInvite() {
 }
