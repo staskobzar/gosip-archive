@@ -139,13 +139,13 @@ func NewRequest(met, ruri string, via *Via, to, from *HeaderFromTo, cseq, maxfwd
 }
 
 // NewResponse initiate SIP Response for the request with given code and reason.
-func (req *Message) NewResponse(code int, reason string) (*Message, error) {
+func (m *Message) NewResponse(code int, reason string) (*Message, error) {
 
 	if code < 100 || code > 699 {
 		return nil, ErrorSIPMsgCreate.msg("invalid reponse code: %d", code)
 	}
 
-	if req == nil || !req.IsRequest() {
+	if m == nil || !m.IsRequest() {
 		return nil, ErrorSIPMsgCreate.msg("Response can be generated only to SIP request.")
 	}
 
@@ -153,11 +153,11 @@ func (req *Message) NewResponse(code int, reason string) (*Message, error) {
 
 	resp.StatusLine = NewStatusLine(strconv.Itoa(code), reason)
 	// rfc3261 8.2.6.2
-	resp.copyHeader(req, SIPHdrVia)
-	resp.copyHeader(req, SIPHdrTo)
-	resp.copyHeader(req, SIPHdrFrom)
-	resp.copyHeader(req, SIPHdrCallID)
-	resp.copyHeader(req, SIPHdrCSeq)
+	resp.copyHeader(m, SIPHdrVia)
+	resp.copyHeader(m, SIPHdrTo)
+	resp.copyHeader(m, SIPHdrFrom)
+	resp.copyHeader(m, SIPHdrCallID)
+	resp.copyHeader(m, SIPHdrCSeq)
 
 	return resp, nil
 }
@@ -174,6 +174,18 @@ func (m *Message) IsInvite() bool {
 		return m.ReqLine.IsInvite()
 	}
 	return false
+}
+
+// Code returns code of SIP response as integer or 0 if error
+func (m *Message) Code() int {
+	if !m.IsResponse() {
+		return 0
+	}
+	code, err := strconv.Atoi(m.StatusLine.Code())
+	if err != nil {
+		return 0
+	}
+	return code
 }
 
 // Bytes SIP message as bytes

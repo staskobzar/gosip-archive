@@ -28,6 +28,7 @@ func TestMessageParse(t *testing.T) {
 	assert.EqualValues(t, 1826, msg.CSeq.Num)
 	assert.EqualValues(t, "REGISTER", msg.CSeq.Method)
 	assert.Equal(t, "843817637684230@998sdasdh09", msg.CallID)
+	assert.Equal(t, 0, msg.Code())
 }
 
 func TestMessageParseMultiLineHeaders(t *testing.T) {
@@ -54,6 +55,7 @@ func TestMessageParseMultiLineHeaders(t *testing.T) {
 	assert.Equal(t, 2, msg.Vias.Count())
 	assert.Equal(t, "12345600@atlanta.example.com", msg.CallID)
 	assert.Equal(t, 0, msg.Contacts.Count())
+	assert.Equal(t, 200, msg.Code())
 
 	// find all via headers
 	vias := msg.Headers.FindAll(SIPHdrVia)
@@ -267,6 +269,7 @@ func TestMessageCreateResponse(t *testing.T) {
 		"CSeq: 1826 REGISTER\r\n\r\n"
 	assert.Equal(t, respStr, resp.String())
 	assert.Empty(t, resp.To.Tag())
+	assert.Equal(t, 100, resp.Code())
 
 	resp, err = msg.NewResponse(200, "OK")
 	assert.Nil(t, err)
