@@ -38,7 +38,6 @@ type Client struct {
 	request  *sipmsg.Message
 	response *sipmsg.Message
 	addr     *transp.Addr
-	ctx      context.Context
 	cancel   context.CancelFunc
 	timer    *Timer
 	mux      *sync.Mutex
@@ -86,14 +85,30 @@ func (cl *Client) Recv(tm *Message) error {
 	if tm.Msg.IsRequest() {
 		return ErrorTxnClient.msg("sip response expected")
 	}
+	switch cl.state {
+	case Calling:
+		cl.smInvCalling(tm)
+	}
+	return nil
+}
+
+func (cl *Client) smInvCalling(tm *Message) {
 	go func() {
-		switch cl.state {
-		case Calling, Proceeding:
+		switch code := tm.Msg.Code(); {
+		case code >= 200 && code < 300:
 			cl.terminate()
 			cl.chTU <- tm
+		case code >= 100 && code < 200:
+			cl.chTU <- tm
+			cl.state = Proceeding
+		case code >= 300 && code <= 699:
+			// send ACK
+			ack, _ := cl.request.NewACK(tm.Msg)
+			cl.chTransp <- &Message{ack, cl.addr}
+			cl.chTU <- tm
+			// completed
 		}
 	}()
-	return nil
 }
 
 // IsTerminated returns true if Client state is Terminated
@@ -104,7 +119,6 @@ func (cl *Client) IsTerminated() bool {
 func (cl *Client) invite() {
 	ctx, cancel := context.WithCancel(context.Background())
 	cl.cancel = cancel
-	cl.ctx = ctx
 
 	cl.calling(ctx)
 	cl.timerB(ctx)
