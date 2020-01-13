@@ -383,6 +383,47 @@ func TestMessageContentType(t *testing.T) {
 	assert.True(t, msg.HasSDP())
 }
 
+func TestMessageTxnACK(t *testing.T) {
+	reqstr := "INVITE sip:bob@biloxi.example.com SIP/2.0\r\n" +
+		"Via: SIP/2.0/UDP client.atlanta.example.com:5060;branch=z9hG4bKbf9f44\r\n" +
+		"Max-Forwards: 70\r\n" +
+		"From: Alice <sip:alice@atlanta.example.com>;tag=9fxced76sl\r\n" +
+		"To: Bob <sip:bob@biloxi.example.com>\r\n" +
+		"Call-ID: 2xTb9vxSit55XU7p8@atlanta.example.com\r\n" +
+		"CSeq: 1 INVITE\r\n" +
+		"Contact: <sip:alice@client.atlanta.example.com>\r\n" +
+		"Content-Length: 0\r\n\r\n"
+
+	respstr := "SIP/2.0 302 Moved Temporarily\r\n" +
+		"Via: SIP/2.0/UDP client.atlanta.example.com:5060;" +
+		"branch=z9hG4bKbf9f44;received=192.0.2.101\r\n" +
+		"From: Alice <sip:alice@atlanta.example.com>;tag=9fxced76sl\r\n" +
+		"To: Bob <sip:bob@biloxi.example.com>;tag=53fHlqlQ2\r\n" +
+		"Call-ID: 2xTb9vxSit55XU7p8@atlanta.example.com\r\n" +
+		"CSeq: 1 INVITE\r\n" +
+		"Contact: <sip:bob@chicago.example.com;transport=tcp>\r\n" +
+		"Content-Length: 0\r\n\r\n"
+
+	ackstr := "ACK sip:bob@biloxi.example.com SIP/2.0\r\n" +
+		"Via: SIP/2.0/UDP client.atlanta.example.com:5060;branch=z9hG4bKbf9f44\r\n" +
+		"Max-Forwards: 70\r\n" +
+		"Call-ID: 2xTb9vxSit55XU7p8@atlanta.example.com\r\n" +
+		"From: Alice <sip:alice@atlanta.example.com>;tag=9fxced76sl\r\n" +
+		"To: Bob <sip:bob@biloxi.example.com>;tag=53fHlqlQ2\r\n" +
+		"CSeq: 1 ACK\r\n\r\n"
+
+	req, err := MsgParse([]byte(reqstr))
+	assert.Nil(t, err)
+
+	resp, err := MsgParse([]byte(respstr))
+	assert.Nil(t, err)
+
+	ack, err := req.NewACK(resp)
+	assert.Nil(t, err)
+
+	assert.Equal(t, ackstr, ack.String())
+}
+
 func BenchmarkMessageParse(b *testing.B) {
 	str := "REGISTER sip:registrar.biloxi.com SIP/2.0\r\n" +
 		"Via: SIP/2.0/UDP bobspc.biloxi.com:5060;branch=z9hG4bKnashds7\r\n" +

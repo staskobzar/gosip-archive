@@ -162,6 +162,38 @@ func (m *Message) NewResponse(code int, reason string) (*Message, error) {
 	return resp, nil
 }
 
+// NewACK creates ACK for Request from Response.
+// Used by transactions
+func (m *Message) NewACK(resp *Message) (*Message, error) {
+	if !m.IsRequest() {
+		return nil, ErrorSIPMsgCreate.msg("ACK can be generated only to SIP request.")
+	}
+	if !resp.IsResponse() {
+		return nil, ErrorSIPMsgCreate.msg("ACK can be generated only for SIP response as arg.")
+	}
+	ack := initMessage()
+	// The ACK MUST contain a single Via header field, and this MUST be equal
+	// to the top Via header field of the original request
+	via := m.Vias[m.Vias.Count()-1]
+	ack.Vias = append(ack.Vias, via)
+	ack.pushHeader(SIPHdrVia, via.buf.Bytes(), via.name, pl{via.name.l + 2, via.buf.plen()})
+	// max forwards
+	ack.MaxFwd = 70
+	buf, plName, plVal := headerValue("Max-Forwards", "70")
+	ack.pushHeader(SIPHdrMaxForwards, buf, plName, plVal)
+	// rfc3261#17.1.1.13 values for the Call-ID, From, and Request-URI that
+	// are equal to the values of those header fields in the request passed
+	ack.ReqLine = NewReqLine("ACK", m.ReqLine.RequestURI())
+	ack.copyHeader(m, SIPHdrCallID)
+	ack.copyHeader(m, SIPHdrFrom)
+	ack.copyHeader(resp, SIPHdrTo)
+	ack.CSeq = &CSeq{m.CSeq.Num, "ACK"}
+	buf, plName, plVal = headerValue("CSeq", strconv.Itoa(int(ack.CSeq.Num)), ack.CSeq.Method)
+	ack.pushHeader(SIPHdrCSeq, buf, plName, plVal)
+
+	return ack, nil
+}
+
 // IsRequest returns true is SIP Message is request
 func (m *Message) IsRequest() bool { return m.ReqLine != nil }
 
