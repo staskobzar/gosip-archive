@@ -174,9 +174,11 @@ func (m *Message) NewACK(resp *Message) (*Message, error) {
 	ack := initMessage()
 	// The ACK MUST contain a single Via header field, and this MUST be equal
 	// to the top Via header field of the original request
-	via := m.Vias[m.Vias.Count()-1]
-	ack.Vias = append(ack.Vias, via)
-	ack.pushHeader(SIPHdrVia, via.buf.Bytes(), via.name, pl{via.name.l + 2, via.buf.plen()})
+	if m.Vias != nil {
+		via := m.Vias[m.Vias.Count()-1]
+		ack.Vias = append(ack.Vias, via)
+		ack.pushHeader(SIPHdrVia, via.buf.Bytes(), via.name, pl{via.name.l + 2, via.buf.plen()})
+	}
 	// max forwards
 	ack.MaxFwd = 70
 	buf, plName, plVal := headerValue("Max-Forwards", "70")

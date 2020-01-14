@@ -94,20 +94,24 @@ func (cl *Client) Recv(tm *Message) error {
 
 func (cl *Client) smInvCalling(tm *Message) {
 	go func() {
+		cl.mux.Lock()
+		defer cl.mux.Unlock()
 		switch code := tm.Msg.Code(); {
+		case code >= 100 && code < 200:
+			cl.state = Proceeding
 		case code >= 200 && code < 300:
 			cl.terminate()
-			cl.chTU <- tm
-		case code >= 100 && code < 200:
-			cl.chTU <- tm
-			cl.state = Proceeding
 		case code >= 300 && code <= 699:
-			// send ACK
-			ack, _ := cl.request.NewACK(tm.Msg)
-			cl.chTransp <- &Message{ack, cl.addr}
-			cl.chTU <- tm
 			// completed
+			cl.state = Completed
+			ack, err := cl.request.NewACK(tm.Msg)
+			if err != nil {
+				panic(err)
+			}
+			// send ACK
+			cl.chTransp <- &Message{ack, cl.addr}
 		}
+		cl.chTU <- tm
 	}()
 }
 
