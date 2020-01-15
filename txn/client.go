@@ -88,6 +88,10 @@ func (cl *Client) Recv(tm *Message) error {
 	switch cl.state {
 	case Calling:
 		cl.smInvCalling(tm)
+	case Proceeding:
+		cl.smInvProceeding(tm)
+	default:
+		panic("INVALID STATE")
 	}
 	return nil
 }
@@ -110,8 +114,35 @@ func (cl *Client) smInvCalling(tm *Message) {
 			}
 			// send ACK
 			cl.chTransp <- &Message{ack, cl.addr}
+		default:
+			panic("INVALID CODE WHILE CALLING")
 		}
 		cl.chTU <- tm
+	}()
+}
+
+func (cl *Client) smInvProceeding(tm *Message) {
+	go func() {
+		cl.mux.Lock()
+		defer cl.mux.Unlock()
+		switch code := tm.Msg.Code(); {
+		case code >= 100 && code < 200:
+			cl.chTU <- tm
+		case code >= 200 && code < 300:
+			cl.chTU <- tm
+			cl.terminate()
+		case code >= 300 && code <= 699:
+			// completed
+			cl.state = Completed
+			ack, err := cl.request.NewACK(tm.Msg)
+			if err != nil {
+				panic(err)
+			}
+			// send ACK
+			cl.chTransp <- &Message{ack, cl.addr}
+		default:
+			panic("INVALID CODE WHILE PROCEEDING")
+		}
 	}()
 }
 

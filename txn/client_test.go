@@ -141,3 +141,38 @@ func TestTxnInvClientStateCalling3XXResp(t *testing.T) {
 	assert.Equal(t, Completed, cl.state)
 	cl.terminate()
 }
+
+func TestTxnInvClientStateProceeding1XXResp(t *testing.T) {
+	msg := initInvite()
+	cl := &Client{
+		request:  msg,
+		addr:     transp.UDPAddr("10.0.0.1:5060"),
+		mux:      &sync.Mutex{},
+		chTU:     make(chan *Message),
+		chTransp: make(chan *Message),
+		timer:    initTimer(0),
+	}
+	cl.invite()
+	resp, err := msg.NewResponse(100, "Trying")
+	assert.Nil(t, err)
+	cl.Recv(&Message{resp, cl.addr})
+	tm := <-cl.chTU
+	assert.Equal(t, "100", tm.Msg.StatusLine.Code())
+	assert.Equal(t, Proceeding, cl.state)
+
+	resp, err = msg.NewResponse(180, "Ringing")
+	assert.Nil(t, err)
+	cl.Recv(&Message{resp, cl.addr})
+	tm = <-cl.chTU
+	assert.Equal(t, "180", tm.Msg.StatusLine.Code())
+	assert.Equal(t, Proceeding, cl.state)
+
+	resp, err = msg.NewResponse(183, "Session progress")
+	assert.Nil(t, err)
+	cl.Recv(&Message{resp, cl.addr})
+	tm = <-cl.chTU
+	assert.Equal(t, "183", tm.Msg.StatusLine.Code())
+	assert.Equal(t, Proceeding, cl.state)
+
+	cl.terminate()
+}
