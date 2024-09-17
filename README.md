@@ -5,3 +5,5 @@
 [![codecov](https://codecov.io/gh/staskobzar/gosip/branch/master/graph/badge.svg)](https://codecov.io/gh/staskobzar/gosip)
 ---
 > Work in progress...
+
+This repo is abandoned. Work is restarted in https://github.com/staskobzar/gosip
